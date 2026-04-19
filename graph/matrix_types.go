@@ -1,0 +1,78 @@
+package graph
+
+// DistanceMatrixRequest holds all parameters for a Distance Matrix API call.
+type DistanceMatrixRequest struct {
+	Origins      []string
+	Destinations []string
+
+	// Mode: "driving" | "walking" | "bicycling" | "transit" (default: "driving")
+	Mode string
+
+	// Units: "metric" | "imperial"
+	Units string
+
+	// Language: BCP-47 code e.g. "en", "th"
+	Language string
+
+	// Region: ccTLD e.g. "th", "us"
+	Region string
+
+	// Avoid: any of "tolls", "highways", "ferries", "indoor"
+	Avoid []string
+
+	// DepartureTime: unix timestamp or 0 to omit; enables DurationInTraffic in response
+	DepartureTime int64
+
+	// TrafficModel: "best_guess" | "pessimistic" | "optimistic" (requires DepartureTime)
+	TrafficModel string
+
+	// Transit-only fields
+	ArrivalTime              int64
+	TransitMode              []string // "bus"|"subway"|"train"|"tram"|"rail"
+	TransitRoutingPreference string   // "less_walking"|"fewer_transfers"
+}
+
+// DistanceMatrixResponse is the full API response.
+type DistanceMatrixResponse struct {
+	// OK | INVALID_REQUEST | MAX_ELEMENTS_EXCEEDED | MAX_DIMENSIONS_EXCEEDED |
+	// OVER_QUERY_LIMIT | REQUEST_DENIED | UNKNOWN_ERROR
+	Status               string                  `json:"status"`
+	OriginAddresses      []string                `json:"origin_addresses"`
+	DestinationAddresses []string                `json:"destination_addresses"`
+	Rows                 []DistanceMatrixRow     `json:"rows"`
+}
+
+type DistanceMatrixRow struct {
+	Elements []DistanceMatrixElement `json:"elements"`
+}
+
+// DistanceMatrixElement represents one origin→destination pair.
+type DistanceMatrixElement struct {
+	// OK | NOT_FOUND | ZERO_RESULTS
+	// Distance/Duration are absent (nil) when status != OK
+	Status string `json:"status"`
+
+	// Distance in meters (value); human-readable text per units param
+	Distance *ValueText `json:"distance,omitempty"`
+
+	// Duration in seconds (value); human-readable text
+	Duration *ValueText `json:"duration,omitempty"`
+
+	// DurationInTraffic: only present for driving + departure_time
+	DurationInTraffic *ValueText `json:"duration_in_traffic,omitempty"`
+
+	// Fare: only present for transit mode when provider supports it
+	Fare *TransitFare `json:"fare,omitempty"`
+}
+
+// ValueText is used for both distance (meters) and duration (seconds).
+type ValueText struct {
+	Value int    `json:"value"`
+	Text  string `json:"text"`
+}
+
+// TransitFare holds fare information for transit routes.
+type TransitFare struct {
+	Value    float64 `json:"value"`
+	Currency string  `json:"currency"` // ISO 4217 e.g. "THB", "USD"
+}
