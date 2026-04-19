@@ -4,11 +4,13 @@ import (
 	"context"
 	"fmt"
 	"strconv"
+	"strings"
 
 	googlemaps "googlemaps.github.io/maps"
 )
 
-const chunkSize = 25
+// API limit: origins × destinations ≤ 100 elements per request (stricter when departure_time is set)
+const chunkSize = 10
 
 // Location is a geographic coordinate used as input to BuildMatrix.
 type Location struct {
@@ -19,7 +21,8 @@ type Location struct {
 // DistanceMatrix is the contract the algorithm uses to get travel data.
 type DistanceMatrix interface {
 	// BuildMatrix returns n×n matrices of durations (minutes) and distances (meters).
-	BuildMatrix(ctx context.Context, locs []Location) (durations [][]int, distances [][]int, err error)
+	// Pass MatrixOptions{} for defaults (driving, no traffic).
+	BuildMatrix(ctx context.Context, locs []Location, opts MatrixOptions) (durations [][]int, distances [][]int, err error)
 }
 
 // GoogleMapsMatrix implements DistanceMatrix via the Distance Matrix API.
@@ -36,8 +39,8 @@ func NewGoogleMapsMatrix(apiKey string) (*GoogleMapsMatrix, error) {
 }
 
 // BuildMatrix fetches travel durations and distances between every pair of locations.
-// Automatically batches requests when len(locs) > 25.
-func (g *GoogleMapsMatrix) BuildMatrix(ctx context.Context, locs []Location) ([][]int, [][]int, error) {
+// Automatically batches requests when len(locs) > chunkSize.
+func (g *GoogleMapsMatrix) BuildMatrix(ctx context.Context, locs []Location, opts MatrixOptions) ([][]int, [][]int, error) {
 	n := len(locs)
 	durations := make([][]int, n)
 	distances := make([][]int, n)
@@ -54,6 +57,8 @@ func (g *GoogleMapsMatrix) BuildMatrix(ctx context.Context, locs []Location) ([]
 		)
 	}
 
+	useTraffic := opts.DepartureTime != 0
+
 	for oStart := 0; oStart < n; oStart += chunkSize {
 		oEnd := clamp(oStart+chunkSize, n)
 
@@ -67,11 +72,23 @@ func (g *GoogleMapsMatrix) BuildMatrix(ctx context.Context, locs []Location) ([]
 				Units:        googlemaps.UnitsMetric,
 			}
 
+			if opts.Mode != "" {
+				req.Mode = googlemaps.Mode(opts.Mode)
+			}
+			if len(opts.Avoid) > 0 {
+				req.Avoid = googlemaps.Avoid(strings.Join(opts.Avoid, "|"))
+			}
+			if useTraffic {
+				req.DepartureTime = strconv.FormatInt(opts.DepartureTime, 10)
+				if opts.TrafficModel != "" {
+					req.TrafficModel = googlemaps.TrafficModel(opts.TrafficModel)
+				}
+			}
+
 			resp, err := g.client.DistanceMatrix(ctx, req)
 			if err != nil {
 				return nil, nil, fmt.Errorf("distance matrix API: %w", err)
 			}
-			// library returns error on non-OK status via StatusError()
 
 			for ri, row := range resp.Rows {
 				for ci, el := range row.Elements {
@@ -80,7 +97,12 @@ func (g *GoogleMapsMatrix) BuildMatrix(ctx context.Context, locs []Location) ([]
 							"element [%d][%d] status: %s", oStart+ri, dStart+ci, el.Status,
 						)
 					}
-					durations[oStart+ri][dStart+ci] = int(el.Duration.Minutes())
+
+					if useTraffic {
+						durations[oStart+ri][dStart+ci] = int(el.DurationInTraffic.Minutes())
+					} else {
+						durations[oStart+ri][dStart+ci] = int(el.Duration.Minutes())
+					}
 					distances[oStart+ri][dStart+ci] = el.Distance.Meters
 				}
 			}

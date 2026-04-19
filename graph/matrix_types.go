@@ -1,5 +1,23 @@
 package graph
 
+// MatrixOptions configures optional parameters for BuildMatrix.
+type MatrixOptions struct {
+	// DepartureTime: unix timestamp; 0 = use normal duration (no traffic)
+	// When set, returns duration_in_traffic (real road conditions at that time).
+	// Must be current or future time only.
+	DepartureTime int64
+
+	// TrafficModel: "best_guess"|"pessimistic"|"optimistic" (requires DepartureTime)
+	// Default "best_guess" if empty.
+	TrafficModel string
+
+	// Avoid: route restrictions — any of "tolls", "highways", "ferries"
+	Avoid []string
+
+	// Mode: "driving"|"walking"|"bicycling" — default "driving"
+	Mode string
+}
+
 // DistanceMatrixRequest holds all parameters for a Distance Matrix API call.
 type DistanceMatrixRequest struct {
 	Origins      []string
