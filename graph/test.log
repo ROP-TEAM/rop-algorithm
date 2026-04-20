@@ -1,0 +1,170 @@
+=== RUN   TestGoogleMapsMatrix
+    matrix_test.go:44: Full Distance Matrix response:
+        {
+          "status": "OK",
+          "origin_addresses": [
+            "QG42+GPJ, Wat Bowon Niwet, Phra Nakhon, Bangkok 10200, Thailand",
+            "417, 991 Rama I Rd, Khwaeng Pathum Wan, Pathum Wan, Krung Thep Maha Nakhon 10330, Thailand",
+            "192 Rama IV Rd, Khwaeng Lumphini, Pathum Wan, Krung Thep Maha Nakhon 10330, Thailand"
+          ],
+          "destination_addresses": [
+            "QG42+GPJ, Wat Bowon Niwet, Phra Nakhon, Bangkok 10200, Thailand",
+            "417, 991 Rama I Rd, Khwaeng Pathum Wan, Pathum Wan, Krung Thep Maha Nakhon 10330, Thailand",
+            "192 Rama IV Rd, Khwaeng Lumphini, Pathum Wan, Krung Thep Maha Nakhon 10330, Thailand"
+          ],
+          "rows": [
+            {
+              "elements": [
+                {
+                  "status": "OK",
+                  "distance": {
+                    "value": 0,
+                    "text": "1 m"
+                  },
+                  "duration": {
+                    "value": 0,
+                    "text": "1 min"
+                  }
+                },
+                {
+                  "status": "OK",
+                  "distance": {
+                    "value": 4860,
+                    "text": "4.9 km"
+                  },
+                  "duration": {
+                    "value": 894,
+                    "text": "15 mins"
+                  }
+                },
+                {
+                  "status": "OK",
+                  "distance": {
+                    "value": 8024,
+                    "text": "8.0 km"
+                  },
+                  "duration": {
+                    "value": 1228,
+                    "text": "20 mins"
+                  }
+                }
+              ]
+            },
+            {
+              "elements": [
+                {
+                  "status": "OK",
+                  "distance": {
+                    "value": 4447,
+                    "text": "4.4 km"
+                  },
+                  "duration": {
+                    "value": 888,
+                    "text": "15 mins"
+                  }
+                },
+                {
+                  "status": "OK",
+                  "distance": {
+                    "value": 0,
+                    "text": "1 m"
+                  },
+                  "duration": {
+                    "value": 0,
+                    "text": "1 min"
+                  }
+                },
+                {
+                  "status": "OK",
+                  "distance": {
+                    "value": 4323,
+                    "text": "4.3 km"
+                  },
+                  "duration": {
+                    "value": 740,
+                    "text": "12 mins"
+                  }
+                }
+              ]
+            },
+            {
+              "elements": [
+                {
+                  "status": "OK",
+                  "distance": {
+                    "value": 8168,
+                    "text": "8.2 km"
+                  },
+                  "duration": {
+                    "value": 1423,
+                    "text": "24 mins"
+                  }
+                },
+                {
+                  "status": "OK",
+                  "distance": {
+                    "value": 4794,
+                    "text": "4.8 km"
+                  },
+                  "duration": {
+                    "value": 994,
+                    "text": "17 mins"
+                  }
+                },
+                {
+                  "status": "OK",
+                  "distance": {
+                    "value": 0,
+                    "text": "1 m"
+                  },
+                  "duration": {
+                    "value": 0,
+                    "text": "1 min"
+                  }
+                }
+              ]
+            }
+          ]
+        }
+    matrix_test.go:48: raw [0→0] status=OK distance=1 m (0) duration=1 min (0) duration_in_traffic=- fare=-
+    matrix_test.go:48: raw [0→1] status=OK distance=4.9 km (4860) duration=15 mins (894) duration_in_traffic=- fare=-
+    matrix_test.go:48: raw [0→2] status=OK distance=8.0 km (8024) duration=20 mins (1228) duration_in_traffic=- fare=-
+    matrix_test.go:48: raw [1→0] status=OK distance=4.4 km (4447) duration=15 mins (888) duration_in_traffic=- fare=-
+    matrix_test.go:48: raw [1→1] status=OK distance=1 m (0) duration=1 min (0) duration_in_traffic=- fare=-
+    matrix_test.go:48: raw [1→2] status=OK distance=4.3 km (4323) duration=12 mins (740) duration_in_traffic=- fare=-
+    matrix_test.go:48: raw [2→0] status=OK distance=8.2 km (8168) duration=24 mins (1423) duration_in_traffic=- fare=-
+    matrix_test.go:48: raw [2→1] status=OK distance=4.8 km (4794) duration=17 mins (994) duration_in_traffic=- fare=-
+    matrix_test.go:48: raw [2→2] status=OK distance=1 m (0) duration=1 min (0) duration_in_traffic=- fare=-
+    matrix_test.go:67: Matrix 3×3
+    matrix_test.go:70:   [0→0] duration=0 min  distance=0 m
+    matrix_test.go:70:   [0→1] duration=14 min  distance=4860 m
+    matrix_test.go:70:   [0→2] duration=20 min  distance=8024 m
+    matrix_test.go:70:   [1→0] duration=14 min  distance=4447 m
+    matrix_test.go:70:   [1→1] duration=0 min  distance=0 m
+    matrix_test.go:70:   [1→2] duration=12 min  distance=4323 m
+    matrix_test.go:70:   [2→0] duration=23 min  distance=8168 m
+    matrix_test.go:70:   [2→1] duration=16 min  distance=4794 m
+    matrix_test.go:70:   [2→2] duration=0 min  distance=0 m
+--- PASS: TestGoogleMapsMatrix (0.25s)
+=== RUN   TestGoogleMapsMatrixBatch
+--- PASS: TestGoogleMapsMatrixBatch (0.87s)
+=== RUN   TestBuildDistanceMatrixQueryIncludesOptions
+--- PASS: TestBuildDistanceMatrixQueryIncludesOptions (0.00s)
+=== RUN   TestBuildDistanceMatrixQueryDepartureTimeNow
+--- PASS: TestBuildDistanceMatrixQueryDepartureTimeNow (0.00s)
+=== RUN   TestValidateDistanceMatrixRequestRejectsConflictingTimes
+--- PASS: TestValidateDistanceMatrixRequestRejectsConflictingTimes (0.00s)
+=== RUN   TestExecuteMatrixRectangularBatching
+--- PASS: TestExecuteMatrixRectangularBatching (0.00s)
+=== RUN   TestExecuteMatrixUsesDurationInTrafficWhenPresent
+--- PASS: TestExecuteMatrixUsesDurationInTrafficWhenPresent (0.00s)
+=== RUN   TestExecuteMatrixReturnsTopLevelAPIError
+--- PASS: TestExecuteMatrixReturnsTopLevelAPIError (0.00s)
+=== RUN   TestExecuteMatrixReturnsElementStatusError
+--- PASS: TestExecuteMatrixReturnsElementStatusError (0.00s)
+=== RUN   TestExecuteMatrixSupportsRegionAndLanguage
+--- PASS: TestExecuteMatrixSupportsRegionAndLanguage (0.00s)
+=== RUN   TestExecuteMatrixSupportsRawLocationStrings
+--- PASS: TestExecuteMatrixSupportsRawLocationStrings (0.00s)
+PASS
+ok      github.com/ROP-TEAM/rop-algorithm/graph 2.117s
