@@ -1,45 +1,13 @@
-# rop-algorithm
-
-Pure Go module สำหรับ Vehicle Routing Problem (VRP) optimization
-
----
-
-## โครงสร้าง Module
-
-```
-rop-algorithm/
-├── model/
-│   ├── matrix.go           — Location, MatrixOptions, DistanceMatrix{Request,Result,Response,Row,Element}, ValueText, TransitFare
-│   ├── matrix_cache.go     — CachePolicy, MatrixCacheConfig, MatrixCacheKeyParts
-│   ├── matrix_event.go     — MatrixEvent
-│   └── car.go              — placeholder (Phase 2)
-├── graph/
-│   ├── matrix_service.go   — GoogleMapsMatrix struct + options, ExecuteMatrix, BuildMatrix, cache/emit orchestration
-│   ├── matrix_request.go   — BuildDistanceMatrixQuery, ValidateDistanceMatrixRequest, buildDistanceMatrixRequest, locationRequestValue
-│   ├── matrix_http.go      — doDistanceMatrixRequest, HTTP execution, response decode, API status/shape checks
-│   ├── matrix_cache.go     — ResolveCachePolicy, BuildMatrixCacheKey, MatrixCacheTTL, MatrixTrafficSlot, key hashing
-│   ├── matrix_cache_memory.go — MatrixCache interface, MemoryMatrixCache, clone helpers
-│   ├── matrix_observability.go — MatrixEventHook, MatrixMetricsCollector, MatrixMetrics
-│   ├── matrix_compat.go    — type aliases re-exporting model types (backward compat)
-│   └── pathFinder.go       — placeholder (Phase 2)
-├── test/
-│   ├── matrix_test.go      — integration + HTTP + query-building tests
-│   └── matrix_cache_test.go — cache key/TTL/policy unit tests
-├── core/
-│   ├── constraint/         — feasibility checker (Phase 2)
-│   ├── priority/           — node sorting (Phase 2)
-│   └── timeWindow/         — time window validation (Phase 2)
-└── solver/                 — ALNS main loop (Phase 2)
-```
-
----
-
-## Distance Matrix API (graph/)
+# Google Maps Distance Matrix API
 
 ใช้ Google Maps Distance Matrix API เพื่อดึง travel time และ distance จริงบนถนน
 แทนการคำนวณ haversine (เส้นตรง) ที่ไม่สะท้อนสภาพจราจรจริง
 
-### API หลัก: `ExecuteMatrix`
+---
+
+## Quick Start
+
+### `ExecuteMatrix` — API หลัก
 
 ```go
 import "github.com/ROP-TEAM/rop-algorithm/graph"
@@ -58,25 +26,15 @@ req := graph.DistanceMatrixRequest{
 result, err := m.ExecuteMatrix(ctx, req)
 if err != nil { ... }
 
-durations := result.Durations
-distances := result.Distances
-raw := result.Response
-sent := result.Request
+durations := result.Durations  // [i][j] = นาที
+distances := result.Distances  // [i][j] = เมตร
+raw := result.Response         // full Google API response
+sent := result.Request         // request ที่ส่งจริง
 ```
 
-- `durations[i][j]` = เวลาเดินทางจาก i → j (**นาที**)
-- `distances[i][j]` = ระยะทางจาก i → j (**เมตร**)
-- `raw` = response เต็มจาก Google Distance Matrix API
-- `sent` = request ที่ใช้ยิงจริงหลังประกอบค่าเรียบร้อย
+### `BuildMatrix` — Compatibility Wrapper
 
-### Compatibility Wrapper
-
-`BuildMatrix(ctx, []Location, MatrixOptions)` ยังใช้งานได้เหมือนเดิม
-แต่ตอนนี้เป็น compatibility wrapper ที่แปลงเป็น `DistanceMatrixRequest`
-แล้วเรียก `ExecuteMatrix(...)` ภายใน
-
-เหมาะเมื่อ caller ยังทำงานแบบ square matrix จาก `[]Location`
-และต้องการคืนแค่ `durations`, `distances`
+ใช้เมื่อทำงานแบบ square matrix จาก `[]Location` และต้องการแค่ durations + distances:
 
 ```go
 locs := []graph.Location{
@@ -86,8 +44,83 @@ locs := []graph.Location{
 }
 
 durations, distances, err := m.BuildMatrix(ctx, locs, graph.MatrixOptions{})
-if err != nil { ... }
 ```
+
+`BuildMatrix` แปลง `[]Location` → `DistanceMatrixRequest` แล้วเรียก `ExecuteMatrix` ภายใน
+
+---
+
+## Result Shape
+
+```go
+type DistanceMatrixResult struct {
+    Request   DistanceMatrixRequest   // request ที่ส่งจริง
+    Response  DistanceMatrixResponse  // raw Google API response
+    Durations [][]int                 // [i][j] นาที
+    Distances [][]int                 // [i][j] เมตร
+}
+```
+
+---
+
+## DistanceMatrixRequest — Parameters
+
+| Field | Type | Default | หมายเหตุ |
+|---|---|---|---|
+| `Origins` | `[]string` | required | address, lat/lng, `place_id:...`, plus code, encoded polyline |
+| `Destinations` | `[]string` | required | รองรับรูปแบบเดียวกับ `Origins` |
+| `Mode` | `string` | `"driving"` | `"driving"`, `"walking"`, `"bicycling"`, `"transit"` |
+| `Units` | `string` | `"metric"` | `"metric"`, `"imperial"` |
+| `Language` | `string` | `""` | BCP-47 เช่น `"th"` |
+| `Region` | `string` | `""` | ccTLD เช่น `"th"` |
+| `Avoid` | `[]string` | `nil` | `"tolls"`, `"highways"`, `"ferries"`, `"indoor"` |
+| `DepartureTime` | `int64` | `0` | Unix timestamp |
+| `DepartureTimeNow` | `bool` | `false` | ส่ง `departure_time=now` |
+| `ArrivalTime` | `int64` | `0` | ใช้กับ transit; ห้ามใช้พร้อม departure time |
+| `TrafficModel` | `string` | `""` | `"best_guess"`, `"pessimistic"`, `"optimistic"` |
+| `TransitMode` | `[]string` | `nil` | `"bus"`, `"subway"`, `"train"`, `"tram"`, `"rail"` |
+| `TransitRoutingPreference` | `string` | `""` | `"less_walking"`, `"fewer_transfers"` |
+
+### Raw Location Strings
+
+`Origins` และ `Destinations` รองรับ location strings แบบ Google Docs โดยตรง:
+
+```go
+[]string{
+    "13.756300,100.501800",
+    "place_id:ChIJTydCFXdnHTERB3oVT1UZDRI",
+    "side_of_road:13.746900,100.534600",
+    "heading=90:13.730800,100.541800",
+}
+```
+
+### Validation Rules
+
+- ต้องมี `Origins` อย่างน้อย 1 ค่า
+- ต้องมี `Destinations` อย่างน้อย 1 ค่า
+- ห้ามใช้ `DepartureTime` พร้อม `DepartureTimeNow`
+- ห้ามใช้ `DepartureTime` หรือ `DepartureTimeNow` พร้อม `ArrivalTime`
+
+### TrafficModel
+
+| Value | ความหมาย |
+|---|---|
+| `best_guess` | ผสม historical + live traffic |
+| `pessimistic` | เวลามากสุด (worst case) |
+| `optimistic` | เวลาน้อยสุด (best case) |
+
+---
+
+## API Limits & Batching
+
+| เงื่อนไข | Limit |
+|---|---|
+| ไม่มี `DepartureTime` | 25 × 25 = 625 elements/request |
+| มี `DepartureTime` | **10 × 10 = 100 elements/request** |
+| Rate limit | 60,000 elements/นาที |
+| ราคา | $5 / 1,000 elements (10,000 ฟรี/เดือน) |
+
+`ExecuteMatrix` และ `BuildMatrix` จัดการ batching อัตโนมัติ รองรับทั้ง rectangular matrix (`origins != destinations`) และ square matrix
 
 ---
 
@@ -101,11 +134,11 @@ cfg := graph.DefaultMatrixCacheConfig()
 cfg.Enabled = true
 m.EnableInMemoryCache(cfg)
 
-// หรือ inject backend อื่น (Redis ฯลฯ)
+// inject backend อื่น (Redis ฯลฯ)
 m.SetCache(myRedisCache, cfg)
 ```
 
-interface ที่ต้อง implement:
+interface ที่ต้อง implement สำหรับ custom backend:
 
 ```go
 type MatrixCache interface {
@@ -118,22 +151,15 @@ type MatrixCache interface {
 
 `ResolveCachePolicy` แบ่ง request เป็น 2 policy อัตโนมัติ:
 
-| Policy | เงื่อนไข | Cache Key | TTL |
-|---|---|---|---|
-| `static` | ไม่มี `DepartureTime`, `DepartureTimeNow`, `TrafficModel` | `namespace:SHA256(locations+mode+units+avoid+…)` | ตาม mode (ดูด้านล่าง) |
-| `traffic` | มี field ใดก็ได้ข้างต้น | `namespace:YYYY-MM-DD:slot:SHA256(…)` | ตาม time slot |
+| Policy | เงื่อนไข | Cache Key Format |
+|---|---|---|
+| `static` | ไม่มี `DepartureTime`, `DepartureTimeNow`, `TrafficModel` | `namespace:SHA256(locations+mode+units+avoid+…)` |
+| `traffic` | มี field ใดก็ได้ข้างต้น | `namespace:YYYY-MM-DD:slot:SHA256(…)` |
 
-### Cache Key (traffic policy)
+traffic key ผูกกับ **วันที่ + time slot** เสมอ — วันหยุดกับวันธรรมดาไม่ปะปนกัน และ replan หลายรอบในวันเดียวได้ทันที  
+`departure_time` ของ request ถูกใช้เป็น reference time ก่อน ถ้าไม่มีจึงใช้ `time.Now()`
 
-traffic key ผูกกับ **วันที่ + time slot** เสมอ ทำให้วันหยุดกับวันธรรมดาไม่ปะปนกัน และ replan หลายรอบในวันเดียวได้ทันที:
-
-```
-matrix:traffic:v1 : 2026-04-21 : morning : <hash>
-```
-
-`departure_time` ของ request ถูกใช้เป็น reference time ก่อน — ถ้าไม่มีถึงจะใช้ `time.Now()`
-
-### Time Slots (traffic policy)
+### Time Slots & TTL (traffic policy)
 
 | Slot | ช่วงเวลา | TTL default |
 |---|---|---|
@@ -154,7 +180,7 @@ matrix:traffic:v1 : 2026-04-21 : morning : <hash>
 ### Dev Config
 
 ```go
-// เปิด cache ทุก field, TTL 30 วัน — ลด API call ระหว่าง develop
+// TTL 30 วันทุก policy — ลด API call ระหว่าง develop
 cfg := graph.DevMatrixCacheConfig()
 m.EnableInMemoryCache(cfg)
 ```
@@ -164,10 +190,11 @@ m.EnableInMemoryCache(cfg)
 - `DefaultMatrixCacheConfig()` — `Enabled=false`, `TrafficEnabled=false` (ต้องเปิดเองเสมอ)
 - เมื่อ `TrafficEnabled=false` request traffic ยิง API ได้ปกติ แต่ไม่ถูก cache
 - avoid array order ไม่กระทบ cache key (normalize + sort ก่อน hash)
+- `MemoryMatrixCache` ไม่ share ข้าม process — ถ้า deploy หลาย instance ต้องใช้ Redis
 
-### Cache Observability
+---
 
-`GoogleMapsMatrix` รองรับ hook สำหรับ logging/metrics แล้ว:
+## Cache Observability
 
 ```go
 metrics := graph.NewMatrixMetrics()
@@ -178,109 +205,127 @@ m.SetEventHook(func(ctx context.Context, event graph.MatrixEvent) {
 })
 
 m.SetMetricsCollector(metrics)
+
+// อ่าน snapshot
+snapshot := metrics.Snapshot() // map[string]int64
 ```
 
-event ที่ปล่อยตอนนี้ครอบคลุม:
-- `cache_hit`
-- `cache_miss`
-- `cache_store`
-- `cache_bypass`
-- `cache_lookup_error`
-- `cache_store_error`
-- `api_request`
-- `api_request_error`
-- `api_response_error`
-- `api_decode_error`
-- `api_status_error`
-- `api_shape_error`
+Events ที่ปล่อยออกมา:
+
+| กลุ่ม | Events |
+|---|---|
+| Cache | `cache_hit`, `cache_miss`, `cache_store`, `cache_bypass`, `cache_lookup_error`, `cache_store_error` |
+| API | `api_request`, `api_request_error`, `api_response_error`, `api_decode_error`, `api_status_error`, `api_shape_error` |
 
 ---
 
-## Result Shape
+## Wire กับ rop-backend
 
-`ExecuteMatrix` คืน `DistanceMatrixResult`:
+### หลักการ
+
+`GoogleMapsMatrix` ต้องสร้างครั้งเดียวตอน startup แล้วส่งต่อผ่าน dependency injection เพราะ `MemoryMatrixCache` อยู่ภายใน instance — ถ้าสร้างใหม่ทุก request cache จะว่างเสมอ
+
+```
+main.go
+  → NewGoogleMapsMatrix(cfg.GOOGLE_MAPS_API_KEY)
+  → EnableInMemoryCache / SetCache
+  → SetEventHook / SetMetricsCollector   (optional)
+  → NewPlanningService(db, matrix)
+      → ใช้ตลอด lifetime ของ process
+```
+
+### `main.go` — init และ inject
 
 ```go
-type DistanceMatrixResult struct {
-    Request   DistanceMatrixRequest
-    Response  DistanceMatrixResponse
-    Durations [][]int
-    Distances [][]int
+import "github.com/ROP-TEAM/rop-algorithm/graph"
+
+matrix, err := graph.NewGoogleMapsMatrix(cfg.GOOGLE_MAPS_API_KEY)
+if err != nil {
+    log.Fatal(err)
+}
+
+// dev: TTL 30 วัน ประหยัด quota
+matrix.EnableInMemoryCache(graph.DevMatrixCacheConfig())
+
+// prod: static cache เปิด, traffic ตามต้องการ
+// prodCfg := graph.DefaultMatrixCacheConfig()
+// prodCfg.Enabled = true
+// prodCfg.TrafficEnabled = true
+// matrix.EnableInMemoryCache(prodCfg)
+
+// optional: logging + metrics
+matrix.SetEventHook(func(ctx context.Context, event graph.MatrixEvent) {
+    slog.InfoContext(ctx, "matrix", "event", event.Name, "policy", event.Policy,
+        "key", event.CacheKey, "err", event.Error)
+})
+
+planningService := services.NewPlanningService(db, matrix)
+```
+
+### `internal/services/planning.go` — รับ interface
+
+```go
+import "github.com/ROP-TEAM/rop-algorithm/graph"
+
+type PlanningService struct {
+    db     *gorm.DB
+    matrix graph.DistanceMatrix  // interface — ทดสอบง่าย, swap Redis ได้
+}
+
+func NewPlanningService(db *gorm.DB, matrix graph.DistanceMatrix) *PlanningService {
+    return &PlanningService{db: db, matrix: matrix}
+}
+
+func (s *PlanningService) buildProblem(ctx context.Context, job Job) (vrp.Problem, error) {
+    durations, distances, err := s.matrix.BuildMatrix(ctx, locs, graph.MatrixOptions{
+        DepartureTime: job.PlannedDepartureUnix, // หรือ DepartureTimeNow: true
+    })
+    if err != nil {
+        return vrp.Problem{}, err
+    }
+    // แปลง durations/distances → vrp.Problem
 }
 ```
 
-เหมาะกับงานที่ต้องการทั้ง:
-- matrix ที่พร้อมใช้ใน algorithm
-- raw payload จาก Google เพื่อ debug หรือเก็บ log
-- request metadata ที่ส่งจริง
+### Request flow
 
----
-
-## DistanceMatrixRequest — Parameters ที่รองรับ
-
-| Field | Type | Default | หมายเหตุ |
-|---|---|---|---|
-| `Origins` | `[]string` | required | address, lat/lng, `place_id:...`, plus code, encoded polyline |
-| `Destinations` | `[]string` | required | รองรับรูปแบบเดียวกับ `Origins` |
-| `Mode` | `string` | `"driving"` | `"driving"`, `"walking"`, `"bicycling"`, `"transit"` |
-| `Units` | `string` | `"metric"` | `"metric"`, `"imperial"` |
-| `Language` | `string` | `""` | BCP-47 เช่น `"th"` |
-| `Region` | `string` | `""` | ccTLD เช่น `"th"` |
-| `Avoid` | `[]string` | `nil` | `"tolls"`, `"highways"`, `"ferries"`, `"indoor"` |
-| `DepartureTime` | `int64` | `0` | Unix timestamp |
-| `DepartureTimeNow` | `bool` | `false` | ส่ง `departure_time=now` |
-| `ArrivalTime` | `int64` | `0` | ใช้กับ transit; ห้ามใช้พร้อม departure time |
-| `TrafficModel` | `string` | `""` | `"best_guess"`, `"pessimistic"`, `"optimistic"` |
-| `TransitMode` | `[]string` | `nil` | `"bus"`, `"subway"`, `"train"`, `"tram"`, `"rail"` |
-| `TransitRoutingPreference` | `string` | `""` | `"less_walking"`, `"fewer_transfers"` |
-
-### Raw Location Strings
-
-`Origins` และ `Destinations` รองรับ location strings แบบ docs โดยตรง เช่น:
-
-```go
-[]string{
-  "13.756300,100.501800",
-  "place_id:ChIJTydCFXdnHTERB3oVT1UZDRI",
-  "side_of_road:13.746900,100.534600",
-  "heading=90:13.730800,100.541800",
-}
+```
+HTTP → PlanningHandler
+  → PlanningService.Plan(jobID)
+      → buildProblem(ctx, job)
+          → matrix.BuildMatrix(...)
+              → [cache hit]  คืน durations/distances ทันที
+              → [cache miss] ยิง Google API → store cache → คืน result
+      → vrp.Solver.Solve(problem)
+      → saveSolution(jobID, solution)
 ```
 
-### Validation Rules
+### Config ตาม environment
 
-- ต้องมี `Origins` อย่างน้อย 1 ค่า
-- ต้องมี `Destinations` อย่างน้อย 1 ค่า
-- ห้ามใช้ `DepartureTime` พร้อม `DepartureTimeNow`
-- ห้ามใช้ `DepartureTime` หรือ `DepartureTimeNow` พร้อม `ArrivalTime`
+| Environment | Config | Enabled | TrafficEnabled | หมายเหตุ |
+|---|---|---|---|---|
+| local / dev | `DevMatrixCacheConfig()` | ✅ | ❌ | TTL 30 วัน ประหยัด quota |
+| staging | `DefaultMatrixCacheConfig()` + `Enabled=true` | ✅ | ❌ | TTL จริง traffic ยังปิด |
+| prod (single) | `DefaultMatrixCacheConfig()` + เปิดทั้งคู่ | ✅ | ✅ | MemoryMatrixCache |
+| prod (multi) | Redis impl + เปิดทั้งคู่ | ✅ | ✅ | implement `MatrixCache` interface |
 
-### MatrixOptions
+### Redis Cache (multi-instance)
 
-`MatrixOptions` ยังมีไว้สำหรับ compatibility wrapper `BuildMatrix(...)`
-โดย map ไปเป็น `DistanceMatrixRequest` ภายใน
+```go
+// rop-backend/internal/infra/matrix_redis_cache.go
+type RedisMatrixCache struct{ client *redis.Client }
 
-### TrafficModel
+func (c *RedisMatrixCache) Get(ctx context.Context, key string) (*graph.DistanceMatrixResult, bool, error) {
+    // json.Unmarshal จาก Redis
+}
 
-| Value | ความหมาย |
-|---|---|
-| `best_guess` | ผสม historical + live traffic |
-| `pessimistic` | เวลามากสุด (worst case) |
-| `optimistic` | เวลาน้อยสุด (best case) |
+func (c *RedisMatrixCache) Set(ctx context.Context, key string, value *graph.DistanceMatrixResult, ttl time.Duration) error {
+    // json.Marshal → Redis SET EX
+}
 
----
-
-## API Limits
-
-| เงื่อนไข | Limit |
-|---|---|
-| ไม่มี `DepartureTime` | 25 × 25 = 625 elements/request |
-| มี `DepartureTime` | **10 × 10 = 100 elements/request** |
-| Rate limit | 60,000 elements/นาที |
-| ราคา | $5 / 1,000 elements (10,000 ฟรี/เดือน) |
-
-`ExecuteMatrix` และ `BuildMatrix` จัดการ batching อัตโนมัติ
-และรองรับทั้ง matrix แบบสี่เหลี่ยม (`origins != destinations`)
-และ square matrix (`origins == destinations`)
+// main.go
+matrix.SetCache(&RedisMatrixCache{client: redisClient}, prodCfg)
+```
 
 ---
 
@@ -294,9 +339,10 @@ go test ./... -v -timeout 60s
 
 ต้องเปิด **Distance Matrix API** ใน Google Cloud Console และเปิด Billing
 
-ชุดเทสปัจจุบันมีทั้ง:
-- integration test ที่ยิง Google API จริงเมื่อมี `GOOGLE_MAPS_API_KEY`
-- unit tests ที่ใช้ `httptest` เพื่อตรวจ query building, batching, validation, และ error handling
+ชุดเทสปัจจุบัน:
+- integration tests ยิง Google API จริงเมื่อมี `GOOGLE_MAPS_API_KEY` (skip ถ้าไม่มี)
+- unit tests ใช้ `httptest` ตรวจ query building, batching, validation, error handling
+- unit tests ตรวจ cache key/TTL/policy โดยไม่ต้องการ API key
 
 ---
 
@@ -306,4 +352,4 @@ go test ./... -v -timeout 60s
 GOOGLE_MAPS_API_KEY=   # ใน rop-backend/.env
 ```
 
-API Key คนละตัวกับ `GOOGLE_CLIENT_ID` (OAuth) — ต้องเปิด Distance Matrix API แยก
+API Key คนละตัวกับ `GOOGLE_CLIENT_ID` (OAuth) — ต้องเปิด Distance Matrix API แยกใน Google Cloud Console
