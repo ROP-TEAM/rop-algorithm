@@ -1,4 +1,4 @@
-package graph
+package gmap
 
 import (
 	"context"

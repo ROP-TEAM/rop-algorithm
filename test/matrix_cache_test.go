@@ -4,46 +4,46 @@ import (
 	"testing"
 	"time"
 
-	graph "github.com/ROP-TEAM/rop-algorithm/graph"
+	gmap "github.com/ROP-TEAM/rop-algorithm/gmap"
 )
 
 func TestResolveCachePolicy(t *testing.T) {
 	tests := []struct {
 		name string
-		req  graph.DistanceMatrixRequest
-		want graph.CachePolicy
+		req  gmap.DistanceMatrixRequest
+		want gmap.CachePolicy
 	}{
 		{
 			name: "static request",
-			req: graph.DistanceMatrixRequest{
+			req: gmap.DistanceMatrixRequest{
 				Origins:      []string{"o1"},
 				Destinations: []string{"d1"},
 			},
-			want: graph.CachePolicyStatic,
+			want: gmap.CachePolicyStatic,
 		},
 		{
 			name: "departure time makes traffic policy",
-			req: graph.DistanceMatrixRequest{
+			req: gmap.DistanceMatrixRequest{
 				Origins:       []string{"o1"},
 				Destinations:  []string{"d1"},
 				DepartureTime: 1713574800,
 			},
-			want: graph.CachePolicyTraffic,
+			want: gmap.CachePolicyTraffic,
 		},
 		{
 			name: "departure time now makes traffic policy",
-			req: graph.DistanceMatrixRequest{
+			req: gmap.DistanceMatrixRequest{
 				Origins:          []string{"o1"},
 				Destinations:     []string{"d1"},
 				DepartureTimeNow: true,
 			},
-			want: graph.CachePolicyTraffic,
+			want: gmap.CachePolicyTraffic,
 		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			if got := graph.ResolveCachePolicy(tt.req); got != tt.want {
+			if got := gmap.ResolveCachePolicy(tt.req); got != tt.want {
 				t.Fatalf("expected %s, got %s", tt.want, got)
 			}
 		})
@@ -51,25 +51,25 @@ func TestResolveCachePolicy(t *testing.T) {
 }
 
 func TestBuildMatrixCacheKeyStaticIgnoresAvoidOrder(t *testing.T) {
-	cfg := graph.DefaultMatrixCacheConfig()
+	cfg := gmap.DefaultMatrixCacheConfig()
 	now := time.Date(2026, 4, 20, 8, 0, 0, 0, time.UTC)
 
-	reqA := graph.DistanceMatrixRequest{
+	reqA := gmap.DistanceMatrixRequest{
 		Origins:      []string{"o1"},
 		Destinations: []string{"d1"},
 		Avoid:        []string{"tolls", "ferries"},
 	}
-	reqB := graph.DistanceMatrixRequest{
+	reqB := gmap.DistanceMatrixRequest{
 		Origins:      []string{"o1"},
 		Destinations: []string{"d1"},
 		Avoid:        []string{"ferries", "tolls"},
 	}
 
-	keyA, err := graph.BuildMatrixCacheKey(reqA, now, cfg)
+	keyA, err := gmap.BuildMatrixCacheKey(reqA, now, cfg)
 	if err != nil {
 		t.Fatalf("BuildMatrixCacheKey(reqA): %v", err)
 	}
-	keyB, err := graph.BuildMatrixCacheKey(reqB, now, cfg)
+	keyB, err := gmap.BuildMatrixCacheKey(reqB, now, cfg)
 	if err != nil {
 		t.Fatalf("BuildMatrixCacheKey(reqB): %v", err)
 	}
@@ -80,10 +80,10 @@ func TestBuildMatrixCacheKeyStaticIgnoresAvoidOrder(t *testing.T) {
 }
 
 func TestBuildMatrixCacheKeyTrafficIncludesDateAndSlot(t *testing.T) {
-	cfg := graph.DefaultMatrixCacheConfig()
+	cfg := gmap.DefaultMatrixCacheConfig()
 	now := time.Date(2026, 4, 20, 7, 30, 0, 0, time.UTC)
 
-	key, err := graph.BuildMatrixCacheKey(graph.DistanceMatrixRequest{
+	key, err := gmap.BuildMatrixCacheKey(gmap.DistanceMatrixRequest{
 		Origins:          []string{"o1"},
 		Destinations:     []string{"d1"},
 		DepartureTimeNow: true,
@@ -93,7 +93,7 @@ func TestBuildMatrixCacheKeyTrafficIncludesDateAndSlot(t *testing.T) {
 		t.Fatalf("BuildMatrixCacheKey: %v", err)
 	}
 
-	if key.Policy != graph.CachePolicyTraffic {
+	if key.Policy != gmap.CachePolicyTraffic {
 		t.Fatalf("expected traffic policy, got %s", key.Policy)
 	}
 	if key.Date != "2026-04-20" {
@@ -105,10 +105,10 @@ func TestBuildMatrixCacheKeyTrafficIncludesDateAndSlot(t *testing.T) {
 }
 
 func TestMatrixCacheTTLByMode(t *testing.T) {
-	cfg := graph.DefaultMatrixCacheConfig()
+	cfg := gmap.DefaultMatrixCacheConfig()
 	now := time.Date(2026, 4, 20, 12, 0, 0, 0, time.UTC)
 
-	if got := graph.MatrixCacheTTL(graph.DistanceMatrixRequest{
+	if got := gmap.MatrixCacheTTL(gmap.DistanceMatrixRequest{
 		Origins:      []string{"o1"},
 		Destinations: []string{"d1"},
 		Mode:         "walking",
@@ -116,7 +116,7 @@ func TestMatrixCacheTTLByMode(t *testing.T) {
 		t.Fatalf("expected walking ttl 7d, got %s", got)
 	}
 
-	if got := graph.MatrixCacheTTL(graph.DistanceMatrixRequest{
+	if got := gmap.MatrixCacheTTL(gmap.DistanceMatrixRequest{
 		Origins:      []string{"o1"},
 		Destinations: []string{"d1"},
 		Mode:         "transit",
@@ -126,10 +126,10 @@ func TestMatrixCacheTTLByMode(t *testing.T) {
 }
 
 func TestMatrixCacheTTLTrafficUsesSlot(t *testing.T) {
-	cfg := graph.DefaultMatrixCacheConfig()
+	cfg := gmap.DefaultMatrixCacheConfig()
 	now := time.Date(2026, 4, 20, 17, 0, 0, 0, time.UTC)
 
-	got := graph.MatrixCacheTTL(graph.DistanceMatrixRequest{
+	got := gmap.MatrixCacheTTL(gmap.DistanceMatrixRequest{
 		Origins:          []string{"o1"},
 		Destinations:     []string{"d1"},
 		DepartureTimeNow: true,
@@ -151,7 +151,7 @@ func TestMatrixTrafficSlot(t *testing.T) {
 	}
 
 	for _, tc := range cases {
-		got := graph.MatrixTrafficSlot(time.Date(2026, 4, 20, tc.hour, 0, 0, 0, time.UTC))
+		got := gmap.MatrixTrafficSlot(time.Date(2026, 4, 20, tc.hour, 0, 0, 0, time.UTC))
 		if got != tc.want {
 			t.Fatalf("hour %d: expected %s, got %s", tc.hour, tc.want, got)
 		}
@@ -159,7 +159,7 @@ func TestMatrixTrafficSlot(t *testing.T) {
 }
 
 func TestDevMatrixCacheConfigUsesMonthTTL(t *testing.T) {
-	cfg := graph.DevMatrixCacheConfig()
+	cfg := gmap.DevMatrixCacheConfig()
 	monthTTL := 30 * 24 * time.Hour
 
 	if !cfg.Enabled {

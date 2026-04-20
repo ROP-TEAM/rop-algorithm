@@ -1,6 +1,6 @@
 // matrix_compat.go re-exports model types for backward compatibility.
 // Remove once all call sites import from model directly.
-package graph
+package gmap
 
 import "github.com/ROP-TEAM/rop-algorithm/model"
 
