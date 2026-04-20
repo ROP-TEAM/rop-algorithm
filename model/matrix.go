@@ -1,4 +1,14 @@
-package graph
+package model
+
+// Location is a convenience type used by the compatibility BuildMatrix wrapper.
+type Location struct {
+	Lat float64
+	Lng float64
+
+	// Raw overrides Lat/Lng formatting and is sent as-is to the API.
+	// Supports address, place_id:..., plus code, enc:...:, side_of_road:..., heading=X:...
+	Raw string
+}
 
 // MatrixOptions configures optional parameters for BuildMatrix.
 type MatrixOptions struct {
@@ -76,21 +86,21 @@ type DistanceMatrixRequest struct {
 
 // DistanceMatrixResult is the parsed output of a Distance Matrix API request.
 type DistanceMatrixResult struct {
-	Request   DistanceMatrixRequest `json:"request"`
+	Request   DistanceMatrixRequest  `json:"request"`
 	Response  DistanceMatrixResponse `json:"response"`
-	Durations [][]int               `json:"durations"`
-	Distances [][]int               `json:"distances"`
+	Durations [][]int                `json:"durations"`
+	Distances [][]int                `json:"distances"`
 }
 
 // DistanceMatrixResponse is the full API response.
 type DistanceMatrixResponse struct {
 	// OK | INVALID_REQUEST | MAX_ELEMENTS_EXCEEDED | MAX_DIMENSIONS_EXCEEDED |
 	// OVER_DAILY_LIMIT | OVER_QUERY_LIMIT | REQUEST_DENIED | UNKNOWN_ERROR
-	Status               string                  `json:"status"`
-	ErrorMessage         string                  `json:"error_message,omitempty"`
-	OriginAddresses      []string                `json:"origin_addresses"`
-	DestinationAddresses []string                `json:"destination_addresses"`
-	Rows                 []DistanceMatrixRow     `json:"rows"`
+	Status               string              `json:"status"`
+	ErrorMessage         string              `json:"error_message,omitempty"`
+	OriginAddresses      []string            `json:"origin_addresses"`
+	DestinationAddresses []string            `json:"destination_addresses"`
+	Rows                 []DistanceMatrixRow `json:"rows"`
 }
 
 type DistanceMatrixRow struct {

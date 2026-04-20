@@ -10,13 +10,20 @@ Pure Go module สำหรับ Vehicle Routing Problem (VRP) optimization
 rop-algorithm/
 ├── graph/
 │   ├── matrix.go          — Raw HTTP executor + compatibility wrapper
-│   ├── matrix_types.go    — Request/Response/Result structs
-│   └── matrix_test.go     — Integration tests (ต้องการ API Key)
+│   ├── type_aliases.go    — Compatibility aliases to model types
+│   ├── matrix_cache.go    — Cache logic + in-memory cache
+│   └── matrix_observability.go — Event hook + metrics collector
+├── model/
+│   ├── matrix.go          — Distance matrix request/response/result structs
+│   ├── matrix_cache.go    — Cache config/key policy structs
+│   └── car.go
+├── test/
+│   ├── matrix_test.go     — Graph integration/unit tests
+│   └── matrix_cache_test.go
 ├── core/
 │   ├── constraint/        — Feasibility checker (Phase 2)
 │   ├── priority/          — Node sorting (Phase 2)
 │   └── timeWindow/        — Time window validation (Phase 2)
-├── model/                 — Vehicle/Node models (Phase 2)
 └── solver/                — ALNS main loop (Phase 2)
 ```
 
@@ -244,7 +251,7 @@ type DistanceMatrixResult struct {
 ```powershell
 cd rop-algorithm
 $env:GOOGLE_MAPS_API_KEY="<your-key>"
-go test ./graph/... -v -timeout 60s
+go test ./... -v -timeout 60s
 ```
 
 ต้องเปิด **Distance Matrix API** ใน Google Cloud Console และเปิด Billing

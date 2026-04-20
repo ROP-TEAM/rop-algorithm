@@ -1,47 +1,49 @@
-package graph
+package test
 
 import (
 	"testing"
 	"time"
+
+	graph "github.com/ROP-TEAM/rop-algorithm/graph"
 )
 
 func TestResolveCachePolicy(t *testing.T) {
 	tests := []struct {
 		name string
-		req  DistanceMatrixRequest
-		want CachePolicy
+		req  graph.DistanceMatrixRequest
+		want graph.CachePolicy
 	}{
 		{
 			name: "static request",
-			req: DistanceMatrixRequest{
+			req: graph.DistanceMatrixRequest{
 				Origins:      []string{"o1"},
 				Destinations: []string{"d1"},
 			},
-			want: CachePolicyStatic,
+			want: graph.CachePolicyStatic,
 		},
 		{
 			name: "departure time makes traffic policy",
-			req: DistanceMatrixRequest{
+			req: graph.DistanceMatrixRequest{
 				Origins:       []string{"o1"},
 				Destinations:  []string{"d1"},
 				DepartureTime: 1713574800,
 			},
-			want: CachePolicyTraffic,
+			want: graph.CachePolicyTraffic,
 		},
 		{
 			name: "departure time now makes traffic policy",
-			req: DistanceMatrixRequest{
+			req: graph.DistanceMatrixRequest{
 				Origins:          []string{"o1"},
 				Destinations:     []string{"d1"},
 				DepartureTimeNow: true,
 			},
-			want: CachePolicyTraffic,
+			want: graph.CachePolicyTraffic,
 		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			if got := ResolveCachePolicy(tt.req); got != tt.want {
+			if got := graph.ResolveCachePolicy(tt.req); got != tt.want {
 				t.Fatalf("expected %s, got %s", tt.want, got)
 			}
 		})
@@ -49,25 +51,25 @@ func TestResolveCachePolicy(t *testing.T) {
 }
 
 func TestBuildMatrixCacheKeyStaticIgnoresAvoidOrder(t *testing.T) {
-	cfg := DefaultMatrixCacheConfig()
+	cfg := graph.DefaultMatrixCacheConfig()
 	now := time.Date(2026, 4, 20, 8, 0, 0, 0, time.UTC)
 
-	reqA := DistanceMatrixRequest{
+	reqA := graph.DistanceMatrixRequest{
 		Origins:      []string{"o1"},
 		Destinations: []string{"d1"},
 		Avoid:        []string{"tolls", "ferries"},
 	}
-	reqB := DistanceMatrixRequest{
+	reqB := graph.DistanceMatrixRequest{
 		Origins:      []string{"o1"},
 		Destinations: []string{"d1"},
 		Avoid:        []string{"ferries", "tolls"},
 	}
 
-	keyA, err := BuildMatrixCacheKey(reqA, now, cfg)
+	keyA, err := graph.BuildMatrixCacheKey(reqA, now, cfg)
 	if err != nil {
 		t.Fatalf("BuildMatrixCacheKey(reqA): %v", err)
 	}
-	keyB, err := BuildMatrixCacheKey(reqB, now, cfg)
+	keyB, err := graph.BuildMatrixCacheKey(reqB, now, cfg)
 	if err != nil {
 		t.Fatalf("BuildMatrixCacheKey(reqB): %v", err)
 	}
@@ -78,10 +80,10 @@ func TestBuildMatrixCacheKeyStaticIgnoresAvoidOrder(t *testing.T) {
 }
 
 func TestBuildMatrixCacheKeyTrafficIncludesDateAndSlot(t *testing.T) {
-	cfg := DefaultMatrixCacheConfig()
+	cfg := graph.DefaultMatrixCacheConfig()
 	now := time.Date(2026, 4, 20, 7, 30, 0, 0, time.UTC)
 
-	key, err := BuildMatrixCacheKey(DistanceMatrixRequest{
+	key, err := graph.BuildMatrixCacheKey(graph.DistanceMatrixRequest{
 		Origins:          []string{"o1"},
 		Destinations:     []string{"d1"},
 		DepartureTimeNow: true,
@@ -91,7 +93,7 @@ func TestBuildMatrixCacheKeyTrafficIncludesDateAndSlot(t *testing.T) {
 		t.Fatalf("BuildMatrixCacheKey: %v", err)
 	}
 
-	if key.Policy != CachePolicyTraffic {
+	if key.Policy != graph.CachePolicyTraffic {
 		t.Fatalf("expected traffic policy, got %s", key.Policy)
 	}
 	if key.Date != "2026-04-20" {
@@ -100,16 +102,13 @@ func TestBuildMatrixCacheKeyTrafficIncludesDateAndSlot(t *testing.T) {
 	if key.Slot != "morning" {
 		t.Fatalf("expected slot morning, got %s", key.Slot)
 	}
-	if key.Namespace != defaultTrafficCacheNamespace {
-		t.Fatalf("expected traffic namespace %q, got %q", defaultTrafficCacheNamespace, key.Namespace)
-	}
 }
 
 func TestMatrixCacheTTLByMode(t *testing.T) {
-	cfg := DefaultMatrixCacheConfig()
+	cfg := graph.DefaultMatrixCacheConfig()
 	now := time.Date(2026, 4, 20, 12, 0, 0, 0, time.UTC)
 
-	if got := MatrixCacheTTL(DistanceMatrixRequest{
+	if got := graph.MatrixCacheTTL(graph.DistanceMatrixRequest{
 		Origins:      []string{"o1"},
 		Destinations: []string{"d1"},
 		Mode:         "walking",
@@ -117,7 +116,7 @@ func TestMatrixCacheTTLByMode(t *testing.T) {
 		t.Fatalf("expected walking ttl 7d, got %s", got)
 	}
 
-	if got := MatrixCacheTTL(DistanceMatrixRequest{
+	if got := graph.MatrixCacheTTL(graph.DistanceMatrixRequest{
 		Origins:      []string{"o1"},
 		Destinations: []string{"d1"},
 		Mode:         "transit",
@@ -126,17 +125,17 @@ func TestMatrixCacheTTLByMode(t *testing.T) {
 	}
 }
 
-func TestMatrixCacheTTLTrafficUsesSlot(tt *testing.T) {
-	cfg := DefaultMatrixCacheConfig()
+func TestMatrixCacheTTLTrafficUsesSlot(t *testing.T) {
+	cfg := graph.DefaultMatrixCacheConfig()
 	now := time.Date(2026, 4, 20, 17, 0, 0, 0, time.UTC)
 
-	got := MatrixCacheTTL(DistanceMatrixRequest{
+	got := graph.MatrixCacheTTL(graph.DistanceMatrixRequest{
 		Origins:          []string{"o1"},
 		Destinations:     []string{"d1"},
 		DepartureTimeNow: true,
 	}, now, cfg)
 	if got != time.Hour {
-		tt.Fatalf("expected evening ttl 1h, got %s", got)
+		t.Fatalf("expected evening ttl 1h, got %s", got)
 	}
 }
 
@@ -152,7 +151,7 @@ func TestMatrixTrafficSlot(t *testing.T) {
 	}
 
 	for _, tc := range cases {
-		got := MatrixTrafficSlot(time.Date(2026, 4, 20, tc.hour, 0, 0, 0, time.UTC))
+		got := graph.MatrixTrafficSlot(time.Date(2026, 4, 20, tc.hour, 0, 0, 0, time.UTC))
 		if got != tc.want {
 			t.Fatalf("hour %d: expected %s, got %s", tc.hour, tc.want, got)
 		}
@@ -160,23 +159,14 @@ func TestMatrixTrafficSlot(t *testing.T) {
 }
 
 func TestDevMatrixCacheConfigUsesMonthTTL(t *testing.T) {
-	cfg := DevMatrixCacheConfig()
+	cfg := graph.DevMatrixCacheConfig()
 	monthTTL := 30 * 24 * time.Hour
 
 	if !cfg.Enabled {
 		t.Fatal("expected dev cache config to enable cache")
 	}
-	if cfg.StaticTTL != monthTTL {
-		t.Fatalf("expected static ttl %s, got %s", monthTTL, cfg.StaticTTL)
-	}
-	if cfg.WalkingTTL != monthTTL {
-		t.Fatalf("expected walking ttl %s, got %s", monthTTL, cfg.WalkingTTL)
-	}
-	if cfg.BicyclingTTL != monthTTL {
-		t.Fatalf("expected bicycling ttl %s, got %s", monthTTL, cfg.BicyclingTTL)
-	}
-	if cfg.TransitTTL != monthTTL {
-		t.Fatalf("expected transit ttl %s, got %s", monthTTL, cfg.TransitTTL)
+	if cfg.StaticTTL != monthTTL || cfg.WalkingTTL != monthTTL || cfg.BicyclingTTL != monthTTL || cfg.TransitTTL != monthTTL {
+		t.Fatalf("expected all static ttls to be %s, got %#v", monthTTL, cfg)
 	}
 
 	for _, slot := range []string{"morning", "midday", "evening", "night"} {

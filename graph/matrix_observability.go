@@ -7,17 +7,6 @@ import (
 	"sync"
 )
 
-// MatrixEvent describes an observable event emitted by GoogleMapsMatrix.
-type MatrixEvent struct {
-	Name              string
-	Policy            CachePolicy
-	Reason            string
-	CacheKey          string
-	ChunkOrigins      int
-	ChunkDestinations int
-	Error             string
-}
-
 // MatrixEventHook is a lightweight logging hook for cache and API events.
 type MatrixEventHook func(ctx context.Context, event MatrixEvent)
 

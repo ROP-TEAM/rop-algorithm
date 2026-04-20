@@ -2,11 +2,8 @@ package graph
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
 	"net/http"
-	"net/url"
-	"strconv"
 	"strings"
 	"time"
 )
@@ -15,16 +12,6 @@ const (
 	defaultDistanceMatrixURL = "https://maps.googleapis.com/maps/api/distancematrix/json"
 	defaultChunkSize         = 10
 )
-
-// Location is a convenience type used by the compatibility BuildMatrix wrapper.
-type Location struct {
-	Lat float64
-	Lng float64
-
-	// Raw overrides Lat/Lng formatting and is sent as-is to the API.
-	// Supports address, place_id:..., plus code, enc:...:, side_of_road:..., heading=X:...
-	Raw string
-}
 
 // DistanceMatrix is the contract the algorithm uses to get travel data.
 type DistanceMatrix interface {
@@ -45,18 +32,45 @@ type GoogleMapsMatrix struct {
 	metrics     MatrixMetricsCollector
 }
 
-func NewGoogleMapsMatrix(apiKey string) (*GoogleMapsMatrix, error) {
+type GoogleMapsMatrixOption func(*GoogleMapsMatrix)
+
+func WithBaseURL(baseURL string) GoogleMapsMatrixOption {
+	return func(g *GoogleMapsMatrix) {
+		g.baseURL = baseURL
+	}
+}
+
+func WithHTTPClient(client *http.Client) GoogleMapsMatrixOption {
+	return func(g *GoogleMapsMatrix) {
+		g.httpClient = client
+	}
+}
+
+func WithClock(now func() time.Time) GoogleMapsMatrixOption {
+	return func(g *GoogleMapsMatrix) {
+		g.now = now
+	}
+}
+
+func NewGoogleMapsMatrix(apiKey string, opts ...GoogleMapsMatrixOption) (*GoogleMapsMatrix, error) {
 	if strings.TrimSpace(apiKey) == "" {
 		return nil, fmt.Errorf("google maps api key is required")
 	}
 
-	return &GoogleMapsMatrix{
+	g := &GoogleMapsMatrix{
 		apiKey:      apiKey,
 		httpClient:  http.DefaultClient,
 		baseURL:     defaultDistanceMatrixURL,
 		cacheConfig: DefaultMatrixCacheConfig(),
 		now:         time.Now,
-	}, nil
+	}
+	for _, opt := range opts {
+		if opt != nil {
+			opt(g)
+		}
+	}
+
+	return g, nil
 }
 
 func (g *GoogleMapsMatrix) SetCache(cache MatrixCache, cfg MatrixCacheConfig) {
@@ -160,212 +174,6 @@ func (g *GoogleMapsMatrix) BuildMatrix(ctx context.Context, locs []Location, opt
 	}
 
 	return result.Durations, result.Distances, nil
-}
-
-func (g *GoogleMapsMatrix) doDistanceMatrixRequest(ctx context.Context, req DistanceMatrixRequest) (*DistanceMatrixResponse, error) {
-	client := g.httpClient
-	if client == nil {
-		client = http.DefaultClient
-	}
-
-	g.emitEvent(ctx, MatrixEvent{
-		Name:              "api_request",
-		Policy:            ResolveCachePolicy(req),
-		ChunkOrigins:      len(req.Origins),
-		ChunkDestinations: len(req.Destinations),
-	})
-
-	httpReq, err := http.NewRequestWithContext(ctx, http.MethodGet, g.buildDistanceMatrixURL(req), nil)
-	if err != nil {
-		g.emitEvent(ctx, MatrixEvent{
-			Name:         "api_request_error",
-			Policy:       ResolveCachePolicy(req),
-			Error:        err.Error(),
-			ChunkOrigins: len(req.Origins),
-			ChunkDestinations: len(req.Destinations),
-		})
-		return nil, err
-	}
-
-	resp, err := client.Do(httpReq)
-	if err != nil {
-		g.emitEvent(ctx, MatrixEvent{
-			Name:              "api_request_error",
-			Policy:            ResolveCachePolicy(req),
-			Error:             err.Error(),
-			ChunkOrigins:      len(req.Origins),
-			ChunkDestinations: len(req.Destinations),
-		})
-		return nil, fmt.Errorf("distance matrix API: %w", err)
-	}
-	defer resp.Body.Close()
-
-	if resp.StatusCode != http.StatusOK {
-		g.emitEvent(ctx, MatrixEvent{
-			Name:              "api_response_error",
-			Policy:            ResolveCachePolicy(req),
-			Error:             resp.Status,
-			ChunkOrigins:      len(req.Origins),
-			ChunkDestinations: len(req.Destinations),
-		})
-		return nil, fmt.Errorf("distance matrix API unexpected HTTP status: %s", resp.Status)
-	}
-
-	var matrixResp DistanceMatrixResponse
-	if err := json.NewDecoder(resp.Body).Decode(&matrixResp); err != nil {
-		g.emitEvent(ctx, MatrixEvent{
-			Name:              "api_decode_error",
-			Policy:            ResolveCachePolicy(req),
-			Error:             err.Error(),
-			ChunkOrigins:      len(req.Origins),
-			ChunkDestinations: len(req.Destinations),
-		})
-		return nil, fmt.Errorf("distance matrix API decode: %w", err)
-	}
-
-	if matrixResp.Status != "OK" {
-		errMsg := matrixResp.Status
-		if matrixResp.ErrorMessage != "" {
-			errMsg += ": " + matrixResp.ErrorMessage
-		}
-		g.emitEvent(ctx, MatrixEvent{
-			Name:              "api_status_error",
-			Policy:            ResolveCachePolicy(req),
-			Error:             errMsg,
-			ChunkOrigins:      len(req.Origins),
-			ChunkDestinations: len(req.Destinations),
-		})
-		if matrixResp.ErrorMessage != "" {
-			return nil, fmt.Errorf("distance matrix API status: %s (%s)", matrixResp.Status, matrixResp.ErrorMessage)
-		}
-		return nil, fmt.Errorf("distance matrix API status: %s", matrixResp.Status)
-	}
-
-	if len(matrixResp.Rows) != len(req.Origins) {
-		g.emitEvent(ctx, MatrixEvent{
-			Name:              "api_shape_error",
-			Policy:            ResolveCachePolicy(req),
-			Error:             "row_count_mismatch",
-			ChunkOrigins:      len(req.Origins),
-			ChunkDestinations: len(req.Destinations),
-		})
-		return nil, fmt.Errorf("distance matrix API returned %d rows, expected %d", len(matrixResp.Rows), len(req.Origins))
-	}
-
-	return &matrixResp, nil
-}
-
-func (g *GoogleMapsMatrix) buildDistanceMatrixURL(req DistanceMatrixRequest) string {
-	baseURL := g.baseURL
-	if baseURL == "" {
-		baseURL = defaultDistanceMatrixURL
-	}
-
-	return baseURL + "?" + buildDistanceMatrixQuery(req, g.apiKey).Encode()
-}
-
-func buildDistanceMatrixQuery(req DistanceMatrixRequest, apiKey string) url.Values {
-	query := url.Values{}
-	query.Set("origins", strings.Join(req.Origins, "|"))
-	query.Set("destinations", strings.Join(req.Destinations, "|"))
-	query.Set("key", apiKey)
-
-	mode := req.Mode
-	if mode == "" {
-		mode = "driving"
-	}
-	query.Set("mode", mode)
-
-	units := req.Units
-	if units == "" {
-		units = "metric"
-	}
-	query.Set("units", units)
-
-	if req.Language != "" {
-		query.Set("language", req.Language)
-	}
-	if req.Region != "" {
-		query.Set("region", req.Region)
-	}
-	if len(req.Avoid) > 0 {
-		query.Set("avoid", strings.Join(req.Avoid, "|"))
-	}
-	if req.DepartureTimeNow {
-		query.Set("departure_time", "now")
-	} else if req.DepartureTime != 0 {
-		query.Set("departure_time", strconv.FormatInt(req.DepartureTime, 10))
-	}
-	if req.ArrivalTime != 0 {
-		query.Set("arrival_time", strconv.FormatInt(req.ArrivalTime, 10))
-	}
-	if req.TrafficModel != "" {
-		query.Set("traffic_model", req.TrafficModel)
-	}
-	if len(req.TransitMode) > 0 {
-		query.Set("transit_mode", strings.Join(req.TransitMode, "|"))
-	}
-	if req.TransitRoutingPreference != "" {
-		query.Set("transit_routing_preference", req.TransitRoutingPreference)
-	}
-
-	return query
-}
-
-func buildDistanceMatrixRequest(locs []Location, opts MatrixOptions) DistanceMatrixRequest {
-	points := make([]string, len(locs))
-	for i, loc := range locs {
-		points[i] = loc.requestValue()
-	}
-
-	req := DistanceMatrixRequest{
-		Origins:                  points,
-		Destinations:             points,
-		Mode:                     "driving",
-		Units:                    "metric",
-		Language:                 opts.Language,
-		Region:                   opts.Region,
-		Avoid:                    append([]string(nil), opts.Avoid...),
-		DepartureTime:            opts.DepartureTime,
-		DepartureTimeNow:         opts.DepartureTimeNow,
-		ArrivalTime:              opts.ArrivalTime,
-		TrafficModel:             opts.TrafficModel,
-		TransitMode:              append([]string(nil), opts.TransitMode...),
-		TransitRoutingPreference: opts.TransitRoutingPreference,
-	}
-	if opts.Mode != "" {
-		req.Mode = opts.Mode
-	}
-	if opts.Units != "" {
-		req.Units = opts.Units
-	}
-
-	return req
-}
-
-func validateDistanceMatrixRequest(req DistanceMatrixRequest) error {
-	if len(req.Origins) == 0 {
-		return fmt.Errorf("origins are required")
-	}
-	if len(req.Destinations) == 0 {
-		return fmt.Errorf("destinations are required")
-	}
-	if req.DepartureTime != 0 && req.DepartureTimeNow {
-		return fmt.Errorf("departure_time and departure_time=now cannot be used together")
-	}
-	if (req.DepartureTime != 0 || req.DepartureTimeNow) && req.ArrivalTime != 0 {
-		return fmt.Errorf("departure_time and arrival_time cannot be used together")
-	}
-
-	return nil
-}
-
-func chunkSizeForRequest(req DistanceMatrixRequest) int {
-	if req.DepartureTime != 0 || req.DepartureTimeNow {
-		return defaultChunkSize
-	}
-
-	return defaultChunkSize
 }
 
 func (g *GoogleMapsMatrix) getCachedMatrix(ctx context.Context, req DistanceMatrixRequest) (*DistanceMatrixResult, bool, error) {
@@ -524,17 +332,6 @@ func makeMatrix(rows, cols int) [][]int {
 		out[i] = make([]int, cols)
 	}
 	return out
-}
-
-func (l Location) requestValue() string {
-	if strings.TrimSpace(l.Raw) != "" {
-		return l.Raw
-	}
-
-	return fmt.Sprintf("%s,%s",
-		strconv.FormatFloat(l.Lat, 'f', 6, 64),
-		strconv.FormatFloat(l.Lng, 'f', 6, 64),
-	)
 }
 
 func clamp(v, max int) int {

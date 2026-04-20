@@ -1,14 +1,12 @@
 package graph
 
 import (
-	"context"
 	"crypto/sha256"
 	"encoding/hex"
 	"encoding/json"
 	"fmt"
 	"sort"
 	"strings"
-	"sync"
 	"time"
 )
 
@@ -16,57 +14,6 @@ const (
 	defaultStaticCacheNamespace  = "matrix:static:v1"
 	defaultTrafficCacheNamespace = "matrix:traffic:v1"
 )
-
-type CachePolicy string
-
-const (
-	CachePolicyStatic  CachePolicy = "static"
-	CachePolicyTraffic CachePolicy = "traffic"
-)
-
-// MatrixCache is the storage contract for caching resolved matrix results.
-type MatrixCache interface {
-	Get(ctx context.Context, key string) (*DistanceMatrixResult, bool, error)
-	Set(ctx context.Context, key string, value *DistanceMatrixResult, ttl time.Duration) error
-}
-
-type memoryMatrixCacheEntry struct {
-	value     *DistanceMatrixResult
-	expiresAt time.Time
-}
-
-// MemoryMatrixCache is a simple in-memory cache implementation intended for single-process use.
-type MemoryMatrixCache struct {
-	mu      sync.RWMutex
-	entries map[string]memoryMatrixCacheEntry
-	now     func() time.Time
-}
-
-// MatrixCacheConfig controls cache behavior for both current static mode and future traffic mode.
-type MatrixCacheConfig struct {
-	Enabled        bool
-	TrafficEnabled bool
-
-	StaticNamespace  string
-	TrafficNamespace string
-
-	StaticTTL    time.Duration
-	WalkingTTL   time.Duration
-	BicyclingTTL time.Duration
-	TransitTTL   time.Duration
-
-	TrafficTTLs map[string]time.Duration
-}
-
-// MatrixCacheKeyParts captures the human-meaningful pieces used to build a cache key.
-type MatrixCacheKeyParts struct {
-	Policy    CachePolicy `json:"policy"`
-	Namespace string      `json:"namespace"`
-	Hash      string      `json:"hash"`
-	Date      string      `json:"date,omitempty"`
-	Slot      string      `json:"slot,omitempty"`
-	Key       string      `json:"key"`
-}
 
 type normalizedMatrixCacheRequest struct {
 	Origins                  []string `json:"origins"`
@@ -121,13 +68,6 @@ func DevMatrixCacheConfig() MatrixCacheConfig {
 	}
 
 	return cfg
-}
-
-func NewMemoryMatrixCache() *MemoryMatrixCache {
-	return &MemoryMatrixCache{
-		entries: make(map[string]memoryMatrixCacheEntry),
-		now:     time.Now,
-	}
 }
 
 func ResolveCachePolicy(req DistanceMatrixRequest) CachePolicy {
@@ -228,52 +168,6 @@ func MatrixTrafficSlot(t time.Time) string {
 	}
 }
 
-func (c *MemoryMatrixCache) Get(ctx context.Context, key string) (*DistanceMatrixResult, bool, error) {
-	_ = ctx
-
-	nowFn := c.now
-	if nowFn == nil {
-		nowFn = time.Now
-	}
-
-	c.mu.RLock()
-	entry, ok := c.entries[key]
-	c.mu.RUnlock()
-	if !ok {
-		return nil, false, nil
-	}
-
-	if !entry.expiresAt.IsZero() && !entry.expiresAt.After(nowFn()) {
-		c.mu.Lock()
-		delete(c.entries, key)
-		c.mu.Unlock()
-		return nil, false, nil
-	}
-
-	return cloneDistanceMatrixResult(entry.value), true, nil
-}
-
-func (c *MemoryMatrixCache) Set(ctx context.Context, key string, value *DistanceMatrixResult, ttl time.Duration) error {
-	_ = ctx
-
-	nowFn := c.now
-	if nowFn == nil {
-		nowFn = time.Now
-	}
-
-	entry := memoryMatrixCacheEntry{
-		value: cloneDistanceMatrixResult(value),
-	}
-	if ttl > 0 {
-		entry.expiresAt = nowFn().Add(ttl)
-	}
-
-	c.mu.Lock()
-	c.entries[key] = entry
-	c.mu.Unlock()
-	return nil
-}
-
 func normalizeMatrixCacheRequest(req DistanceMatrixRequest, date, slot string) normalizedMatrixCacheRequest {
 	avoid := append([]string(nil), req.Avoid...)
 	sort.Strings(avoid)
@@ -331,93 +225,4 @@ func normalizedUnits(units string) string {
 		return "metric"
 	}
 	return units
-}
-
-func cloneDistanceMatrixResult(src *DistanceMatrixResult) *DistanceMatrixResult {
-	if src == nil {
-		return nil
-	}
-
-	dst := &DistanceMatrixResult{
-		Request:   cloneDistanceMatrixRequest(src.Request),
-		Response:  cloneDistanceMatrixResponse(src.Response),
-		Durations: cloneIntMatrix(src.Durations),
-		Distances: cloneIntMatrix(src.Distances),
-	}
-	return dst
-}
-
-func cloneDistanceMatrixRequest(src DistanceMatrixRequest) DistanceMatrixRequest {
-	return DistanceMatrixRequest{
-		Origins:                  append([]string(nil), src.Origins...),
-		Destinations:             append([]string(nil), src.Destinations...),
-		Mode:                     src.Mode,
-		Units:                    src.Units,
-		Language:                 src.Language,
-		Region:                   src.Region,
-		Avoid:                    append([]string(nil), src.Avoid...),
-		DepartureTime:            src.DepartureTime,
-		DepartureTimeNow:         src.DepartureTimeNow,
-		TrafficModel:             src.TrafficModel,
-		ArrivalTime:              src.ArrivalTime,
-		TransitMode:              append([]string(nil), src.TransitMode...),
-		TransitRoutingPreference: src.TransitRoutingPreference,
-	}
-}
-
-func cloneDistanceMatrixResponse(src DistanceMatrixResponse) DistanceMatrixResponse {
-	dst := DistanceMatrixResponse{
-		Status:               src.Status,
-		ErrorMessage:         src.ErrorMessage,
-		OriginAddresses:      append([]string(nil), src.OriginAddresses...),
-		DestinationAddresses: append([]string(nil), src.DestinationAddresses...),
-		Rows:                 make([]DistanceMatrixRow, len(src.Rows)),
-	}
-
-	for i, row := range src.Rows {
-		dst.Rows[i] = DistanceMatrixRow{
-			Elements: make([]DistanceMatrixElement, len(row.Elements)),
-		}
-		for j, el := range row.Elements {
-			dst.Rows[i].Elements[j] = DistanceMatrixElement{
-				Status:            el.Status,
-				Distance:          cloneValueText(el.Distance),
-				Duration:          cloneValueText(el.Duration),
-				DurationInTraffic: cloneValueText(el.DurationInTraffic),
-				Fare:              cloneTransitFare(el.Fare),
-			}
-		}
-	}
-
-	return dst
-}
-
-func cloneIntMatrix(src [][]int) [][]int {
-	if src == nil {
-		return nil
-	}
-
-	dst := make([][]int, len(src))
-	for i := range src {
-		dst[i] = append([]int(nil), src[i]...)
-	}
-	return dst
-}
-
-func cloneValueText(src *ValueText) *ValueText {
-	if src == nil {
-		return nil
-	}
-
-	dst := *src
-	return &dst
-}
-
-func cloneTransitFare(src *TransitFare) *TransitFare {
-	if src == nil {
-		return nil
-	}
-
-	dst := *src
-	return &dst
 }

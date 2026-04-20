@@ -1,5 +1,25 @@
+=== RUN   TestResolveCachePolicy
+=== RUN   TestResolveCachePolicy/static_request
+=== RUN   TestResolveCachePolicy/departure_time_makes_traffic_policy
+=== RUN   TestResolveCachePolicy/departure_time_now_makes_traffic_policy
+--- PASS: TestResolveCachePolicy (0.00s)
+    --- PASS: TestResolveCachePolicy/static_request (0.00s)
+    --- PASS: TestResolveCachePolicy/departure_time_makes_traffic_policy (0.00s)
+    --- PASS: TestResolveCachePolicy/departure_time_now_makes_traffic_policy (0.00s)
+=== RUN   TestBuildMatrixCacheKeyStaticIgnoresAvoidOrder
+--- PASS: TestBuildMatrixCacheKeyStaticIgnoresAvoidOrder (0.00s)
+=== RUN   TestBuildMatrixCacheKeyTrafficIncludesDateAndSlot
+--- PASS: TestBuildMatrixCacheKeyTrafficIncludesDateAndSlot (0.00s)
+=== RUN   TestMatrixCacheTTLByMode
+--- PASS: TestMatrixCacheTTLByMode (0.00s)
+=== RUN   TestMatrixCacheTTLTrafficUsesSlot
+--- PASS: TestMatrixCacheTTLTrafficUsesSlot (0.00s)
+=== RUN   TestMatrixTrafficSlot
+--- PASS: TestMatrixTrafficSlot (0.00s)
+=== RUN   TestDevMatrixCacheConfigUsesMonthTTL
+--- PASS: TestDevMatrixCacheConfigUsesMonthTTL (0.00s)
 === RUN   TestGoogleMapsMatrix
-    matrix_test.go:44: Full Distance Matrix response:
+    matrix_test.go:43: Full Distance Matrix response:
         {
           "status": "OK",
           "origin_addresses": [
@@ -126,28 +146,9 @@
             }
           ]
         }
-    matrix_test.go:48: raw [0→0] status=OK distance=1 m (0) duration=1 min (0) duration_in_traffic=- fare=-
-    matrix_test.go:48: raw [0→1] status=OK distance=4.9 km (4860) duration=15 mins (894) duration_in_traffic=- fare=-
-    matrix_test.go:48: raw [0→2] status=OK distance=8.0 km (8024) duration=20 mins (1228) duration_in_traffic=- fare=-
-    matrix_test.go:48: raw [1→0] status=OK distance=4.4 km (4447) duration=15 mins (888) duration_in_traffic=- fare=-
-    matrix_test.go:48: raw [1→1] status=OK distance=1 m (0) duration=1 min (0) duration_in_traffic=- fare=-
-    matrix_test.go:48: raw [1→2] status=OK distance=4.3 km (4323) duration=12 mins (740) duration_in_traffic=- fare=-
-    matrix_test.go:48: raw [2→0] status=OK distance=8.2 km (8168) duration=24 mins (1423) duration_in_traffic=- fare=-
-    matrix_test.go:48: raw [2→1] status=OK distance=4.8 km (4794) duration=17 mins (994) duration_in_traffic=- fare=-
-    matrix_test.go:48: raw [2→2] status=OK distance=1 m (0) duration=1 min (0) duration_in_traffic=- fare=-
-    matrix_test.go:67: Matrix 3×3
-    matrix_test.go:70:   [0→0] duration=0 min  distance=0 m
-    matrix_test.go:70:   [0→1] duration=14 min  distance=4860 m
-    matrix_test.go:70:   [0→2] duration=20 min  distance=8024 m
-    matrix_test.go:70:   [1→0] duration=14 min  distance=4447 m
-    matrix_test.go:70:   [1→1] duration=0 min  distance=0 m
-    matrix_test.go:70:   [1→2] duration=12 min  distance=4323 m
-    matrix_test.go:70:   [2→0] duration=23 min  distance=8168 m
-    matrix_test.go:70:   [2→1] duration=16 min  distance=4794 m
-    matrix_test.go:70:   [2→2] duration=0 min  distance=0 m
---- PASS: TestGoogleMapsMatrix (0.25s)
+--- PASS: TestGoogleMapsMatrix (0.33s)
 === RUN   TestGoogleMapsMatrixBatch
---- PASS: TestGoogleMapsMatrixBatch (0.87s)
+--- PASS: TestGoogleMapsMatrixBatch (1.29s)
 === RUN   TestBuildDistanceMatrixQueryIncludesOptions
 --- PASS: TestBuildDistanceMatrixQueryIncludesOptions (0.00s)
 === RUN   TestBuildDistanceMatrixQueryDepartureTimeNow
@@ -160,11 +161,11 @@
 --- PASS: TestExecuteMatrixUsesDurationInTrafficWhenPresent (0.00s)
 === RUN   TestExecuteMatrixReturnsTopLevelAPIError
 --- PASS: TestExecuteMatrixReturnsTopLevelAPIError (0.00s)
-=== RUN   TestExecuteMatrixReturnsElementStatusError
---- PASS: TestExecuteMatrixReturnsElementStatusError (0.00s)
 === RUN   TestExecuteMatrixSupportsRegionAndLanguage
 --- PASS: TestExecuteMatrixSupportsRegionAndLanguage (0.00s)
-=== RUN   TestExecuteMatrixSupportsRawLocationStrings
---- PASS: TestExecuteMatrixSupportsRawLocationStrings (0.00s)
+=== RUN   TestExecuteMatrixUsesStaticCache
+--- PASS: TestExecuteMatrixUsesStaticCache (0.00s)
+=== RUN   TestExecuteMatrixEmitsCacheEventsAndMetrics
+--- PASS: TestExecuteMatrixEmitsCacheEventsAndMetrics (0.00s)
 PASS
-ok      github.com/ROP-TEAM/rop-algorithm/graph 2.117s
+ok      github.com/ROP-TEAM/rop-algorithm/test  2.456s
