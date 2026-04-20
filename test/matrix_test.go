@@ -12,7 +12,7 @@ import (
 	"testing"
 	"time"
 
-	graph "github.com/ROP-TEAM/rop-algorithm/graph"
+	graph "github.com/ROP-TEAM/rop-algorithm/google_map_API"
 )
 
 func TestGoogleMapsMatrix(t *testing.T) {
@@ -148,11 +148,11 @@ func TestExecuteMatrixRectangularBatching(t *testing.T) {
 				resp.Rows[i].Elements[j] = graph.DistanceMatrixElement{
 					Status: "OK",
 					Distance: &graph.ValueText{
-						Value: (i + 1) * 1000 + (j + 1),
+						Value: (i+1)*1000 + (j + 1),
 						Text:  fmt.Sprintf("%d m", (i+1)*1000+(j+1)),
 					},
 					Duration: &graph.ValueText{
-						Value: (i + 1) * 600 + (j * 60),
+						Value: (i+1)*600 + (j * 60),
 						Text:  fmt.Sprintf("%d mins", (i+1)*10+j),
 					},
 				}
