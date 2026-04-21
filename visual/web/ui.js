@@ -65,6 +65,20 @@ const UI = (() => {
       renderPanel();
     });
     document.getElementById('btn-export').addEventListener('click', exportJSON);
+
+    const fileInput = document.getElementById('file-import');
+    document.getElementById('btn-import').addEventListener('click', () => fileInput.click());
+    fileInput.addEventListener('change', () => {
+      if (!fileInput.files.length) return;
+      importJSON(fileInput.files[0], () => {
+        document.getElementById('init-overlay').classList.add('hidden');
+        Renderer.setGridSize(20);
+        Renderer.setViewBox({ x: 0, y: 0, scale: 10 });
+        Renderer.render();
+        renderPanel();
+      });
+      fileInput.value = '';
+    });
   }
 
   function renderPanel() {
@@ -90,37 +104,7 @@ const UI = (() => {
     groupHeader.appendChild(addGroupBtn);
     groupsSection.appendChild(groupHeader);
 
-    AppState.groups.forEach(g => {
-      const stats = getGroupStats(g.id);
-      const row = document.createElement('div');
-      row.className = 'group-row';
-      row.innerHTML = `
-        <span class="color-dot" style="background:${g.color}"></span>
-        <span class="group-name">${g.name}</span>
-        <span class="group-stats">${stats.totalDemand}/${g.vehicleCapacity} cap · ${stats.totalWeight} dist</span>
-      `;
-
-      const bar = document.createElement('div');
-      bar.className = 'cap-bar';
-      const fill = document.createElement('div');
-      fill.className = 'cap-fill';
-      const ratio = Math.min(1, stats.totalDemand / (g.vehicleCapacity || 1));
-      fill.style.width = (ratio * 100) + '%';
-      fill.style.background = ratio >= 1 ? '#F44336' : g.color;
-      bar.appendChild(fill);
-      row.appendChild(bar);
-
-      const nodeList = document.createElement('div');
-      nodeList.className = 'node-list';
-      AppState.nodes.filter(n => n.groupId === g.id && !n.isDepot).forEach(n => {
-        const nrow = document.createElement('div');
-        nrow.className = 'node-row';
-        nrow.textContent = `#${n.label}  demand:${n.demand}  (${n.x},${n.y})`;
-        nodeList.appendChild(nrow);
-      });
-      row.appendChild(nodeList);
-      groupsSection.appendChild(row);
-    });
+    AppState.groups.forEach(g => groupsSection.appendChild(buildGroupRow(g)));
 
     body.appendChild(groupsSection);
 
@@ -146,6 +130,105 @@ const UI = (() => {
         <div class="node-row">#0  (${depot.x},${depot.y})</div>`;
       body.appendChild(sec);
     }
+  }
+
+  function buildGroupRow(g) {
+    const stats = getGroupStats(g.id);
+    const row = document.createElement('div');
+    row.className = 'group-row';
+
+    // ── header: color · name · cap · delete ──
+    const header = document.createElement('div');
+    header.className = 'group-row-header';
+
+    const colorPicker = document.createElement('input');
+    colorPicker.type  = 'color';
+    colorPicker.value = g.color;
+    colorPicker.className = 'group-color-pick';
+    colorPicker.title = 'Change color';
+    colorPicker.addEventListener('input', () => {
+      g.color = colorPicker.value;
+      Renderer.render();
+      updateGroupBar(row, g, getGroupStats(g.id));
+    });
+
+    const nameInput = document.createElement('input');
+    nameInput.type      = 'text';
+    nameInput.value     = g.name;
+    nameInput.className = 'group-name-input';
+    nameInput.addEventListener('change', () => { g.name = nameInput.value.trim() || g.name; });
+
+    const capLabel = document.createElement('span');
+    capLabel.className = 'group-cap-label';
+    capLabel.textContent = 'cap';
+
+    const capInput = document.createElement('input');
+    capInput.type      = 'number';
+    capInput.value     = g.vehicleCapacity;
+    capInput.min       = 1;
+    capInput.className = 'group-cap-input';
+    capInput.title     = 'Vehicle capacity';
+    capInput.addEventListener('change', () => {
+      const v = parseInt(capInput.value);
+      if (!isNaN(v) && v > 0) {
+        g.vehicleCapacity = v;
+        updateGroupBar(row, g, getGroupStats(g.id));
+      }
+    });
+
+    const delBtn = document.createElement('button');
+    delBtn.textContent = '×';
+    delBtn.className   = 'group-del-btn';
+    delBtn.title       = 'Delete group';
+    delBtn.addEventListener('click', () => {
+      deleteGroup(g.id);
+      Renderer.render();
+      renderPanel();
+    });
+
+    header.appendChild(colorPicker);
+    header.appendChild(nameInput);
+    header.appendChild(capLabel);
+    header.appendChild(capInput);
+    header.appendChild(delBtn);
+    row.appendChild(header);
+
+    // ── stats line ──
+    const statsEl = document.createElement('div');
+    statsEl.className = 'group-stats-line';
+    statsEl.textContent = `${stats.totalDemand}/${g.vehicleCapacity} demand · ${stats.totalWeight} dist`;
+    row.appendChild(statsEl);
+
+    // ── capacity bar ──
+    const bar = document.createElement('div');
+    bar.className = 'cap-bar';
+    const fill = document.createElement('div');
+    fill.className = 'cap-fill';
+    bar.appendChild(fill);
+    row.appendChild(bar);
+    updateGroupBar(row, g, stats);
+
+    // ── node list ──
+    const nodeList = document.createElement('div');
+    nodeList.className = 'node-list';
+    AppState.nodes.filter(n => n.groupId === g.id && !n.isDepot).forEach(n => {
+      const nrow = document.createElement('div');
+      nrow.className = 'node-row';
+      nrow.textContent = `#${n.label}  demand:${n.demand}  (${n.x},${n.y})`;
+      nodeList.appendChild(nrow);
+    });
+    row.appendChild(nodeList);
+    return row;
+  }
+
+  function updateGroupBar(row, g, stats) {
+    const fill  = row.querySelector('.cap-fill');
+    const label = row.querySelector('.group-stats-line');
+    if (!fill || !label) return;
+    const ratio = Math.min(1, stats.totalDemand / (g.vehicleCapacity || 1));
+    fill.style.width      = (ratio * 100) + '%';
+    fill.style.background = ratio >= 1 ? '#F44336' : g.color;
+    label.textContent = `${stats.totalDemand}/${g.vehicleCapacity} demand · ${stats.totalWeight} dist`;
   }
 
   return { init, renderPanel };

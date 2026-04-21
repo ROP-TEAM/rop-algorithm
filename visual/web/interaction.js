@@ -138,9 +138,18 @@ const Interaction = (() => {
 
   function onWheel(e) {
     e.preventDefault();
-    const factor = e.deltaY < 0 ? 1.1 : 0.9;
-    const vb = Renderer.getViewBox();
-    Renderer.setViewBox({ ...vb, scale: Math.min(100, Math.max(0.1, vb.scale * factor)) });
+    const [sx, sy] = svgPoint(e);
+    const vb       = Renderer.getViewBox();
+    const oldScale = vb.scale;
+    const newScale = Math.min(100, Math.max(0.1, oldScale * (e.deltaY < 0 ? 1.1 : 0.9)));
+    const f        = 1 / newScale - 1 / oldScale;
+    const cx       = svg.clientWidth  / 2;
+    const cy       = svg.clientHeight / 2;
+    Renderer.setViewBox({
+      scale: newScale,
+      x: vb.x + (sx - cx) * f,
+      y: vb.y + (sy - cy) * f,
+    });
     Renderer.render();
   }
 
@@ -209,6 +218,9 @@ const Interaction = (() => {
     const edge = AppState.edges.find(ed => ed.id === edgeId);
     if (!edge) return;
     renderCtxMenu(clientX, clientY, [
+      { label: edge.bidirectional ? '→  Make one-way' : '⇄  Make bidirectional', action: () => {
+        edge.bidirectional = !edge.bidirectional; Renderer.render();
+      }},
       { label: `Edit weight (${edge.weight})…`, action: () => {
         const v = prompt('Edge weight:', edge.weight);
         if (v !== null) { const n = parseFloat(v); if (!isNaN(n) && n >= 0) { edge.weight = n; Renderer.render(); UI.renderPanel(); } }

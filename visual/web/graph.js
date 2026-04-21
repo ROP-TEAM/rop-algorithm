@@ -30,6 +30,11 @@ function createGroup(name, color) {
   return g;
 }
 
+function deleteGroup(id) {
+  AppState.groups = AppState.groups.filter(g => g.id !== id);
+  AppState.nodes.forEach(n => { if (n.groupId === id) n.groupId = null; });
+}
+
 function createNode(x, y, isDepot, demandMin, demandMax, rand) {
   const r = rand || Math.random;
   const demand = demandMin + Math.floor(r() * (demandMax - demandMin + 1));
@@ -49,10 +54,13 @@ function createEdge(fromId, toId, weightOverride) {
   const a = AppState.nodes.find(n => n.id === fromId);
   const b = AppState.nodes.find(n => n.id === toId);
   if (!a || !b || fromId === toId) return null;
-  const exists = AppState.edges.find(e => e.from === fromId && e.to === toId);
+  const exists = AppState.edges.find(e =>
+    (e.from === fromId && e.to === toId) ||
+    (e.bidirectional && e.from === toId && e.to === fromId)
+  );
   if (exists) return null;
   const weight = weightOverride !== undefined ? weightOverride : euclidean(a, b);
-  const edge = { id: AppState.nextEdgeId++, from: fromId, to: toId, weight };
+  const edge = { id: AppState.nextEdgeId++, from: fromId, to: toId, weight, bidirectional: true };
   AppState.edges.push(edge);
   return edge;
 }
@@ -150,6 +158,28 @@ function generatePositions(count, L, clustered, rand) {
       Math.round(cy + (rand() * 2 - 1) * L * 0.25),
     ];
   });
+}
+
+function importJSON(file, onDone) {
+  const reader = new FileReader();
+  reader.onload = evt => {
+    try {
+      const data = JSON.parse(evt.target.result);
+      if (!Array.isArray(data.nodes) || !Array.isArray(data.edges) || !Array.isArray(data.groups)) {
+        throw new Error('Invalid format');
+      }
+      AppState.nodes   = data.nodes;
+      AppState.edges   = data.edges;
+      AppState.groups  = data.groups;
+      AppState.nextNodeId  = data.nodes.reduce((m, n) => Math.max(m, n.id + 1), 0);
+      AppState.nextEdgeId  = data.edges.reduce((m, e) => Math.max(m, e.id + 1), 0);
+      AppState.nextGroupId = data.groups.reduce((m, g) => Math.max(m, g.id + 1), 0);
+      onDone();
+    } catch (err) {
+      alert('Import failed: ' + err.message);
+    }
+  };
+  reader.readAsText(file);
 }
 
 function exportJSON() {

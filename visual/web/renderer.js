@@ -62,10 +62,10 @@ const Renderer = (() => {
     if (defs.querySelector('#' + id)) return;
     const marker = el('marker', { id, markerWidth: '8', markerHeight: '6',
       refX: '6', refY: '3', orient: 'auto' });
-    const poly = el('polygon', { points: '0 0, 8 3, 0 6', fill: color });
-    marker.appendChild(poly);
+    marker.appendChild(el('polygon', { points: '0 0, 8 3, 0 6', fill: color }));
     defs.appendChild(marker);
   }
+
 
   function groupColor(groupId) {
     if (groupId === null || groupId === undefined) return '#9E9E9E';
@@ -130,23 +130,24 @@ const Renderer = (() => {
       if (!a || !b) return;
       const color = edgeColor(edge);
       const markerId = 'arrow-' + color.replace('#', '');
-      ensureArrowMarker(color, markerId);
+      if (!edge.bidirectional) ensureArrowMarker(color, markerId);
 
       const [x1, y1] = worldToScreen(a.x, a.y);
       const [x2, y2] = worldToScreen(b.x, b.y);
       const dx = x2 - x1, dy = y2 - y1;
       const len = Math.sqrt(dx * dx + dy * dy) || 1;
-      const r = (b.isDepot ? depotR() : nodeR()) + 2;
-      const ex = x2 - dx / len * r;
-      const ey = y2 - dy / len * r;
+      const rb  = (b.isDepot ? depotR() : nodeR()) + 2;
+      const ex  = x2 - dx / len * rb;
+      const ey  = y2 - dy / len * rb;
 
-      const line = el('line', {
+      const lineAttrs = {
         x1, y1, x2: ex, y2: ey,
         stroke: color, 'stroke-width': '2',
-        'marker-end': `url(#${markerId})`,
         'data-edge-id': edge.id,
         class: 'edge',
-      });
+      };
+      if (!edge.bidirectional) lineAttrs['marker-end'] = `url(#${markerId})`;
+      const line = el('line', lineAttrs);
       line.addEventListener('contextmenu', e => { e.preventDefault(); showEdgeMenu(e, edge.id); });
 
       const mx = (x1 + x2) / 2;
@@ -174,7 +175,6 @@ const Renderer = (() => {
       const [cx, cy] = worldToScreen(node.x, node.y);
       const r = node.isDepot ? depotR() : nodeR();
       const color = node.isDepot ? '#000' : groupColor(node.groupId);
-      const fillColor = node.isDepot ? '#fff' : (node.groupId !== null ? color + '22' : '#fff');
 
       const g = el('g', { class: 'node-group', 'data-node-id': node.id });
 
@@ -187,9 +187,18 @@ const Renderer = (() => {
         g.appendChild(handle);
       }
 
+      // White base — always opaque
+      g.appendChild(el('circle', { cx, cy, r, fill: '#fff' }));
+
+      // Group color tint on top of white
+      if (!node.isDepot && node.groupId !== null) {
+        g.appendChild(el('circle', { cx, cy, r, fill: color, opacity: '0.18' }));
+      }
+
+      // Border
       const circle = el('circle', {
         cx, cy, r,
-        fill: fillColor, stroke: color,
+        fill: 'none', stroke: color,
         'stroke-width': node.isDepot ? '3' : '2',
         class: 'node-body',
       });
