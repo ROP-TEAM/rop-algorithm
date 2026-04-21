@@ -1,0 +1,171 @@
+=== RUN   TestResolveCachePolicy
+=== RUN   TestResolveCachePolicy/static_request
+=== RUN   TestResolveCachePolicy/departure_time_makes_traffic_policy
+=== RUN   TestResolveCachePolicy/departure_time_now_makes_traffic_policy
+--- PASS: TestResolveCachePolicy (0.00s)
+    --- PASS: TestResolveCachePolicy/static_request (0.00s)
+    --- PASS: TestResolveCachePolicy/departure_time_makes_traffic_policy (0.00s)
+    --- PASS: TestResolveCachePolicy/departure_time_now_makes_traffic_policy (0.00s)
+=== RUN   TestBuildMatrixCacheKeyStaticIgnoresAvoidOrder
+--- PASS: TestBuildMatrixCacheKeyStaticIgnoresAvoidOrder (0.00s)
+=== RUN   TestBuildMatrixCacheKeyTrafficIncludesDateAndSlot
+--- PASS: TestBuildMatrixCacheKeyTrafficIncludesDateAndSlot (0.00s)
+=== RUN   TestMatrixCacheTTLByMode
+--- PASS: TestMatrixCacheTTLByMode (0.00s)
+=== RUN   TestMatrixCacheTTLTrafficUsesSlot
+--- PASS: TestMatrixCacheTTLTrafficUsesSlot (0.00s)
+=== RUN   TestMatrixTrafficSlot
+--- PASS: TestMatrixTrafficSlot (0.00s)
+=== RUN   TestDevMatrixCacheConfigUsesMonthTTL
+--- PASS: TestDevMatrixCacheConfigUsesMonthTTL (0.00s)
+=== RUN   TestGoogleMapsMatrix
+    matrix_test.go:43: Full Distance Matrix response:
+        {
+          "status": "OK",
+          "origin_addresses": [
+            "QG42+GPJ, Wat Bowon Niwet, Phra Nakhon, Bangkok 10200, Thailand",
+            "417, 991 Rama I Rd, Khwaeng Pathum Wan, Pathum Wan, Krung Thep Maha Nakhon 10330, Thailand",
+            "192 Rama IV Rd, Khwaeng Lumphini, Pathum Wan, Krung Thep Maha Nakhon 10330, Thailand"
+          ],
+          "destination_addresses": [
+            "QG42+GPJ, Wat Bowon Niwet, Phra Nakhon, Bangkok 10200, Thailand",
+            "417, 991 Rama I Rd, Khwaeng Pathum Wan, Pathum Wan, Krung Thep Maha Nakhon 10330, Thailand",
+            "192 Rama IV Rd, Khwaeng Lumphini, Pathum Wan, Krung Thep Maha Nakhon 10330, Thailand"
+          ],
+          "rows": [
+            {
+              "elements": [
+                {
+                  "status": "OK",
+                  "distance": {
+                    "value": 0,
+                    "text": "1 m"
+                  },
+                  "duration": {
+                    "value": 0,
+                    "text": "1 min"
+                  }
+                },
+                {
+                  "status": "OK",
+                  "distance": {
+                    "value": 4860,
+                    "text": "4.9 km"
+                  },
+                  "duration": {
+                    "value": 894,
+                    "text": "15 mins"
+                  }
+                },
+                {
+                  "status": "OK",
+                  "distance": {
+                    "value": 8024,
+                    "text": "8.0 km"
+                  },
+                  "duration": {
+                    "value": 1228,
+                    "text": "20 mins"
+                  }
+                }
+              ]
+            },
+            {
+              "elements": [
+                {
+                  "status": "OK",
+                  "distance": {
+                    "value": 4447,
+                    "text": "4.4 km"
+                  },
+                  "duration": {
+                    "value": 888,
+                    "text": "15 mins"
+                  }
+                },
+                {
+                  "status": "OK",
+                  "distance": {
+                    "value": 0,
+                    "text": "1 m"
+                  },
+                  "duration": {
+                    "value": 0,
+                    "text": "1 min"
+                  }
+                },
+                {
+                  "status": "OK",
+                  "distance": {
+                    "value": 4323,
+                    "text": "4.3 km"
+                  },
+                  "duration": {
+                    "value": 740,
+                    "text": "12 mins"
+                  }
+                }
+              ]
+            },
+            {
+              "elements": [
+                {
+                  "status": "OK",
+                  "distance": {
+                    "value": 8168,
+                    "text": "8.2 km"
+                  },
+                  "duration": {
+                    "value": 1423,
+                    "text": "24 mins"
+                  }
+                },
+                {
+                  "status": "OK",
+                  "distance": {
+                    "value": 4794,
+                    "text": "4.8 km"
+                  },
+                  "duration": {
+                    "value": 994,
+                    "text": "17 mins"
+                  }
+                },
+                {
+                  "status": "OK",
+                  "distance": {
+                    "value": 0,
+                    "text": "1 m"
+                  },
+                  "duration": {
+                    "value": 0,
+                    "text": "1 min"
+                  }
+                }
+              ]
+            }
+          ]
+        }
+--- PASS: TestGoogleMapsMatrix (0.33s)
+=== RUN   TestGoogleMapsMatrixBatch
+--- PASS: TestGoogleMapsMatrixBatch (1.29s)
+=== RUN   TestBuildDistanceMatrixQueryIncludesOptions
+--- PASS: TestBuildDistanceMatrixQueryIncludesOptions (0.00s)
+=== RUN   TestBuildDistanceMatrixQueryDepartureTimeNow
+--- PASS: TestBuildDistanceMatrixQueryDepartureTimeNow (0.00s)
+=== RUN   TestValidateDistanceMatrixRequestRejectsConflictingTimes
+--- PASS: TestValidateDistanceMatrixRequestRejectsConflictingTimes (0.00s)
+=== RUN   TestExecuteMatrixRectangularBatching
+--- PASS: TestExecuteMatrixRectangularBatching (0.00s)
+=== RUN   TestExecuteMatrixUsesDurationInTrafficWhenPresent
+--- PASS: TestExecuteMatrixUsesDurationInTrafficWhenPresent (0.00s)
+=== RUN   TestExecuteMatrixReturnsTopLevelAPIError
+--- PASS: TestExecuteMatrixReturnsTopLevelAPIError (0.00s)
+=== RUN   TestExecuteMatrixSupportsRegionAndLanguage
+--- PASS: TestExecuteMatrixSupportsRegionAndLanguage (0.00s)
+=== RUN   TestExecuteMatrixUsesStaticCache
+--- PASS: TestExecuteMatrixUsesStaticCache (0.00s)
+=== RUN   TestExecuteMatrixEmitsCacheEventsAndMetrics
+--- PASS: TestExecuteMatrixEmitsCacheEventsAndMetrics (0.00s)
+PASS
+ok      github.com/ROP-TEAM/rop-algorithm/test  2.456s
