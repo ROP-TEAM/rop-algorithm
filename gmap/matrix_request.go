@@ -122,14 +122,6 @@ func ValidateDistanceMatrixRequest(req DistanceMatrixRequest) error {
 	return validateDistanceMatrixRequest(req)
 }
 
-func chunkSizeForRequest(req DistanceMatrixRequest) int {
-	if req.DepartureTime != 0 || req.DepartureTimeNow {
-		return defaultChunkSize
-	}
-
-	return defaultChunkSize
-}
-
 func locationRequestValue(l Location) string {
 	if strings.TrimSpace(l.Raw) != "" {
 		return l.Raw

@@ -82,53 +82,43 @@ func BuildMatrixCacheKey(req DistanceMatrixRequest, now time.Time, cfg MatrixCac
 	if err := validateDistanceMatrixRequest(req); err != nil {
 		return MatrixCacheKeyParts{}, err
 	}
-
 	policy := ResolveCachePolicy(req)
 	switch policy {
 	case CachePolicyStatic:
-		normalized := normalizeMatrixCacheRequest(req, "", "")
-		hash, err := hashNormalizedMatrixCacheRequest(normalized)
-		if err != nil {
-			return MatrixCacheKeyParts{}, err
+		ns := cfg.StaticNamespace
+		if ns == "" {
+			ns = defaultStaticCacheNamespace
 		}
-
-		namespace := cfg.StaticNamespace
-		if namespace == "" {
-			namespace = defaultStaticCacheNamespace
-		}
-
-		return MatrixCacheKeyParts{
-			Policy:    policy,
-			Namespace: namespace,
-			Hash:      hash,
-			Key:       namespace + ":" + hash,
-		}, nil
+		return buildCacheKeyParts(MatrixCacheKeyParts{Policy: policy, Namespace: ns}, req)
 	case CachePolicyTraffic:
 		when := resolveTrafficReferenceTime(req, now)
-		date := when.Format("2006-01-02")
-		slot := MatrixTrafficSlot(when)
-		normalized := normalizeMatrixCacheRequest(req, date, slot)
-		hash, err := hashNormalizedMatrixCacheRequest(normalized)
-		if err != nil {
-			return MatrixCacheKeyParts{}, err
+		ns := cfg.TrafficNamespace
+		if ns == "" {
+			ns = defaultTrafficCacheNamespace
 		}
-
-		namespace := cfg.TrafficNamespace
-		if namespace == "" {
-			namespace = defaultTrafficCacheNamespace
-		}
-
-		return MatrixCacheKeyParts{
-			Policy:    policy,
-			Namespace: namespace,
-			Hash:      hash,
-			Date:      date,
-			Slot:      slot,
-			Key:       namespace + ":" + date + ":" + slot + ":" + hash,
-		}, nil
+		return buildCacheKeyParts(MatrixCacheKeyParts{
+			Policy: policy, Namespace: ns,
+			Date: when.Format("2006-01-02"), Slot: MatrixTrafficSlot(when),
+		}, req)
 	default:
 		return MatrixCacheKeyParts{}, fmt.Errorf("unsupported cache policy: %s", policy)
 	}
+}
+
+// buildCacheKeyParts computes hash and Key for a partially-filled MatrixCacheKeyParts.
+func buildCacheKeyParts(parts MatrixCacheKeyParts, req DistanceMatrixRequest) (MatrixCacheKeyParts, error) {
+	normalized := normalizeMatrixCacheRequest(req, parts.Date, parts.Slot)
+	hash, err := hashNormalizedMatrixCacheRequest(normalized)
+	if err != nil {
+		return MatrixCacheKeyParts{}, err
+	}
+	parts.Hash = hash
+	if parts.Date != "" {
+		parts.Key = parts.Namespace + ":" + parts.Date + ":" + parts.Slot + ":" + hash
+	} else {
+		parts.Key = parts.Namespace + ":" + hash
+	}
+	return parts, nil
 }
 
 func MatrixCacheTTL(req DistanceMatrixRequest, now time.Time, cfg MatrixCacheConfig) time.Duration {

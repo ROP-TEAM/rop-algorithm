@@ -4,98 +4,65 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"io"
 	"net/http"
 )
 
 func (g *GoogleMapsMatrix) doDistanceMatrixRequest(ctx context.Context, req DistanceMatrixRequest) (*DistanceMatrixResponse, error) {
+	policy := ResolveCachePolicy(req)
+	nO, nD := len(req.Origins), len(req.Destinations)
+
+	g.emitEvent(ctx, MatrixEvent{Name: "api_request", Policy: policy, ChunkOrigins: nO, ChunkDestinations: nD})
+
+	httpResp, err := g.executeHTTPRequest(ctx, req)
+	if err != nil {
+		g.emitEvent(ctx, MatrixEvent{Name: "api_request_error", Policy: policy, Error: err.Error(), ChunkOrigins: nO, ChunkDestinations: nD})
+		return nil, err
+	}
+	defer httpResp.Body.Close()
+
+	if httpResp.StatusCode != http.StatusOK {
+		g.emitEvent(ctx, MatrixEvent{Name: "api_response_error", Policy: policy, Error: httpResp.Status, ChunkOrigins: nO, ChunkDestinations: nD})
+		return nil, fmt.Errorf("distance matrix API unexpected HTTP status: %s", httpResp.Status)
+	}
+
+	apiResp, eventName, err := decodeAndValidateAPIResponse(httpResp.Body, len(req.Origins))
+	if err != nil {
+		g.emitEvent(ctx, MatrixEvent{Name: eventName, Policy: policy, Error: err.Error(), ChunkOrigins: nO, ChunkDestinations: nD})
+		return nil, err
+	}
+	return apiResp, nil
+}
+
+func (g *GoogleMapsMatrix) executeHTTPRequest(ctx context.Context, req DistanceMatrixRequest) (*http.Response, error) {
 	client := g.httpClient
 	if client == nil {
 		client = http.DefaultClient
 	}
-
-	g.emitEvent(ctx, MatrixEvent{
-		Name:              "api_request",
-		Policy:            ResolveCachePolicy(req),
-		ChunkOrigins:      len(req.Origins),
-		ChunkDestinations: len(req.Destinations),
-	})
-
 	httpReq, err := http.NewRequestWithContext(ctx, http.MethodGet, g.buildDistanceMatrixURL(req), nil)
 	if err != nil {
-		g.emitEvent(ctx, MatrixEvent{
-			Name:              "api_request_error",
-			Policy:            ResolveCachePolicy(req),
-			Error:             err.Error(),
-			ChunkOrigins:      len(req.Origins),
-			ChunkDestinations: len(req.Destinations),
-		})
 		return nil, err
 	}
-
 	resp, err := client.Do(httpReq)
 	if err != nil {
-		g.emitEvent(ctx, MatrixEvent{
-			Name:              "api_request_error",
-			Policy:            ResolveCachePolicy(req),
-			Error:             err.Error(),
-			ChunkOrigins:      len(req.Origins),
-			ChunkDestinations: len(req.Destinations),
-		})
 		return nil, fmt.Errorf("distance matrix API: %w", err)
 	}
-	defer resp.Body.Close()
+	return resp, nil
+}
 
-	if resp.StatusCode != http.StatusOK {
-		g.emitEvent(ctx, MatrixEvent{
-			Name:              "api_response_error",
-			Policy:            ResolveCachePolicy(req),
-			Error:             resp.Status,
-			ChunkOrigins:      len(req.Origins),
-			ChunkDestinations: len(req.Destinations),
-		})
-		return nil, fmt.Errorf("distance matrix API unexpected HTTP status: %s", resp.Status)
+func decodeAndValidateAPIResponse(body io.Reader, expectedRows int) (*DistanceMatrixResponse, string, error) {
+	var resp DistanceMatrixResponse
+	if err := json.NewDecoder(body).Decode(&resp); err != nil {
+		return nil, "api_decode_error", fmt.Errorf("distance matrix API decode: %w", err)
 	}
-
-	var matrixResp DistanceMatrixResponse
-	if err := json.NewDecoder(resp.Body).Decode(&matrixResp); err != nil {
-		g.emitEvent(ctx, MatrixEvent{
-			Name:              "api_decode_error",
-			Policy:            ResolveCachePolicy(req),
-			Error:             err.Error(),
-			ChunkOrigins:      len(req.Origins),
-			ChunkDestinations: len(req.Destinations),
-		})
-		return nil, fmt.Errorf("distance matrix API decode: %w", err)
-	}
-
-	if matrixResp.Status != "OK" {
-		errMsg := matrixResp.Status
-		if matrixResp.ErrorMessage != "" {
-			errMsg += ": " + matrixResp.ErrorMessage
+	if resp.Status != "OK" {
+		if resp.ErrorMessage != "" {
+			return nil, "api_status_error", fmt.Errorf("distance matrix API status: %s (%s)", resp.Status, resp.ErrorMessage)
 		}
-		g.emitEvent(ctx, MatrixEvent{
-			Name:              "api_status_error",
-			Policy:            ResolveCachePolicy(req),
-			Error:             errMsg,
-			ChunkOrigins:      len(req.Origins),
-			ChunkDestinations: len(req.Destinations),
-		})
-		if matrixResp.ErrorMessage != "" {
-			return nil, fmt.Errorf("distance matrix API status: %s (%s)", matrixResp.Status, matrixResp.ErrorMessage)
-		}
-		return nil, fmt.Errorf("distance matrix API status: %s", matrixResp.Status)
+		return nil, "api_status_error", fmt.Errorf("distance matrix API status: %s", resp.Status)
 	}
-
-	if len(matrixResp.Rows) != len(req.Origins) {
-		g.emitEvent(ctx, MatrixEvent{
-			Name:              "api_shape_error",
-			Policy:            ResolveCachePolicy(req),
-			Error:             "row_count_mismatch",
-			ChunkOrigins:      len(req.Origins),
-			ChunkDestinations: len(req.Destinations),
-		})
-		return nil, fmt.Errorf("distance matrix API returned %d rows, expected %d", len(matrixResp.Rows), len(req.Origins))
+	if len(resp.Rows) != expectedRows {
+		return nil, "api_shape_error", fmt.Errorf("distance matrix API returned %d rows, expected %d", len(resp.Rows), expectedRows)
 	}
-
-	return &matrixResp, nil
+	return &resp, "", nil
 }
