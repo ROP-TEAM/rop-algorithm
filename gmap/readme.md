@@ -2,21 +2,22 @@
 
 `package gmap` — data layer สำหรับดึง travel time และ distance จริงบนถนนจาก Google Maps Distance Matrix API
 
-ข้อมูลที่ได้ (nodes + edges) ถูกส่งต่อไปยัง `graph/` และ `core/` เพื่อใช้คิด routing algorithm
+ค่าที่ได้กลับมา: **n×n matrix** ทั้งสองชุด
+- `durations[i][j]` = เวลาเดินทาง i→j **(นาที)**
+- `distances[i][j]` = ระยะทาง i→j **(เมตร)**
+
+ข้อมูลเหล่านี้ถูกส่งต่อไปยัง `graph/` และ `core/` เพื่อคิด routing algorithm
 
 ---
 
-## ไฟล์ในแพ็กเกจ
+## Prerequisites
 
-| ไฟล์ | หน้าที่ |
-|---|---|
-| `matrix_service.go` | `GoogleMapsMatrix` struct, constructor, `ExecuteMatrix`, `BuildMatrix`, cache/event orchestration |
-| `matrix_request.go` | `BuildDistanceMatrixQuery`, `ValidateDistanceMatrixRequest`, `buildDistanceMatrixRequest`, `locationRequestValue` |
-| `matrix_http.go` | HTTP execution, response decode, API status/shape checks |
-| `matrix_cache.go` | `ResolveCachePolicy`, `BuildMatrixCacheKey`, `MatrixCacheTTL`, `MatrixTrafficSlot`, key hashing |
-| `matrix_cache_memory.go` | `MatrixCache` interface, `MemoryMatrixCache`, clone helpers |
-| `matrix_observability.go` | `MatrixEventHook`, `MatrixMetricsCollector`, `MatrixMetrics` |
-| `matrix_compat.go` | type aliases re-exporting จาก `model/` (backward compat) |
+1. สร้าง API key ใน [Google Cloud Console](https://console.cloud.google.com/)
+2. เปิด **Distance Matrix API** ใน Console (คนละตัวกับ Maps JavaScript API หรือ OAuth)
+3. ใส่ key ใน `rop-backend/.env`:
+   ```
+   GOOGLE_MAPS_API_KEY=AIza...
+   ```
 
 ---
 
@@ -25,211 +26,149 @@
 ```go
 import "github.com/ROP-TEAM/rop-algorithm/gmap"
 
-m, err := gmap.NewGoogleMapsMatrix(apiKey)
+// สร้าง client ครั้งเดียวตอน startup — cache อยู่ภายใน instance
+m, err := gmap.NewGoogleMapsMatrix(
+    apiKey,
+    gmap.WithInMemoryCache(gmap.DevMatrixCacheConfig()),
+)
 if err != nil {
-    log.Fatal(err) // apiKey ว่างจะ error ทันที
+    return err // apiKey ว่างจะ error ทันที
 }
 
-// square matrix จาก []Location — ใช้กับ routing algorithm โดยตรง
 locs := []gmap.Location{
-    {Lat: 13.7563, Lng: 100.5018}, // depot
-    {Lat: 13.7469, Lng: 100.5346},
-    {Lat: 13.7308, Lng: 100.5418},
+    gmap.NewLatLngLocation(13.7563, 100.5018), // depot
+    gmap.NewLatLngLocation(13.7469, 100.5346),
+    gmap.NewLatLngLocation(13.7308, 100.5418),
 }
-durations, distances, err := m.BuildMatrix(ctx, locs, gmap.MatrixOptions{})
-// durations[i][j] = นาที, distances[i][j] = เมตร
 
-// หรือถ้าต้องการ custom origins/destinations แยกกัน
-result, err := m.ExecuteMatrix(ctx, gmap.DistanceMatrixRequest{
-    Origins:      []string{"13.756300,100.501800"},
-    Destinations: []string{"13.746900,100.534600", "13.730800,100.541800"},
-    Language:     "th",
-    Region:       "th",
-})
+durations, distances, err := m.BuildMatrix(ctx, locs, gmap.MatrixOptions{})
+if err != nil {
+    return err
+}
+// durations[i][j] = เวลาเดินทาง i→j (นาที)
+// distances[i][j] = ระยะทาง i→j (เมตร)
 ```
 
 ---
 
 ## รูปแบบ Location
 
-Origins/Destinations ใน `DistanceMatrixRequest` รับ string ได้หลายรูปแบบ — ผสมกันในคำขอเดียวได้:
-
 ```go
-req := gmap.DistanceMatrixRequest{
-    Origins: []string{
-        "13.756300,100.501800",                       // lat,lng
-        "place_id:ChIJTydCFXdnHTERB3oVT1UZDRI",       // Google place ID
-        "Central World, Bangkok",                      // ที่อยู่ (geocode ที่ฝั่ง API)
-        "7P3Q+QJ Bangkok",                             // plus code
-    },
-    Destinations: []string{
-        "side_of_road:13.756300,100.501800",           // snap ไปฝั่งถนนที่ใกล้ที่สุด
-        "heading=90:13.756300,100.501800",             // 0–360° — ระบุทิศออกจากจุด (ถนนทางเดียว)
-        "enc:polyline_value:",                         // encoded polyline
-    },
-}
+// lat/lng — รูปแบบปกติ
+gmap.NewLatLngLocation(13.7563, 100.5018)
+
+// raw string — ส่งตรงไปยัง API (ข้าม lat/lng)
+gmap.NewRawLocation("place_id:ChIJTydCFXdnHTERB3oVT1UZDRI")
+gmap.NewRawLocation("Central World, Bangkok")     // geocode ที่ฝั่ง API
+gmap.NewRawLocation("7P3Q+QJ Bangkok")            // plus code
+gmap.NewRawLocation("side_of_road:13.7563,100.5018")
+gmap.NewRawLocation("heading=90:13.7563,100.5018")
+gmap.NewRawLocation("enc:polyline_value:")
 ```
 
-เมื่อใช้ `Location` struct กับ `BuildMatrix`:
-
-```go
-locs := []gmap.Location{
-    {Lat: 13.7563, Lng: 100.5018},                        // → "13.756300,100.501800"
-    {Raw: "place_id:ChIJTydCFXdnHTERB3oVT1UZDRI"},        // Raw ส่งตรง ข้าม Lat/Lng
-    {Raw: "heading=90:13.756300,100.501800"},
-}
-```
+Origins/Destinations ใน `DistanceMatrixRequest` รับ string ได้ทุกรูปแบบข้างต้น และผสมกันได้ในคำขอเดียว
 
 ---
 
-## Mode (วิธีเดินทาง)
+## Options
+
+### Mode (วิธีเดินทาง)
 
 ```go
-// driving — default ถ้าไม่ระบุ
-gmap.MatrixOptions{Mode: "driving"}
-
-// walking — ไม่มี traffic, ไม่รองรับ avoid=tolls/highways
-gmap.MatrixOptions{Mode: "walking"}
-
-// bicycling — รองรับ avoid=tolls/highways/ferries เท่านั้น
-gmap.MatrixOptions{Mode: "bicycling"}
-
-// transit — ต้องตั้ง DepartureTime หรือ ArrivalTime ด้วย, ไม่รองรับ avoid ทั้งหมด
-gmap.MatrixOptions{
-    Mode:          "transit",
-    DepartureTime: time.Now().Add(1 * time.Hour).Unix(),
-}
+gmap.MatrixOptions{Mode: gmap.ModeDriving}   // default ถ้าไม่ระบุ
+gmap.MatrixOptions{Mode: gmap.ModeWalking}   // ไม่มี traffic
+gmap.MatrixOptions{Mode: gmap.ModeBicycling}
+gmap.MatrixOptions{Mode: gmap.ModeTransit}   // ต้องตั้งเวลาเดินทางด้วย
 ```
 
----
+### Traffic (สภาพจราจรจริง)
 
-## Avoid (หลีกเลี่ยงเส้นทาง)
+`DurationInTraffic` ถูกใช้แทน `Duration` เมื่อ **mode = driving** และ **ตั้ง departure_time** เท่านั้น
+
+```go
+// ใช้สภาพจราจร ณ เวลาออกเดินทางจริง
+var opts gmap.MatrixOptions
+opts.SetDepartureTime(time.Now().Add(30 * time.Minute))
+opts.TrafficModel = gmap.TrafficModelPessimistic // time-critical delivery
+
+// ใช้สภาพจราจรขณะนี้เลย
+gmap.MatrixOptions{DepartureTimeNow: true}
+```
+
+TrafficModel ที่รองรับ: `TrafficModelBestGuess` (default) · `TrafficModelPessimistic` · `TrafficModelOptimistic`
+
+> **ข้อควรระวัง:** `DepartureTime` ในอดีตทำให้ API คืน `INVALID_REQUEST`
+
+### Avoid (หลีกเลี่ยงเส้นทาง)
 
 ใช้กับ `driving` และ `bicycling` เท่านั้น:
 
 ```go
-// หลีกเลี่ยงทางด่วน (tolls) + ทางหลวง (highways)
 gmap.MatrixOptions{
-    Mode:  "driving",
-    Avoid: []string{"tolls", "highways"},
+    Mode:  gmap.ModeDriving,
+    Avoid: []string{gmap.AvoidTolls, gmap.AvoidHighways},
 }
-
-// หลีกเลี่ยงเรือข้ามฟาก
-gmap.MatrixOptions{
-    Mode:  "driving",
-    Avoid: []string{"ferries"},
-}
-
-// หลีกเลี่ยงเส้นทางในอาคาร — walking เท่านั้น
-gmap.MatrixOptions{
-    Mode:  "walking",
-    Avoid: []string{"indoor"},
-}
+gmap.MatrixOptions{Mode: gmap.ModeWalking, Avoid: []string{gmap.AvoidIndoor}}
 ```
 
----
+Avoid constants: `AvoidTolls` · `AvoidHighways` · `AvoidFerries` · `AvoidIndoor`
 
-## Traffic (สภาพจราจรจริง)
-
-`DurationInTraffic` จะถูกส่งกลับเมื่อ **mode = driving** และ **ตั้ง departure_time** เท่านั้น  
-package นี้ใช้ `DurationInTraffic` ก่อน `Duration` เสมอเมื่อมีค่า
+### Transit (ขนส่งสาธารณะ)
 
 ```go
-// ใช้สภาพจราจร ณ เวลาออกเดินทางจริง (ต้องเป็นปัจจุบันหรืออนาคต)
+// ออกเดินทางเวลาที่กำหนด
+var opts gmap.MatrixOptions
+opts.SetDepartureTime(time.Date(2026, 4, 23, 8, 0, 0, 0, bangkokLoc))
+opts.Mode = gmap.ModeTransit
+
+// ต้องถึงปลายทางภายในเวลา (ใช้แทน SetDepartureTime — ไม่ใช้พร้อมกัน)
+var opts gmap.MatrixOptions
+opts.SetArrivalTime(time.Date(2026, 4, 23, 9, 0, 0, 0, bangkokLoc))
+opts.Mode = gmap.ModeTransit
+
+// เฉพาะรถไฟฟ้า + รถไฟ
 gmap.MatrixOptions{
-    DepartureTime: time.Now().Add(30 * time.Minute).Unix(),
-}
-
-// ใช้สภาพจราจรขณะนี้เลย
-gmap.MatrixOptions{
-    DepartureTimeNow: true,
-}
-
-// best_guess — ค่า default ของ Google ถ้าไม่ระบุ TrafficModel
-// ประมาณจาก historical + realtime data
-gmap.MatrixOptions{
-    DepartureTime: time.Now().Add(1 * time.Hour).Unix(),
-    TrafficModel:  "best_guess",
-}
-
-// pessimistic — เหมาะกับ time-critical delivery (ประมาณสูงกว่าจริง)
-gmap.MatrixOptions{
-    DepartureTime: time.Now().Add(1 * time.Hour).Unix(),
-    TrafficModel:  "pessimistic",
-}
-
-// optimistic — เหมาะกับ best-case planning
-gmap.MatrixOptions{
-    DepartureTime: time.Now().Add(1 * time.Hour).Unix(),
-    TrafficModel:  "optimistic",
-}
-```
-
-> **ข้อควรระวัง:** `DepartureTime` ในอดีตทำให้ API คืน `INVALID_REQUEST`
-
----
-
-## Transit (ขนส่งสาธารณะ)
-
-```go
-// ออกเดินทางเวลาที่กำหนด — API เลือก transit ที่ดีที่สุด
-gmap.MatrixOptions{
-    Mode:          "transit",
-    DepartureTime: time.Date(2026, 4, 23, 8, 0, 0, 0, bangkokLoc).Unix(),
-}
-
-// ต้องถึงปลายทางภายในเวลา — ใช้แทน DepartureTime ได้ (ไม่ใช้พร้อมกัน)
-gmap.MatrixOptions{
-    Mode:        "transit",
-    ArrivalTime: time.Date(2026, 4, 23, 9, 0, 0, 0, bangkokLoc).Unix(),
-}
-
-// เฉพาะรถไฟฟ้า + รถไฟ (ไม่รวมรถเมล์)
-gmap.MatrixOptions{
-    Mode:        "transit",
+    Mode:        gmap.ModeTransit,
     TransitMode: []string{"subway", "train"},
-    DepartureTime: time.Now().Unix(),
 }
 
-// ลด walking ให้น้อยที่สุด
-gmap.MatrixOptions{
-    Mode:                     "transit",
-    TransitRoutingPreference: "less_walking",
-    DepartureTime:            time.Now().Unix(),
-}
-
-// เปลี่ยนขบวนน้อยที่สุด
-gmap.MatrixOptions{
-    Mode:                     "transit",
-    TransitRoutingPreference: "fewer_transfers",
-    DepartureTime:            time.Now().Unix(),
-}
+// ลด walking / เปลี่ยนขบวนน้อย
+gmap.MatrixOptions{Mode: gmap.ModeTransit, TransitRoutingPreference: "less_walking"}
+gmap.MatrixOptions{Mode: gmap.ModeTransit, TransitRoutingPreference: "fewer_transfers"}
 ```
 
-TransitMode ที่รองรับ: `"bus"`, `"subway"`, `"train"`, `"tram"`, `"rail"`
+TransitMode ที่รองรับ: `"bus"` · `"subway"` · `"train"` · `"tram"` · `"rail"`
 
 ---
 
-## ข้อจำกัดของ Google Maps API
+## การจัดการ Error
 
-### Element Limit และ Auto-Chunking
+### Top-level (response ทั้งคำขอ)
 
-Google Maps Distance Matrix API รองรับสูงสุด **100 elements** (origins × destinations) ต่อ 1 request
+package คืน `error` ทันทีสำหรับทุก status ที่ไม่ใช่ `OK`:
 
-package นี้ auto-chunk เป็น **10×10 block** แล้ว merge ผลลัพธ์อัตโนมัติ — ส่ง location กี่จุดก็ได้:
-
-```go
-// 30 locations → 30×30 = 900 elements → package แบ่งเป็น 9 chunk อัตโนมัติ
-locs := make([]gmap.Location, 30)
-durations, distances, err := m.BuildMatrix(ctx, locs, gmap.MatrixOptions{})
+```
+INVALID_REQUEST        — พารามิเตอร์ไม่ถูกต้อง (เช่น DepartureTime ในอดีต)
+MAX_DIMENSIONS_EXCEEDED — origins หรือ destinations เกิน 25
+OVER_DAILY_LIMIT       — เกิน daily quota หรือ API key มีปัญหา
+OVER_QUERY_LIMIT       — เกิน QPS — ต้อง retry with back-off
+REQUEST_DENIED         — API key ไม่มีสิทธิ์ หรือยังไม่เปิด Distance Matrix API
+UNKNOWN_ERROR          — server error ฝั่ง Google — retry ได้
 ```
 
-### Validation ที่ package บังคับก่อนส่ง API
+### Element-level (origin→destination คู่เดียว)
+
+```
+NOT_FOUND              — geocode origin/destination ไม่เจอ
+ZERO_RESULTS           — ไม่มีเส้นทางระหว่างสองจุด (เช่น เกาะที่ไม่มีถนนเชื่อม)
+MAX_ROUTE_LENGTH_EXCEEDED — เส้นทางยาวเกิน ~6,500 km
+```
+
+format ของ error message: `"element [i][j] (origin_string -> dest_string) status: NOT_FOUND"`
+
+### Validation (ก่อนส่ง API)
 
 ```go
-// error: origins ว่าง
-gmap.DistanceMatrixRequest{Origins: []string{}, Destinations: []string{"..."}}
-
 // error: departure_time และ departure_time=now ใช้พร้อมกันไม่ได้
 gmap.DistanceMatrixRequest{DepartureTime: 1234567890, DepartureTimeNow: true}
 
@@ -237,44 +176,18 @@ gmap.DistanceMatrixRequest{DepartureTime: 1234567890, DepartureTimeNow: true}
 gmap.DistanceMatrixRequest{DepartureTime: 1234567890, ArrivalTime: 1234599999}
 ```
 
-### API-level Status (top-level response)
+---
 
-package คืน `error` ทันทีสำหรับทุก status ที่ไม่ใช่ `OK`:
+## Element Limit และ Auto-Chunking
 
-```go
-result, err := m.ExecuteMatrix(ctx, req)
-if err != nil {
-    // err.Error() จะมี status และ error_message จาก Google เช่น:
-    // "distance matrix API status: REQUEST_DENIED"
-    // "distance matrix API status: OVER_QUERY_LIMIT"
-    // "distance matrix API status: INVALID_REQUEST (departure_time must not be in the past)"
-}
+Google Maps Distance Matrix API รองรับสูงสุด **100 elements** (origins × destinations) ต่อ 1 request
 
-// Status ที่เป็นไปได้:
-// OK                    — สำเร็จ
-// INVALID_REQUEST       — พารามิเตอร์ไม่ถูกต้อง (เช่น DepartureTime ในอดีต)
-// MAX_ELEMENTS_EXCEEDED — origins × destinations เกิน limit (หลัง chunking แปลว่า bug)
-// MAX_DIMENSIONS_EXCEEDED — origins หรือ destinations เกิน 25
-// OVER_DAILY_LIMIT      — เกิน daily quota หรือ API key มีปัญหา
-// OVER_QUERY_LIMIT      — เกิน QPS — ต้อง retry with back-off
-// REQUEST_DENIED        — API key ไม่มีสิทธิ์ หรือ Distance Matrix API ยังไม่เปิดใน Console
-// UNKNOWN_ERROR         — server error ฝั่ง Google — retry ได้
-```
-
-### Element-level Status
-
-package คืน `error` ทันทีเมื่อพบ element ที่ไม่ใช่ `OK`:
+package นี้ auto-chunk เป็น **10×10 block** แล้ว merge ผลลัพธ์อัตโนมัติ:
 
 ```go
-// err จะมีรูปแบบ: "element [i][j] status: NOT_FOUND"
-result, err := m.ExecuteMatrix(ctx, req)
-if err != nil {
-    // Status ที่เป็นไปได้ใน element:
-    // OK                       — มี distance และ duration
-    // NOT_FOUND                — geocode origin/destination ไม่เจอ
-    // ZERO_RESULTS             — ไม่มีเส้นทางระหว่างสองจุด (เช่น เกาะที่ไม่มีถนนเชื่อม)
-    // MAX_ROUTE_LENGTH_EXCEEDED — เส้นทางยาวเกิน limit (~6500 km สำหรับ driving)
-}
+// 30 locations → 30×30 = 900 elements → แบ่งเป็น 9 chunk อัตโนมัติ
+locs := make([]gmap.Location, 30)
+durations, distances, err := m.BuildMatrix(ctx, locs, gmap.MatrixOptions{})
 ```
 
 ---
@@ -283,13 +196,16 @@ if err != nil {
 
 ```go
 // dev — TTL 30 วัน, ประหยัด quota ระหว่าง develop
-m.EnableInMemoryCache(gmap.DevMatrixCacheConfig())
+m, _ := gmap.NewGoogleMapsMatrix(apiKey, gmap.WithInMemoryCache(gmap.DevMatrixCacheConfig()))
 
-// prod — default: cache ปิด, เปิดเองตามต้องการ
+// prod — เปิด cache เองพร้อมกำหนดค่า
 cfg := gmap.DefaultMatrixCacheConfig()
 cfg.Enabled = true
 cfg.TrafficEnabled = true // traffic cache แยก flag เพราะ TTL สั้นกว่ามาก
-m.EnableInMemoryCache(cfg)
+m, _ := gmap.NewGoogleMapsMatrix(apiKey, gmap.WithInMemoryCache(cfg))
+
+// ตั้ง cache หลัง construction (ยังรองรับ)
+m.EnableInMemoryCache(gmap.DevMatrixCacheConfig())
 
 // custom backend — implement MatrixCache interface (2 methods)
 m.SetCache(myRedisCache, cfg)
@@ -298,33 +214,30 @@ m.SetCache(myRedisCache, cfg)
 Cache policy แบ่งอัตโนมัติ — `static` เมื่อไม่มี traffic fields, `traffic` เมื่อมี:
 
 ```go
-// policy: static → key = "matrix:static:v1:SHA256(origins+destinations+mode+...)"
+// policy: static → key = "matrix:static:v1:SHA256(...)"
 gmap.MatrixOptions{}
-gmap.MatrixOptions{Mode: "walking"}
+gmap.MatrixOptions{Mode: gmap.ModeWalking}
 
 // policy: traffic → key = "matrix:traffic:v1:2026-04-23:morning:SHA256(...)"
 gmap.MatrixOptions{DepartureTimeNow: true}
-gmap.MatrixOptions{DepartureTime: departureUnix}
-gmap.MatrixOptions{TrafficModel: "pessimistic"} // TrafficModel อย่างเดียวก็นับเป็น traffic
+gmap.MatrixOptions{TrafficModel: gmap.TrafficModelPessimistic}
 ```
 
 Default TTL (`DefaultMatrixCacheConfig`):
 
-```go
-// static
-driving   → 24 * time.Hour
-walking   → 7 * 24 * time.Hour
-bicycling → 7 * 24 * time.Hour
-transit   → 6 * time.Hour
-
-// traffic (แบ่งตาม time slot ของ departure_time)
-morning (06:00–08:59) → 1 * time.Hour
-midday  (09:00–15:59) → 4 * time.Hour
-evening (16:00–19:59) → 1 * time.Hour
-night   (20:00–05:59) → 8 * time.Hour
 ```
+static
+  driving   → 24h
+  walking   → 7d
+  bicycling → 7d
+  transit   → 6h
 
-Cache key ถูก normalize ก่อน hash — sort `avoid`/`transit_mode`, trim whitespace, fill defaults — ทำให้ request ที่ logical เหมือนกันได้ cache เดียวกันเสมอ
+traffic (แบ่งตาม time slot ของ departure_time)
+  morning (06:00–08:59) → 1h
+  midday  (09:00–15:59) → 4h
+  evening (16:00–19:59) → 1h
+  night   (20:00–05:59) → 8h
+```
 
 ---
 
@@ -333,7 +246,7 @@ Cache key ถูก normalize ก่อน hash — sort `avoid`/`transit_mode`,
 ```go
 // event hook — log ทุก cache hit/miss และ API call
 m.SetEventHook(func(ctx context.Context, event gmap.MatrixEvent) {
-    log.Printf("event=%-25s policy=%-8s key=%s origins=%d dests=%d err=%s",
+    log.Printf("event=%-25s policy=%-8s key=%s origins=%d dests=%d err=%v",
         event.Name, event.Policy, event.CacheKey,
         event.ChunkOrigins, event.ChunkDestinations, event.Error)
 })
@@ -341,16 +254,31 @@ m.SetEventHook(func(ctx context.Context, event gmap.MatrixEvent) {
 // metrics counter — snapshot เป็น map[string]int64
 metrics := gmap.NewMatrixMetrics()
 m.SetMetricsCollector(metrics)
-
 snapshot := metrics.Snapshot()
 // snapshot["api_request"]    → จำนวน API call จริง
 // snapshot["cache_hit"]      → จำนวน cache hit
 // snapshot["cache_miss"]     → จำนวน cache miss
-// snapshot["api_status_error"] → จำนวน error จาก Google API
 ```
 
 Event names ทั้งหมด:
 `api_request` · `api_request_error` · `api_response_error` · `api_decode_error` · `api_status_error` · `api_shape_error` · `cache_hit` · `cache_miss` · `cache_bypass` · `cache_lookup_error` · `cache_store` · `cache_store_error`
+
+---
+
+## ExecuteMatrix (advanced)
+
+`BuildMatrix` ใช้สำหรับ square n×n matrix `ExecuteMatrix` ใช้เมื่อต้องการ origins/destinations แยกกัน หรือต้องการ raw response:
+
+```go
+result, err := m.ExecuteMatrix(ctx, gmap.DistanceMatrixRequest{
+    Origins:      []string{"13.756300,100.501800", gmap.NewRawLocation("place_id:...").Raw},
+    Destinations: []string{"13.746900,100.534600", "13.730800,100.541800"},
+    Language:     "th",
+    Region:       "th",
+})
+// result.Durations, result.Distances — เหมือน BuildMatrix
+// result.Response — raw API response (origin addresses, fare, ฯลฯ)
+```
 
 ---
 
@@ -360,11 +288,15 @@ Event names ทั้งหมด:
 
 ```go
 // main.go
-matrix, err := gmap.NewGoogleMapsMatrix(cfg.GOOGLE_MAPS_API_KEY)
-if err != nil { log.Fatal(err) }
-
-matrix.EnableInMemoryCache(gmap.DevMatrixCacheConfig()) // dev
-// matrix.SetCache(redisCache, prodCfg)                // prod multi-instance
+matrix, err := gmap.NewGoogleMapsMatrix(
+    cfg.GOOGLE_MAPS_API_KEY,
+    gmap.WithInMemoryCache(gmap.DevMatrixCacheConfig()), // dev
+    // gmap.WithInMemoryCache(prodCfg),                 // prod single-instance
+)
+if err != nil {
+    log.Fatal(err)
+}
+// matrix.SetCache(redisCache, prodCfg)  // prod multi-instance
 
 planningService := services.NewPlanningService(db, matrix)
 ```
@@ -377,10 +309,11 @@ type PlanningService struct {
 }
 
 func (s *PlanningService) buildProblem(ctx context.Context, job Job) error {
-    durations, distances, err := s.matrix.BuildMatrix(ctx, locs, gmap.MatrixOptions{
-        DepartureTime: job.PlannedDepartureUnix,
-        TrafficModel:  "pessimistic", // time-critical delivery
-    })
+    var opts gmap.MatrixOptions
+    opts.SetDepartureTime(job.PlannedDepartureTime)
+    opts.TrafficModel = gmap.TrafficModelPessimistic // time-critical delivery
+
+    durations, distances, err := s.matrix.BuildMatrix(ctx, locs, opts)
     // ส่ง durations/distances → graph algorithm
 }
 ```
@@ -417,10 +350,16 @@ func (c *RedisMatrixCache) Set(ctx context.Context, key string, value *gmap.Dist
 
 ---
 
-## Environment Variables
+## ไฟล์ในแพ็กเกจ
 
-```env
-GOOGLE_MAPS_API_KEY=   # ใน rop-backend/.env
-```
-
-ต้องเปิด **Distance Matrix API** แยกใน Google Cloud Console — คนละตัวกับ `GOOGLE_CLIENT_ID` (OAuth)
+| ไฟล์ | หน้าที่ |
+|---|---|
+| `matrix_service.go` | `GoogleMapsMatrix` struct, setters, `ExecuteMatrix`, `BuildMatrix`, cache orchestration |
+| `matrix_options.go` | `NewGoogleMapsMatrix` constructor, `With*` option functions, `WithInMemoryCache` |
+| `matrix_chunks.go` | `allocateResult`, `buildChunk`, `mergeChunkIntoResult` — internal chunking helpers |
+| `matrix_request.go` | `BuildDistanceMatrixQuery`, `ValidateDistanceMatrixRequest`, location formatting |
+| `matrix_http.go` | `executeHTTPRequest`, `decodeAndValidateAPIResponse`, HTTP execution |
+| `matrix_cache.go` | `ResolveCachePolicy`, `BuildMatrixCacheKey`, `MatrixCacheTTL`, `MatrixTrafficSlot` |
+| `matrix_cache_memory.go` | `MatrixCache` interface, `MemoryMatrixCache`, clone helpers |
+| `matrix_observability.go` | `MatrixEventHook`, `MatrixMetricsCollector`, `MatrixMetrics` |
+| `matrix_compat.go` | type aliases + constructor re-exports จาก `model/` (backward compat) |

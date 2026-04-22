@@ -1,8 +1,11 @@
-// matrix_compat.go re-exports model types for backward compatibility.
+// matrix_compat.go re-exports model types and constructors for backward compatibility.
 // Remove once all call sites import from model directly.
 package gmap
 
 import "github.com/ROP-TEAM/rop-algorithm/model"
+
+func NewLatLngLocation(lat, lng float64) Location { return model.NewLatLngLocation(lat, lng) }
+func NewRawLocation(raw string) Location          { return model.NewRawLocation(raw) }
 
 type Location = model.Location
 type MatrixOptions = model.MatrixOptions
@@ -21,4 +24,20 @@ type TransitFare = model.TransitFare
 const (
 	CachePolicyStatic  = model.CachePolicyStatic
 	CachePolicyTraffic = model.CachePolicyTraffic
+)
+
+const (
+	ModeDriving   = model.ModeDriving
+	ModeWalking   = model.ModeWalking
+	ModeBicycling = model.ModeBicycling
+	ModeTransit   = model.ModeTransit
+
+	TrafficModelBestGuess   = model.TrafficModelBestGuess
+	TrafficModelPessimistic = model.TrafficModelPessimistic
+	TrafficModelOptimistic  = model.TrafficModelOptimistic
+
+	AvoidTolls    = model.AvoidTolls
+	AvoidHighways = model.AvoidHighways
+	AvoidFerries  = model.AvoidFerries
+	AvoidIndoor   = model.AvoidIndoor
 )
