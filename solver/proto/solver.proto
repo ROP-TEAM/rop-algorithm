@@ -1,0 +1,62 @@
+syntax = "proto3";
+package solver;
+option go_package = "github.com/ROP-TEAM/rop-algorithm/solver/grpc/pb";
+
+message Node {
+  string          id           = 1;
+  double          lat          = 2;
+  double          lng          = 3;
+  int32           demand       = 4;
+  int32           service_time = 5;
+  int32           tw_start     = 6;  // minutes from midnight
+  int32           tw_end       = 7;  // minutes from midnight
+  repeated string tags         = 8;
+  string          type         = 9;  // depot | delivery | pickup
+  string          pair_id      = 10; // links pickup↔delivery; empty if not a PD pair
+}
+
+message Vehicle {
+  string          id           = 1;
+  int32           capacity     = 2;
+  int32           shift_start  = 3;  // minutes from midnight
+  int32           shift_end    = 4;  // minutes from midnight
+  int32           break_start  = 5;  // 0 = no break
+  int32           break_end    = 6;
+  int32           max_tasks    = 7;  // 0 = unlimited
+  double          max_distance = 8;  // meters; 0 = unlimited
+  repeated string tags         = 9;
+}
+
+message SolveRequest {
+  Node             depot         = 1;
+  repeated Node    nodes         = 2;
+  repeated Vehicle vehicles      = 3;
+  repeated double  durations     = 4; // flattened n×n, row-major (minutes)
+  repeated double  distances     = 5; // flattened n×n, row-major (meters)
+  int32            matrix_size   = 6; // n (depot + nodes)
+  int32            time_limit_ms = 7;
+}
+
+message RouteStop {
+  string node_id     = 1;
+  int32  arrival_min = 2; // minutes from midnight
+  int32  depart_min  = 3; // minutes from midnight
+}
+
+message Route {
+  string             vehicle_id     = 1;
+  repeated RouteStop stops          = 2;
+  double             total_distance = 3; // meters
+  int32              total_duration = 4; // minutes
+}
+
+message SolveResponse {
+  repeated Route  routes     = 1;
+  repeated string unassigned = 2;
+  double          objective  = 3;
+  string          status     = 4; // OK | INFEASIBLE | TIMEOUT
+}
+
+service SolverService {
+  rpc Solve(SolveRequest) returns (SolveResponse);
+}
