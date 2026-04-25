@@ -9,6 +9,16 @@ const (
 	NodeTypePickup   NodeType = "pickup"
 )
 
+// Priority is the urgency level of a delivery order.
+type Priority string
+
+const (
+	PriorityCritical Priority = "critical"
+	PriorityHigh     Priority = "high"
+	PriorityMedium   Priority = "medium"
+	PriorityLow      Priority = "low"
+)
+
 // Node is a stop in the routing problem.
 type Node struct {
 	ID          string
@@ -20,5 +30,7 @@ type Node struct {
 	TWEnd       int      // latest arrival, minutes from midnight
 	Tags        []string // must match at least one vehicle tag
 	Type        NodeType
-	PairID      string // links pickup↔delivery; empty if not a PD pair
+	PairID      string   // links pickup↔delivery; empty if not a PD pair
+	Priority    Priority
+	DeadlineMin int // minutes from planning midnight; 0 = no deadline
 }

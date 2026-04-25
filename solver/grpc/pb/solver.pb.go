@@ -31,8 +31,10 @@ type Node struct {
 	TwStart       int32                  `protobuf:"varint,6,opt,name=tw_start,json=twStart,proto3" json:"tw_start,omitempty"` // minutes from midnight
 	TwEnd         int32                  `protobuf:"varint,7,opt,name=tw_end,json=twEnd,proto3" json:"tw_end,omitempty"`       // minutes from midnight
 	Tags          []string               `protobuf:"bytes,8,rep,name=tags,proto3" json:"tags,omitempty"`
-	Type          string                 `protobuf:"bytes,9,opt,name=type,proto3" json:"type,omitempty"`                    // depot | delivery | pickup
-	PairId        string                 `protobuf:"bytes,10,opt,name=pair_id,json=pairId,proto3" json:"pair_id,omitempty"` // links pickup↔delivery; empty if not a PD pair
+	Type          string                 `protobuf:"bytes,9,opt,name=type,proto3" json:"type,omitempty"`                                    // depot | delivery | pickup
+	PairId        string                 `protobuf:"bytes,10,opt,name=pair_id,json=pairId,proto3" json:"pair_id,omitempty"`                 // links pickup↔delivery; empty if not a PD pair
+	Priority      int32                  `protobuf:"varint,11,opt,name=priority,proto3" json:"priority,omitempty"`                          // 1=low 2=medium 3=high 4=critical 0=unset
+	DeadlineMin   int32                  `protobuf:"varint,12,opt,name=deadline_min,json=deadlineMin,proto3" json:"deadline_min,omitempty"` // minutes from planning midnight; 0=no deadline
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -135,6 +137,20 @@ func (x *Node) GetPairId() string {
 		return x.PairId
 	}
 	return ""
+}
+
+func (x *Node) GetPriority() int32 {
+	if x != nil {
+		return x.Priority
+	}
+	return 0
+}
+
+func (x *Node) GetDeadlineMin() int32 {
+	if x != nil {
+		return x.DeadlineMin
+	}
+	return 0
 }
 
 type Vehicle struct {
@@ -537,7 +553,7 @@ var File_solver_proto protoreflect.FileDescriptor
 
 const file_solver_proto_rawDesc = "" +
 	"\n" +
-	"\fsolver.proto\x12\x06solver\"\xe8\x01\n" +
+	"\fsolver.proto\x12\x06solver\"\xa7\x02\n" +
 	"\x04Node\x12\x0e\n" +
 	"\x02id\x18\x01 \x01(\tR\x02id\x12\x10\n" +
 	"\x03lat\x18\x02 \x01(\x01R\x03lat\x12\x10\n" +
@@ -549,7 +565,9 @@ const file_solver_proto_rawDesc = "" +
 	"\x04tags\x18\b \x03(\tR\x04tags\x12\x12\n" +
 	"\x04type\x18\t \x01(\tR\x04type\x12\x17\n" +
 	"\apair_id\x18\n" +
-	" \x01(\tR\x06pairId\"\x85\x02\n" +
+	" \x01(\tR\x06pairId\x12\x1a\n" +
+	"\bpriority\x18\v \x01(\x05R\bpriority\x12!\n" +
+	"\fdeadline_min\x18\f \x01(\x05R\vdeadlineMin\"\x85\x02\n" +
 	"\aVehicle\x12\x0e\n" +
 	"\x02id\x18\x01 \x01(\tR\x02id\x12\x1a\n" +
 	"\bcapacity\x18\x02 \x01(\x05R\bcapacity\x12\x1f\n" +
