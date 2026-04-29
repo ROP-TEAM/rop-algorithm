@@ -84,12 +84,47 @@ func TestSortNodes(t *testing.T) {
 
 			SortNodes(nodes)
 
+			gotOrder := make([]string, len(nodes))
+			for i, n := range nodes {
+				gotOrder[i] = n.ID
+			}
+			t.Logf("sorted order: %v", gotOrder)
+
 			for i, wantID := range tt.wantOrder {
 				if nodes[i].ID != wantID {
 					t.Errorf("position %d: got %q, want %q", i, nodes[i].ID, wantID)
 				}
 			}
 		})
+	}
+}
+
+func TestSortNodesScattered(t *testing.T) {
+	// กระจายครบทุกมิติ: deadline หลายวัน, TWEnd หลายช่วง, priority ทุกระดับ, มีทั้ง no-deadline
+	nodes := []model.Node{
+		{ID: "no-dl-low", DeadlineMin: 0, TWEnd: 600, Priority: model.PriorityLow},
+		{ID: "no-dl-critical", DeadlineMin: 0, TWEnd: 600, Priority: model.PriorityCritical},
+		{ID: "no-dl-medium-late", DeadlineMin: 0, TWEnd: 1200, Priority: model.PriorityMedium},
+		{ID: "day3-high", DeadlineMin: 4320, TWEnd: 900, Priority: model.PriorityHigh},
+		{ID: "day2-low", DeadlineMin: 2880, TWEnd: 720, Priority: model.PriorityLow},
+		{ID: "day2-critical", DeadlineMin: 2880, TWEnd: 720, Priority: model.PriorityCritical},
+		{ID: "tomorrow-medium", DeadlineMin: 2460, TWEnd: 1020, Priority: model.PriorityMedium},
+		{ID: "tomorrow-high", DeadlineMin: 2460, TWEnd: 1020, Priority: model.PriorityHigh},
+		{ID: "today-low-late", DeadlineMin: 1020, TWEnd: 1440, Priority: model.PriorityLow},
+		{ID: "today-critical-early", DeadlineMin: 1020, TWEnd: 900, Priority: model.PriorityCritical},
+		{ID: "today-high-early", DeadlineMin: 1020, TWEnd: 900, Priority: model.PriorityHigh},
+		{ID: "today-medium-early", DeadlineMin: 1020, TWEnd: 900, Priority: model.PriorityMedium},
+		{ID: "today-low-early", DeadlineMin: 1020, TWEnd: 900, Priority: model.PriorityLow},
+		{ID: "today-high-mid", DeadlineMin: 1020, TWEnd: 1080, Priority: model.PriorityHigh},
+		{ID: "no-priority", DeadlineMin: 540, TWEnd: 600, Priority: ""},
+	}
+
+	SortNodes(nodes)
+
+	t.Log("=== sorted result ===")
+	for i, n := range nodes {
+		t.Logf("[%2d] {ID: %q, DeadlineMin: %d, TWEnd: %d, Priority: %q}",
+			i+1, n.ID, n.DeadlineMin, n.TWEnd, n.Priority)
 	}
 }
 
