@@ -13,6 +13,8 @@ message Node {
   repeated string tags         = 8;
   string          type         = 9;  // depot | delivery | pickup
   string          pair_id      = 10; // links pickup↔delivery; empty if not a PD pair
+  int32           priority     = 11; // 1=low 2=medium 3=high 4=critical 0=unset
+  int32           deadline_min = 12; // minutes from planning midnight; 0=no deadline
 }
 
 message Vehicle {
