@@ -37,8 +37,8 @@ double calculateTSPRoute(const std::vector<int>& node_ids,
 }
 
 int main() {
-    const double FIXED_COST_PER_VEHICLE = 150.0;
-    const double COST_PER_KM = 10.0;
+    const double FIXED_COST_PER_VEHICLE = 550.0;
+    const double COST_PER_KM = 40.0;
 
     std::vector<Vehicle> fleet = {
         {1,  "Truck_1",  45.0, 14}, {2,  "Truck_2",  38.0, 12}, {3,  "Truck_3",  50.0, 15},
@@ -92,114 +92,92 @@ int main() {
     std::vector<std::vector<double>> delta(N, std::vector<double>(N));
     computeSlenderMatrix(N, theta, rho, delta, max_rho);
 
-    // Experiment Vars
-    // random subsets of vehicles
-    const int RANDOM_TRIALS = 20; 
     std::mt19937 rng(std::random_device{}());
+    std::uniform_int_distribution<int> K_dist(1, K_max);
 
-    double best_total_cost = 1e18;
-    double best_total_dist = 0;
+    double best_cost = 1e18;
+    double best_dist = 0;
     int best_K = -1;
     std::vector<std::vector<Cluster>> best_plan;
-    std::vector<int> best_overall_subset;
+    std::vector<int> best_subset;
 
-    for (int K = 1; K <= K_max; ++K) {
-        // std::cout << "Trying K = " << K << " ...\n";
-        double best_K_cost = 1e18;
-        double best_K_dist = 0;
-        std::vector<std::vector<Cluster>> best_K_plan;
-        std::vector<int> best_K_subset;
+    while (true) {
+        int K = K_dist(rng);
 
-        for (int trial = 0; trial < RANDOM_TRIALS; ++trial) {
-            std::vector<int> indices(K_max);
-            std::iota(indices.begin(), indices.end(), 0);
-            std::shuffle(indices.begin(), indices.end(), rng);
-            std::vector<int> subset(indices.begin(), indices.begin() + K);
+        std::vector<int> indices(K_max);
+        std::iota(indices.begin(), indices.end(), 0);
+        std::shuffle(indices.begin(), indices.end(), rng);
+        std::vector<int> subset(indices.begin(), indices.begin() + K);
 
-            std::vector<int> unassigned(N - 1);
-            std::iota(unassigned.begin(), unassigned.end(), 1);
-            
-            std::vector<int> orders_served(K, 0);
-            std::vector<std::vector<Cluster>> vehicle_plan(K);
-            bool feasible = true;
+        std::vector<int> unassigned(N - 1);
+        std::iota(unassigned.begin(), unassigned.end(), 1);
 
-            // MULTI-TRIP LOOP
-            while (!unassigned.empty()) {
-                std::vector<int> active_indices;
-                std::vector<double> active_caps;
-                std::vector<int> active_rem_orders;
+        std::vector<int> orders_served(K, 0);
+        std::vector<std::vector<Cluster>> vehicle_plan(K);
+        bool feasible = true;
 
-                for (int v = 0; v < K; ++v) {
-                    int left = fleet[subset[v]].max_orders_per_day - orders_served[v];
-                    if (left > 0) {
-                        active_indices.push_back(v);
-                        active_caps.push_back(fleet[subset[v]].capacity);
-                        active_rem_orders.push_back(left);
-                    }
-                }
-                if (active_indices.empty()) { feasible = false; break; }
+        while (!unassigned.empty()) {
+            std::vector<int> active_indices;
+            std::vector<double> active_caps;
+            std::vector<int> active_rem_orders;
 
-                int nodes_left_before = unassigned.size();
-
-                std::vector<Cluster> new_clusters = SlenderSolver::runOneRound(
-                    nodes, delta, active_caps, active_rem_orders, unassigned
-                );
-
-                // Prevent infinite loop if not any vehicles can take this order
-                if (unassigned.size() == nodes_left_before) {
-                    feasible = false; 
-                    break; 
-                }
-
-                for (size_t i = 0; i < active_indices.size(); ++i) {
-                    int v = active_indices[i];
-                    if (new_clusters[i].node_ids.empty()) continue;
-                    vehicle_plan[v].push_back(new_clusters[i]);
-                    orders_served[v] += new_clusters[i].node_ids.size();
-                }
-            }
-
-            if (!feasible) continue;
-
-            double total_distance = 0.0;
             for (int v = 0; v < K; ++v) {
-                for (auto& trip : vehicle_plan[v]) {
-                    trip.distance = calculateTSPRoute(trip.node_ids, nodes, distMatrix);
-                    total_distance += trip.distance;
+                int left = fleet[subset[v]].max_orders_per_day - orders_served[v];
+                if (left > 0) {
+                    active_indices.push_back(v);
+                    active_caps.push_back(fleet[subset[v]].capacity);
+                    active_rem_orders.push_back(left);
                 }
             }
-            double total_cost = K * FIXED_COST_PER_VEHICLE + total_distance * COST_PER_KM;
+            if (active_indices.empty()) { feasible = false; break; }
 
-            if (total_cost < best_K_cost) {
-                best_K_cost = total_cost;
-                best_K_dist = total_distance;
-                best_K_plan = vehicle_plan;
-                best_K_subset = subset;
+            int nodes_left_before = unassigned.size();
+            std::vector<Cluster> new_clusters = SlenderSolver::runOneRound(
+                nodes, delta, active_caps, active_rem_orders, unassigned
+            );
+            if (unassigned.size() == nodes_left_before) { feasible = false; break; }
+
+            for (size_t i = 0; i < active_indices.size(); ++i) {
+                int v = active_indices[i];
+                if (new_clusters[i].node_ids.empty()) continue;
+                vehicle_plan[v].push_back(new_clusters[i]);
+                orders_served[v] += new_clusters[i].node_ids.size();
             }
         }
 
-        if (best_K_cost < 1e18 && best_K_cost < best_total_cost) {
-            best_total_cost = best_K_cost;
-            best_total_dist = best_K_dist;
+        if (!feasible) continue;
+
+        double total_dist = 0.0;
+        for (int v = 0; v < K; ++v) {
+            for (auto& trip : vehicle_plan[v]) {
+                trip.distance = calculateTSPRoute(trip.node_ids, nodes, distMatrix);
+                total_dist += trip.distance;
+            }
+        }
+        double total_cost = K * FIXED_COST_PER_VEHICLE + total_dist * COST_PER_KM;
+
+        if (total_cost < best_cost) {
+            best_cost = total_cost;
+            best_dist = total_dist;
             best_K = K;
-            best_plan = best_K_plan;
-            best_overall_subset = best_K_subset;
+            best_plan = vehicle_plan;
+            best_subset = subset;
+
+            std::cout << "\n=======================================\n";
+            std::cout << "NEW BEST | K=" << K << " | dist=" << best_dist << " km | cost=" << best_cost << " THB\n";
+            for (int i = 0; i < K; ++i) {
+                if (vehicle_plan[i].empty()) continue;
+                const Vehicle& veh = fleet[subset[i]];
+                std::cout << veh.type << " (Cap: " << veh.capacity << "kg):\n";
+                int t = 1;
+                for (const auto& trip : vehicle_plan[i]) {
+                    std::cout << "  Trip " << t++ << " | Nodes: ";
+                    for (int id : trip.node_ids) std::cout << nodes[id].name << " ";
+                    std::cout << "| Weight: " << trip.total_weight << "kg | Dist: " << trip.distance << " km\n";
+                }
+            }
         }
     }
 
-    std::cout << "\n=======================================\n";
-    std::cout << "BEST SOLUTION: K = " << best_K << "\n";
-    std::cout << "Total dist = " << best_total_dist << " km | Total cost = " << best_total_cost << " THB\n";
-    for (int i = 0; i < best_K; ++i) {
-        if (best_plan[i].empty()) continue;
-        const Vehicle& veh = fleet[best_overall_subset[i]];
-        std::cout << "\n" << veh.type << " (Cap: " << veh.capacity << "kg): \n";
-        int t = 1;
-        for (const auto& trip : best_plan[i]) {
-            std::cout << "  Trip " << t++ << " | Nodes: ";
-            for (int id : trip.node_ids) std::cout << id << " ";
-            std::cout << " | Weight: " << trip.total_weight << "kg | Dist: " << trip.distance << " km\n";
-        }
-    }
     return 0;
 }

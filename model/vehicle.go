@@ -11,4 +11,8 @@ type Vehicle struct {
 	MaxTasks    int     // 0 = unlimited
 	MaxDistance float64 // meters; 0 = unlimited
 	Tags        []string
+	StartLat    float64
+	StartLng    float64
+	EndLat      float64
+	EndLng      float64
 }

@@ -122,8 +122,35 @@ double getRouteDistance(vector<int>& route, Adj& adj) {
   return ans;
 }
 
-int main() {
+Adj buildAdjMatrix(vector<Point>& points) {
+  int n = points.size();
+  Adj adj(n, vector<double>(n, 0.0));
+  for (int i = 0; i < n; i++)
+    for (int j = i + 1; j < n; j++) {
+      double d = getDistance(points[i], points[j]);
+      adj[i][j] = d;
+      adj[j][i] = d;
+    }
+  return adj;
+}
 
+struct RouteResult {
+  vector<int> route;
+  double      distance;
+};
+
+// Runs MST (Prim) + DFS traversal + 2-opt on a pre-built n×n distance matrix.
+// Returns the optimised tour starting and ending at node 0.
+// adj is wire gmap api
+RouteResult optimizeRoute(Adj& adj, int n) {
+  vector<Edge> mst      = buildMST(adj, n);
+  vector<int>  route    = getRoute(mst, n);
+  vector<int>  opt      = twoOpt(route, adj);
+  opt.push_back(0);
+  return {opt, getRouteDistance(opt, adj)};
+}
+
+int main() {
   vector<Point> nodes = {
     {100, 100},   // 0  depot
     {300, 150},   // 1
@@ -139,39 +166,17 @@ int main() {
     {520, 350},   // 11
   };
 
-  int n = nodes.size();
-  Adj adj(n, vector<double>(n, 0.0));
-  for(int i=0;i<n;i++) 
-    for(int j=i+1;j<n;j++) {
-      double dist = getDistance(nodes[i], nodes[j]);
-      adj[i][j] = dist;
-      adj[j][i] = dist;
-    }
-
-  // first step : building a MST
-  // I'm using prim's algortihm
-  vector<Edge> MST = buildMST(adj, n);
+  Adj adj    = buildAdjMatrix(nodes);
+  int n      = nodes.size();
 
   separator("Prim's MST");
-  for(auto [u,v] : MST) cout << u << " -> " << v << " / weight : " << adj[u][v] << '\n';
+  for (auto [u,v] : buildMST(adj, n)) cout << u << " -> " << v << " / weight : " << adj[u][v] << '\n';
   separator();
 
-  // second step : tranverse the tree and create a route
-  // this step would not give an optimal result which is way we need 2-opt
-  vector<int> route = getRoute(MST, n);
-  cout << '\n';
-  separator("create route");
-  for(int i=0;i<n;i++) cout << route[i] << " -> ";
-  cout << "0\n";
-  separator();
-
-  // third step : opt route
-  vector<int> optRoute = twoOpt(route, adj);
-  optRoute.push_back(0);
-  cout << '\n';
+  auto [optRoute, dist] = optimizeRoute(adj, n);
   separator("2-opt route");
-  cout << "route distance : " << getRouteDistance(optRoute, adj) << '\n';
-  for(int i=0;i<n+1;i++) cout << optRoute[i] << (i!=n?" -> ":"\n");
+  cout << "route distance : " << dist << '\n';
+  for (int i = 0; i < (int)optRoute.size(); i++)
+    cout << optRoute[i] << (i != (int)optRoute.size()-1 ? " -> " : "\n");
   separator();
-
 }
