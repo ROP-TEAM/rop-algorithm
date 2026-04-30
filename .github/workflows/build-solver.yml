@@ -13,31 +13,23 @@ on:
 
 jobs:
   build:
-    runs-on: windows-latest
+    runs-on: ubuntu-latest
 
     steps:
       - uses: actions/checkout@v4
 
-      - name: Set up MSYS2 (UCRT64)
-        uses: msys2/setup-msys2@v2
-        with:
-          msystem: UCRT64
-          update: true
-          install: >-
-            mingw-w64-ucrt-x86_64-grpc
-            mingw-w64-ucrt-x86_64-ninja
-            mingw-w64-ucrt-x86_64-cmake
+      - name: Install dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y cmake ninja-build libgrpc++-dev protobuf-compiler-grpc
 
       - name: Configure
-        shell: msys2 {0}
         run: |
           cd core
           cmake -B build -G Ninja \
-            -DCMAKE_BUILD_TYPE=Release \
-            -DCMAKE_PREFIX_PATH=/ucrt64
+            -DCMAKE_BUILD_TYPE=Release
 
       - name: Build
-        shell: msys2 {0}
         run: |
           cd core
           cmake --build build --parallel
@@ -45,6 +37,6 @@ jobs:
       - name: Upload solver binary
         uses: actions/upload-artifact@v4
         with:
-          name: solver-windows
-          path: core/build/solver.exe
+          name: solver-linux
+          path: core/build/solver
           retention-days: 7
