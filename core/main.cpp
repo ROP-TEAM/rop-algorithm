@@ -2,8 +2,7 @@
 #include "priority_shape_clustering/solver_service.h"
 
 int main(int argc, char** argv) {
-    std::string port = argc > 1 ? argv[1] : "50051";
-    std::string addr = "0.0.0.0:" + port;
+    std::string addr = argc > 1 ? argv[1] : "0.0.0.0:50051";
 
     SolverServiceImpl service;
     grpc::ServerBuilder builder;
