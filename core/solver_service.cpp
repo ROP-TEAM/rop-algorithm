@@ -1,8 +1,8 @@
 #include "solver_service.h"
-#include "route_optimizer.h"
-#include "slender_solver.h"
-#include "types.h"
-#include "../priority/sorter.h"
+#include "priority_shape_clustering/route_optimizer.h"
+#include "priority_shape_clustering/slender_solver.h"
+#include "priority_shape_clustering/types.h"
+#include "priority/sorter.h"
 #include <numeric>
 #include <unordered_set>
 #include <climits>
@@ -11,22 +11,22 @@ static std::vector<Node> buildAllNodes(const solver::SolveRequest* req) {
     int N = req->matrix_size();
     std::vector<Node> nodes(N);
 
-    nodes[0].id          = 0;
-    nodes[0].name        = req->depot().id();
-    nodes[0].lat         = req->depot().lat();
-    nodes[0].lon         = req->depot().lng();
-    nodes[0].weight      = 0.0;
-    nodes[0].priority    = 0;
+    nodes[0].id           = 0;
+    nodes[0].name         = req->depot().id();
+    nodes[0].lat          = req->depot().lat();
+    nodes[0].lon          = req->depot().lng();
+    nodes[0].weight       = 0.0;
+    nodes[0].priority     = 0;
     nodes[0].deadline_min = 0;
 
     for (int i = 1; i < N; ++i) {
         const auto& pn = req->nodes(i - 1);
-        nodes[i].id          = i;
-        nodes[i].name        = pn.id();
-        nodes[i].lat         = pn.lat();
-        nodes[i].lon         = pn.lng();
-        nodes[i].weight      = pn.demand();
-        nodes[i].priority    = pn.priority();
+        nodes[i].id           = i;
+        nodes[i].name         = pn.id();
+        nodes[i].lat          = pn.lat();
+        nodes[i].lon          = pn.lng();
+        nodes[i].weight       = pn.demand();
+        nodes[i].priority     = pn.priority();
         nodes[i].deadline_min = pn.deadline_min();
     }
     return nodes;
@@ -42,8 +42,6 @@ static std::vector<std::vector<double>> unflatten(
     return mat;
 }
 
-// Builds (1 + cluster_size) x (1 + cluster_size) sub-matrix.
-// Index 0 = depot, indices 1..k = cluster node_ids.
 static Adj buildSubAdj(const std::vector<int>& node_ids,
                        const std::vector<std::vector<double>>& dist)
 {
@@ -57,7 +55,8 @@ static Adj buildSubAdj(const std::vector<int>& node_ids,
     return sub;
 }
 
-// Picks K center IDs evenly spaced across sorted candidate list.
+// Evenly-spaced seeding: spreads K centers across the priority-sorted candidate list
+// so each vehicle gets a geographically distinct starting region.
 static std::vector<int> pickCenters(const std::vector<int>& ids, int K) {
     int sz = (int)ids.size();
     std::vector<int> centers(K);
@@ -76,9 +75,9 @@ grpc::Status SolverServiceImpl::Solve(grpc::ServerContext*,
         return grpc::Status::OK;
     }
 
-    std::vector<Node> all_nodes    = buildAllNodes(req);
-    auto              dist_matrix  = unflatten(req->distances(), N);
-    auto              dur_matrix   = unflatten(req->durations(), N);
+    std::vector<Node> all_nodes   = buildAllNodes(req);
+    auto              dist_matrix = unflatten(req->distances(), N);
+    auto              dur_matrix  = unflatten(req->durations(), N);
 
     std::vector<int> all_indices(N - 1);
     std::iota(all_indices.begin(), all_indices.end(), 1);
@@ -94,6 +93,7 @@ grpc::Status SolverServiceImpl::Solve(grpc::ServerContext*,
     }
 
     std::vector<std::vector<Cluster>> vehicle_trips(V);
+    std::unordered_set<int> all_assigned;
 
     while (!sorted_unassigned.empty()) {
         std::vector<double> active_caps;
@@ -115,16 +115,11 @@ grpc::Status SolverServiceImpl::Solve(grpc::ServerContext*,
         candidates.reserve(sorted_unassigned.size());
         for (int idx : sorted_unassigned) candidates.push_back(all_nodes[idx]);
 
-        std::vector<int> candidate_ids;
-        candidate_ids.reserve(candidates.size());
-        for (const auto& n : candidates) candidate_ids.push_back(n.id);
-
-        std::vector<int> centers = pickCenters(candidate_ids, K);
+        std::vector<int> centers = pickCenters(sorted_unassigned, K);
 
         std::vector<Cluster> clusters = SlenderSolver::clusterWithCenters(
             candidates, all_nodes, centers, dist_matrix, active_caps, active_rem);
 
-        std::unordered_set<int> assigned_ids;
         int assigned_total = 0;
 
         for (int i = 0; i < K; ++i) {
@@ -142,7 +137,7 @@ grpc::Status SolverServiceImpl::Solve(grpc::ServerContext*,
             int v = active_v[i];
             vehicle_trips[v].push_back(c);
             tasks_done[v] += (int)c.node_ids.size();
-            for (int id : c.node_ids) assigned_ids.insert(id);
+            for (int id : c.node_ids) all_assigned.insert(id);
             assigned_total++;
         }
 
@@ -150,12 +145,10 @@ grpc::Status SolverServiceImpl::Solve(grpc::ServerContext*,
 
         sorted_unassigned.erase(
             std::remove_if(sorted_unassigned.begin(), sorted_unassigned.end(),
-                [&](int idx) { return assigned_ids.count(idx) > 0; }),
+                [&](int idx) { return all_assigned.count(idx) > 0; }),
             sorted_unassigned.end());
     }
 
-    // Build SolveResponse
-    std::unordered_set<int> all_assigned;
     double total_obj = 0.0;
 
     for (int v = 0; v < V; ++v) {
@@ -184,10 +177,9 @@ grpc::Status SolverServiceImpl::Solve(grpc::ServerContext*,
                 vdist += dist_matrix[cur][global_id];
                 vtime  = depart;
                 cur    = global_id;
-                all_assigned.insert(global_id);
             }
         }
-        vdist += dist_matrix[cur][0]; // return to depot
+        vdist += dist_matrix[cur][0];
         route->set_total_distance(vdist);
         route->set_total_duration(vtime - req->vehicles(v).shift_start());
         total_obj += vdist;

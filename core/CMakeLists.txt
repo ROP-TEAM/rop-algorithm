@@ -29,7 +29,7 @@ add_custom_command(
 # gRPC solver binary — started by Go's solver/process package
 add_executable(solver
     main.cpp
-    priority_shape_clustering/solver_service.cpp
+    solver_service.cpp
     priority_shape_clustering/slender_utils.cpp
     priority_shape_clustering/slender_solver.cpp
     ${PROTO_SRCS}
@@ -37,6 +37,21 @@ add_executable(solver
 )
 target_link_libraries(solver PRIVATE gRPC::grpc++ protobuf::libprotobuf)
 target_include_directories(solver PRIVATE
+    ${CMAKE_CURRENT_BINARY_DIR}
+    ${CMAKE_CURRENT_SOURCE_DIR}
+)
+
+# Solve pipeline demo — requires gRPC/protobuf (uses SolveRequest/SolveResponse proto)
+add_executable(demo_solve
+    demo_solve.cpp
+    solver_service.cpp
+    priority_shape_clustering/slender_utils.cpp
+    priority_shape_clustering/slender_solver.cpp
+    ${PROTO_SRCS}
+    ${GRPC_SRCS}
+)
+target_link_libraries(demo_solve PRIVATE gRPC::grpc++ protobuf::libprotobuf)
+target_include_directories(demo_solve PRIVATE
     ${CMAKE_CURRENT_BINARY_DIR}
     ${CMAKE_CURRENT_SOURCE_DIR}
 )

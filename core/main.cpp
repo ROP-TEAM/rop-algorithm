@@ -1,5 +1,5 @@
 #include <grpcpp/grpcpp.h>
-#include "priority_shape_clustering/solver_service.h"
+#include "solver_service.h"
 
 int main(int argc, char** argv) {
     std::string addr = argc > 1 ? argv[1] : "0.0.0.0:50051";
