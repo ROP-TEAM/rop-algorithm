@@ -1,0 +1,50 @@
+name: Build C++ Solver
+
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - 'core/**'
+      - 'solver/proto/**'
+  pull_request:
+    paths:
+      - 'core/**'
+      - 'solver/proto/**'
+
+jobs:
+  build:
+    runs-on: windows-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up MSYS2 (UCRT64)
+        uses: msys2/setup-msys2@v2
+        with:
+          msystem: UCRT64
+          update: true
+          install: >-
+            mingw-w64-ucrt-x86_64-grpc
+            mingw-w64-ucrt-x86_64-ninja
+            mingw-w64-ucrt-x86_64-cmake
+
+      - name: Configure
+        shell: msys2 {0}
+        run: |
+          cd core
+          cmake -B build -G Ninja \
+            -DCMAKE_BUILD_TYPE=Release \
+            -DCMAKE_PREFIX_PATH=/ucrt64
+
+      - name: Build
+        shell: msys2 {0}
+        run: |
+          cd core
+          cmake --build build --parallel
+
+      - name: Upload solver binary
+        uses: actions/upload-artifact@v4
+        with:
+          name: solver-windows
+          path: core/build/solver.exe
+          retention-days: 7
