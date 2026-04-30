@@ -4,12 +4,12 @@ on:
   workflow_dispatch:
   push:
     paths:
-      - 'rop-algorithm/core/**'
-      - 'rop-algorithm/solver/proto/**'
+      - 'core/**'
+      - 'solver/proto/**'
   pull_request:
     paths:
-      - 'rop-algorithm/core/**'
-      - 'rop-algorithm/solver/proto/**'
+      - 'core/**'
+      - 'solver/proto/**'
 
 jobs:
   build:
@@ -31,7 +31,7 @@ jobs:
       - name: Configure
         shell: msys2 {0}
         run: |
-          cd rop-algorithm/core
+          cd core
           cmake -B build -G Ninja \
             -DCMAKE_BUILD_TYPE=Release \
             -DCMAKE_PREFIX_PATH=/ucrt64
@@ -39,12 +39,12 @@ jobs:
       - name: Build
         shell: msys2 {0}
         run: |
-          cd rop-algorithm/core
+          cd core
           cmake --build build --parallel
 
       - name: Upload solver binary
         uses: actions/upload-artifact@v4
         with:
           name: solver-windows
-          path: rop-algorithm/core/build/solver.exe
+          path: core/build/solver.exe
           retention-days: 7
