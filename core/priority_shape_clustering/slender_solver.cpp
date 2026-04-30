@@ -114,7 +114,7 @@ std::vector<Cluster> SlenderSolver::clusterWithCenters(
     const std::vector<Node>& candidate_nodes,
     const std::vector<Node>& all_nodes,
     const std::vector<int>& centers,
-    const std::vector<std::vector<double>>& distMatrix, // wire gmap api
+    const std::vector<std::vector<double>>& distMatrix,
     const std::vector<double>& active_capacities,
     const std::vector<int>& active_remaining_orders)
 {
