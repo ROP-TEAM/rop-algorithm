@@ -3,13 +3,13 @@ name: Build C++ Solver
 on:
   workflow_dispatch:
   push:
-    paths:
-      - 'core/**'
-      - 'solver/proto/**'
+    branches:
+      - main
+      - dev
   pull_request:
-    paths:
-      - 'core/**'
-      - 'solver/proto/**'
+    branches:
+      - main
+      - dev
 
 jobs:
   build:
