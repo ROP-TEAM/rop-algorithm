@@ -16,21 +16,26 @@ go test ./test/... -run TestName -v
 go test ./core/priority/... -run TestName -v
 ```
 
-### C++ Solver (core/priority_shape_clustering/)
+### C++ Solver (core/)
 
 ```bash
-cd core/priority_shape_clustering
+cd core
 
 # First build
 cmake -B build -DCMAKE_BUILD_TYPE=Release
-cmake --build build
-# Produces: build/solver (gRPC server), build/demo_solve (standalone demo)
+cmake --build build                          # builds solver + demo_solve
+cmake --build build --target solver          # gRPC server only
+cmake --build build --target demo_solve      # mock-data demo only
 
 # Subsequent rebuilds after editing existing files
 cmake --build build
 
 # After adding a new .cpp file — update CMakeLists.txt first, then:
 cmake -B build && cmake --build build
+
+# Standalone clustering demo (no gRPC dependency):
+cd core/priority_shape_clustering
+cmake -B build && cmake --build build        # builds: build/demo
 ```
 
 ### Regenerate Go proto bindings (after editing solver/proto/solver.proto)
@@ -131,6 +136,24 @@ For gRPC they are flattened row-major: `element[i][j] = flat[i * matrix_size + j
 - `graph/pathFinder.go` — placeholder, no logic
 - `core/constraint/checker.go` — placeholder, no logic
 - `buildProblem()` / `saveSolution()` in `rop-backend` — the bridge between GORM models and `model.Problem`/`model.Solution`
+
+### C++ solver constraint gaps
+
+`Node` proto fields received but currently **ignored** in `core/`: `tw_end`, `tags`, `type`, `pair_id`.
+`Vehicle` proto fields received but currently **ignored**: `shift_end`, `break_start`, `break_end`, `max_distance`, `tags`.
+
+| Constraint | Status |
+|---|---|
+| Capacity | ✅ enforced in `kMedoidsIterate` |
+| tw_start (early wait) | ✅ applied in route building |
+| max_tasks per vehicle | ✅ enforced in `kMedoidsIterate` |
+| tw_end (latest arrival) | ❌ ignored — late arrivals not unassigned |
+| shift_end (vehicle return) | ❌ ignored |
+| Break window | ❌ ignored |
+| Tag match (node ∩ vehicle) | ❌ ignored — incompatible nodes assigned freely |
+| PD pairs (pickup before delivery) | ❌ not enforced |
+| max_distance per vehicle | ❌ ignored |
+| Penalty scoring (1000 × unassigned) | ❌ not applied |
 
 ## Reference Docs
 
