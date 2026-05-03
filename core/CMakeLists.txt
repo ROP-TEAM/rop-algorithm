@@ -55,3 +55,19 @@ target_include_directories(demo_solve PRIVATE
     ${CMAKE_CURRENT_BINARY_DIR}
     ${CMAKE_CURRENT_SOURCE_DIR}
 )
+
+# Benchmark harness — plug in new *_bench.cpp that includes bench_gen.h to extend
+add_executable(bench_solve
+    bench_solve.cpp
+    bench_gen.cpp
+    solver_service.cpp
+    priority_shape_clustering/slender_utils.cpp
+    priority_shape_clustering/slender_solver.cpp
+    ${PROTO_SRCS}
+    ${GRPC_SRCS}
+)
+target_link_libraries(bench_solve PRIVATE gRPC::grpc++ protobuf::libprotobuf)
+target_include_directories(bench_solve PRIVATE
+    ${CMAKE_CURRENT_BINARY_DIR}
+    ${CMAKE_CURRENT_SOURCE_DIR}
+)
