@@ -108,15 +108,10 @@ vector<int> twoOpt(vector<int> route, Adj& adj) {
   int  swapCount = 0;
   bool improved  = true;
 
-  // copter debug on 04-may 2026 : 00:42
-  bool iter = 0;
-
-  while (improved && iter < 10000) {
+  while (improved && iter) {
     improved = twoOptPass(route, adj, swapCount);
-    ++iter;
   }
 
-  if (iter == 10000) std::cerr << "[WARN] twoOpt exceeded max iterations, size=" << route.size() << "\n";
   // std::cout << "  Total 2-opt swaps applied: " << swapCount << "\n";
   return route;
 }
