@@ -5,6 +5,7 @@
 #include <cmath>
 #include <limits>
 #include <climits>
+#include <iostream>
 
 using Adj  = std::vector<std::vector<double>>;
 using Edge = std::pair<int, int>;
@@ -87,7 +88,17 @@ inline bool twoOptPass(std::vector<int>& route, Adj& adj, int& swapCount) {
 inline std::vector<int> twoOpt(std::vector<int> route, Adj& adj) {
     int  swaps    = 0;
     bool improved = true;
-    while (improved) improved = twoOptPass(route, adj, swaps);
+    // copter debug on 04-may : 00:46
+    // add iter count
+    int iter = 0;
+    while (improved && iter < 10000) {
+      improved = twoOptPass(route, adj, swaps);
+      iter++;
+    } 
+    if (iter == 10000) {
+      std::cerr << "[DEBUG WARING] twoOpt: max iterations reached, size=" 
+        << route.size() << std::endl;
+    }
     return route;
 }
 

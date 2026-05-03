@@ -139,18 +139,18 @@ struct VehicleDef {
 };
 
 static const VehicleDef VEHICLES[12] = {
-    {"V-01",  50, 420,1020, 0, "refrigerated","fragile"},
-    {"V-02",  80, 360,1080, 0, "heavy","bulk"},
-    {"V-03",  10, 480,1260, 0, "small","express"},
-    {"V-04",  16, 420,1020, 0, "refrigerated","fragile"},
-    {"V-05",  12, 540, 900, 0, "heavy","bulk"},
-    {"V-06",  47, 480,1080, 0, "small","express"},
-    {"V-07",  40, 480,1020, 0, "fragile","small"},
-    {"V-08", 200, 300, 900, 0, "heavy","bulk"},
-    {"V-09",  60, 540,1140, 0, "fragile",""},
-    {"V-10",  10, 540,1020, 0, "small","express"},
-    {"V-11", 100, 240, 840, 0, "refrigerated",""},
-    {"V-12",  16, 420,1020, 0, "refrigerated","fragile"},
+    {"V-01",  50, 420,1020, 4, "refrigerated","fragile"},
+    {"V-02",  80, 360,1080, 5, "heavy","bulk"},
+    {"V-03",  10, 480,1260, 6, "small","express"},
+    {"V-04",  16, 420,1020, 4, "refrigerated","fragile"},
+    {"V-05",  12, 540, 900, 5, "heavy","bulk"},
+    {"V-06",  47, 480,1080, 6, "small","express"},
+    {"V-07",  40, 480,1020, 7, "fragile","small"},
+    {"V-08", 200, 300, 900, 7, "heavy","bulk"},
+    {"V-09",  60, 540,1140, 8, "fragile",""},
+    {"V-10",  10, 540,1020, 5, "small","express"},
+    {"V-11", 100, 240, 840, 6, "refrigerated",""},
+    {"V-12",  16, 420,1020, 5, "refrigerated","fragile"},
 };
 
 // ---------------------------------------------------------------------------
