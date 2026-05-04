@@ -1,3 +1,4 @@
+#define _USE_MATH_DEFINES
 #include "slender_utils.h"
 #include <cmath>
 #include <algorithm>

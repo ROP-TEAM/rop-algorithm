@@ -1,3 +1,4 @@
+#define _USE_MATH_DEFINES
 #include "bench_gen.h"
 #include <random>
 #include <cmath>
