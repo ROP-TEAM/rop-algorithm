@@ -64,29 +64,6 @@ static Adj buildSubAdj(const std::vector<int>& node_ids,
     return sub;
 }
 
-// simple nearest-neighbour route (just in case optimizeRoute lack order)
-// delete later (now 03-May 23:35)
-static std::vector<int> computeSimpleRoute(const std::vector<int>& ids,
-                                           const std::vector<std::vector<double>>& dist)
-{
-    std::vector<int> route;
-    if (ids.empty()) return route;
-    std::unordered_set<int> unvisited(ids.begin(), ids.end());
-    int current = 0; // depot
-    while (!unvisited.empty()) {
-        double best_dist = 1e18;
-        int best_next = -1;
-        for (int nid : unvisited) {
-            double d = dist[current][nid];
-            if (d < best_dist) { best_dist = d; best_next = nid; }
-        }
-        route.push_back(best_next);
-        unvisited.erase(best_next);
-        current = best_next;
-    }
-    return route;
-}
-
 /*
    Evaluate one subset of vehicles (their indices in full fleet)
    Returns {total_cost, plan}, where plan is a vector of trips per SELECTED vehicle (size = K)
@@ -111,7 +88,7 @@ std::pair<double, std::vector<std::vector<Cluster>>> evaluateSubset(
   for (int i = 0; i < K; ++i) {
     const auto& v = req->vehicles(veh_indices[i]);
     caps[i] = v.capacity();
-    // max_tasks == 0 → unlimited
+    // max_tasks == 0 → unlimited // temporary
     max_orders[i] = (v.max_tasks() == 0) ? INT_MAX : v.max_tasks();
   }
 
@@ -178,40 +155,6 @@ std::pair<double, std::vector<std::vector<Cluster>>> evaluateSubset(
       total_dist += trip.distance;
       for (int nid : trip.node_ids) assigned_set.insert(nid);
 
-      // Use ALl simpleRouteCal
-      // trip.route = computeSimpleRoute(trip.node_ids, dist);
-      // trip.distance = 0.0;
-      // int prev = 0;
-      // for (int nid : trip.route) {
-      //     trip.distance += dist[prev][nid];
-      //     prev = nid;
-      // }
-      // trip.distance += dist[prev][0];
-      //
-      // total_dist += trip.distance;
-
-
-      // for (int nid : trip.node_ids) assigned_set.insert(nid);
-      // Adj sub = buildSubAdj(trip.node_ids, dist);
-      // RouteResult res = optimizeRoute(sub, (int)sub.size());
-      // trip.distance = res.distance;
-      //
-      // If optimizeRoute returns order, use it; else fallback
-      // (Assuming res.route exists and 0 = depot)
-    //   if (!res.route.empty()) {
-    //     trip.route.clear();
-    //     for (int idx : res.route) {
-    //       if (idx == 0) continue;
-    //       trip.route.push_back(trip.node_ids[idx - 1]);
-    //     }
-    //   } else {
-    //     trip.route = computeSimpleRoute(trip.node_ids, dist);
-    //   }
-    //
-    //   total_dist += res.distance;
-    //   for (int nid : trip.node_ids) assigned_set.insert(nid);
-
-
     }
   }
 
@@ -219,16 +162,6 @@ std::pair<double, std::vector<std::vector<Cluster>>> evaluateSubset(
 
   double total_cost = K * fixed_cost_per_veh + (total_dist/1000.0) * cost_per_km;
   return {total_cost, trips};
-}
-
-// Evenly-spaced seeding: spreads K centers across the priority-sorted candidate list
-// so each vehicle gets a geographically distinct starting region.
-static std::vector<int> pickCenters(const std::vector<int>& ids, int K) {
-    int sz = (int)ids.size();
-    std::vector<int> centers(K);
-    for (int k = 0; k < K; ++k)
-        centers[k] = ids[k * (sz - 1) / std::max(K - 1, 1) % sz];
-    return centers;
 }
 
 grpc::Status SolverServiceImpl::Solve(grpc::ServerContext*,
