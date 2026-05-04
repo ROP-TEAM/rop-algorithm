@@ -1,29 +1,33 @@
 package gmap
 
-import "fmt"
+import (
+	"fmt"
+
+	"github.com/ROP-TEAM/rop-algorithm/model"
+)
 
 type matrixChunk struct {
-	req    DistanceMatrixRequest
+	req    model.DistanceMatrixRequest
 	oStart int
 	dStart int
 }
 
-func buildChunk(req DistanceMatrixRequest, oStart, oEnd, dStart, dEnd int) matrixChunk {
+func buildChunk(req model.DistanceMatrixRequest, oStart, oEnd, dStart, dEnd int) matrixChunk {
 	chunk := matrixChunk{req: req, oStart: oStart, dStart: dStart}
 	chunk.req.Origins = append([]string(nil), req.Origins[oStart:oEnd]...)
 	chunk.req.Destinations = append([]string(nil), req.Destinations[dStart:dEnd]...)
 	return chunk
 }
 
-func allocateResult(req DistanceMatrixRequest) *DistanceMatrixResult {
+func allocateResult(req model.DistanceMatrixRequest) *model.DistanceMatrixResult {
 	nO, nD := len(req.Origins), len(req.Destinations)
-	rows := make([]DistanceMatrixRow, nO)
+	rows := make([]model.DistanceMatrixRow, nO)
 	for i := range rows {
-		rows[i] = DistanceMatrixRow{Elements: make([]DistanceMatrixElement, nD)}
+		rows[i] = model.DistanceMatrixRow{Elements: make([]model.DistanceMatrixElement, nD)}
 	}
-	return &DistanceMatrixResult{
+	return &model.DistanceMatrixResult{
 		Request: req,
-		Response: DistanceMatrixResponse{
+		Response: model.DistanceMatrixResponse{
 			Status:               "OK",
 			OriginAddresses:      make([]string, nO),
 			DestinationAddresses: make([]string, nD),
@@ -34,7 +38,7 @@ func allocateResult(req DistanceMatrixRequest) *DistanceMatrixResult {
 	}
 }
 
-func mergeChunkIntoResult(result *DistanceMatrixResult, chunk matrixChunk, resp DistanceMatrixResponse) error {
+func mergeChunkIntoResult(result *model.DistanceMatrixResult, chunk matrixChunk, resp model.DistanceMatrixResponse) error {
 	copy(result.Response.OriginAddresses[chunk.oStart:], resp.OriginAddresses)
 	copy(result.Response.DestinationAddresses[chunk.dStart:], resp.DestinationAddresses)
 	for ri, row := range resp.Rows {
@@ -51,7 +55,7 @@ func mergeChunkIntoResult(result *DistanceMatrixResult, chunk matrixChunk, resp 
 	return nil
 }
 
-func mergeElement(result *DistanceMatrixResult, chunk matrixChunk, ri, ci int, el DistanceMatrixElement) error {
+func mergeElement(result *model.DistanceMatrixResult, chunk matrixChunk, ri, ci int, el model.DistanceMatrixElement) error {
 	absRow, absCol := chunk.oStart+ri, chunk.dStart+ci
 	if el.Status != "OK" {
 		return fmt.Errorf("element [%d][%d] (%s -> %s) status: %s",

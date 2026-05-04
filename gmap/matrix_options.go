@@ -5,6 +5,8 @@ import (
 	"net/http"
 	"strings"
 	"time"
+
+	"github.com/ROP-TEAM/rop-algorithm/model"
 )
 
 func WithBaseURL(baseURL string) GoogleMapsMatrixOption {
@@ -26,7 +28,7 @@ func WithClock(now func() time.Time) GoogleMapsMatrixOption {
 }
 
 // WithInMemoryCache enables the built-in in-memory cache as a constructor option.
-func WithInMemoryCache(cfg MatrixCacheConfig) GoogleMapsMatrixOption {
+func WithInMemoryCache(cfg model.MatrixCacheConfig) GoogleMapsMatrixOption {
 	return func(g *GoogleMapsMatrix) {
 		g.cache = NewMemoryMatrixCache()
 		g.cacheConfig = cfg

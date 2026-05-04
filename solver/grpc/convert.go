@@ -36,23 +36,8 @@ func nodeToProto(n model.Node) *pb.Node {
 		Tags:        n.Tags,
 		Type:        string(n.Type),
 		PairId:      n.PairID,
-		Priority:    priorityToInt32(n.Priority),
+		Priority:    n.Priority.Rank(),
 		DeadlineMin: int32(n.DeadlineMin),
-	}
-}
-
-func priorityToInt32(p model.Priority) int32 {
-	switch p {
-	case model.PriorityCritical:
-		return 4
-	case model.PriorityHigh:
-		return 3
-	case model.PriorityMedium:
-		return 2
-	case model.PriorityLow:
-		return 1
-	default:
-		return 0
 	}
 }
 

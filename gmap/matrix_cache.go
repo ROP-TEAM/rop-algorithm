@@ -8,6 +8,8 @@ import (
 	"sort"
 	"strings"
 	"time"
+
+	"github.com/ROP-TEAM/rop-algorithm/model"
 )
 
 const (
@@ -30,8 +32,8 @@ type normalizedMatrixCacheRequest struct {
 	Slot                     string   `json:"slot,omitempty"`
 }
 
-func DefaultMatrixCacheConfig() MatrixCacheConfig {
-	return MatrixCacheConfig{
+func DefaultMatrixCacheConfig() model.MatrixCacheConfig {
+	return model.MatrixCacheConfig{
 		Enabled:          false,
 		TrafficEnabled:   false,
 		StaticNamespace:  defaultStaticCacheNamespace,
@@ -51,7 +53,7 @@ func DefaultMatrixCacheConfig() MatrixCacheConfig {
 
 // DevMatrixCacheConfig returns a cache configuration optimized for development
 // environments where minimizing API calls is more important than freshness.
-func DevMatrixCacheConfig() MatrixCacheConfig {
+func DevMatrixCacheConfig() model.MatrixCacheConfig {
 	cfg := DefaultMatrixCacheConfig()
 	monthTTL := 30 * 24 * time.Hour
 
@@ -70,47 +72,45 @@ func DevMatrixCacheConfig() MatrixCacheConfig {
 	return cfg
 }
 
-func ResolveCachePolicy(req DistanceMatrixRequest) CachePolicy {
+func ResolveCachePolicy(req model.DistanceMatrixRequest) model.CachePolicy {
 	if req.DepartureTime != 0 || req.DepartureTimeNow || req.TrafficModel != "" {
-		return CachePolicyTraffic
+		return model.CachePolicyTraffic
 	}
-
-	return CachePolicyStatic
+	return model.CachePolicyStatic
 }
 
-func BuildMatrixCacheKey(req DistanceMatrixRequest, now time.Time, cfg MatrixCacheConfig) (MatrixCacheKeyParts, error) {
+func BuildMatrixCacheKey(req model.DistanceMatrixRequest, now time.Time, cfg model.MatrixCacheConfig) (model.MatrixCacheKeyParts, error) {
 	if err := validateDistanceMatrixRequest(req); err != nil {
-		return MatrixCacheKeyParts{}, err
+		return model.MatrixCacheKeyParts{}, err
 	}
 	policy := ResolveCachePolicy(req)
 	switch policy {
-	case CachePolicyStatic:
+	case model.CachePolicyStatic:
 		ns := cfg.StaticNamespace
 		if ns == "" {
 			ns = defaultStaticCacheNamespace
 		}
-		return buildCacheKeyParts(MatrixCacheKeyParts{Policy: policy, Namespace: ns}, req)
-	case CachePolicyTraffic:
+		return buildCacheKeyParts(model.MatrixCacheKeyParts{Policy: policy, Namespace: ns}, req)
+	case model.CachePolicyTraffic:
 		when := resolveTrafficReferenceTime(req, now)
 		ns := cfg.TrafficNamespace
 		if ns == "" {
 			ns = defaultTrafficCacheNamespace
 		}
-		return buildCacheKeyParts(MatrixCacheKeyParts{
+		return buildCacheKeyParts(model.MatrixCacheKeyParts{
 			Policy: policy, Namespace: ns,
 			Date: when.Format("2006-01-02"), Slot: MatrixTrafficSlot(when),
 		}, req)
 	default:
-		return MatrixCacheKeyParts{}, fmt.Errorf("unsupported cache policy: %s", policy)
+		return model.MatrixCacheKeyParts{}, fmt.Errorf("unsupported cache policy: %s", policy)
 	}
 }
 
-// buildCacheKeyParts computes hash and Key for a partially-filled MatrixCacheKeyParts.
-func buildCacheKeyParts(parts MatrixCacheKeyParts, req DistanceMatrixRequest) (MatrixCacheKeyParts, error) {
+func buildCacheKeyParts(parts model.MatrixCacheKeyParts, req model.DistanceMatrixRequest) (model.MatrixCacheKeyParts, error) {
 	normalized := normalizeMatrixCacheRequest(req, parts.Date, parts.Slot)
 	hash, err := hashNormalizedMatrixCacheRequest(normalized)
 	if err != nil {
-		return MatrixCacheKeyParts{}, err
+		return model.MatrixCacheKeyParts{}, err
 	}
 	parts.Hash = hash
 	if parts.Date != "" {
@@ -121,10 +121,10 @@ func buildCacheKeyParts(parts MatrixCacheKeyParts, req DistanceMatrixRequest) (M
 	return parts, nil
 }
 
-func MatrixCacheTTL(req DistanceMatrixRequest, now time.Time, cfg MatrixCacheConfig) time.Duration {
+func MatrixCacheTTL(req model.DistanceMatrixRequest, now time.Time, cfg model.MatrixCacheConfig) time.Duration {
 	policy := ResolveCachePolicy(req)
 
-	if policy == CachePolicyTraffic {
+	if policy == model.CachePolicyTraffic {
 		slot := MatrixTrafficSlot(resolveTrafficReferenceTime(req, now))
 		if ttl, ok := cfg.TrafficTTLs[slot]; ok && ttl > 0 {
 			return ttl
@@ -158,7 +158,7 @@ func MatrixTrafficSlot(t time.Time) string {
 	}
 }
 
-func normalizeMatrixCacheRequest(req DistanceMatrixRequest, date, slot string) normalizedMatrixCacheRequest {
+func normalizeMatrixCacheRequest(req model.DistanceMatrixRequest, date, slot string) normalizedMatrixCacheRequest {
 	avoid := append([]string(nil), req.Avoid...)
 	sort.Strings(avoid)
 
@@ -191,7 +191,7 @@ func hashNormalizedMatrixCacheRequest(req normalizedMatrixCacheRequest) (string,
 	return hex.EncodeToString(sum[:]), nil
 }
 
-func resolveTrafficReferenceTime(req DistanceMatrixRequest, now time.Time) time.Time {
+func resolveTrafficReferenceTime(req model.DistanceMatrixRequest, now time.Time) time.Time {
 	if req.DepartureTime != 0 {
 		return time.Unix(req.DepartureTime, 0).In(now.Location())
 	}

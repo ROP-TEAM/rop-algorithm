@@ -5,6 +5,8 @@ import (
 	"fmt"
 	"net/http"
 	"time"
+
+	"github.com/ROP-TEAM/rop-algorithm/model"
 )
 
 const (
@@ -16,7 +18,7 @@ const (
 type DistanceMatrix interface {
 	// BuildMatrix returns n×n matrices of durations (minutes) and distances (meters).
 	// Pass MatrixOptions{} for defaults (driving, no traffic).
-	BuildMatrix(ctx context.Context, locs []Location, opts MatrixOptions) (durations [][]int, distances [][]int, err error)
+	BuildMatrix(ctx context.Context, locs []model.Location, opts model.MatrixOptions) (durations [][]int, distances [][]int, err error)
 }
 
 // GoogleMapsMatrix implements DistanceMatrix via the Distance Matrix API.
@@ -25,7 +27,7 @@ type GoogleMapsMatrix struct {
 	httpClient  *http.Client
 	baseURL     string
 	cache       MatrixCache
-	cacheConfig MatrixCacheConfig
+	cacheConfig model.MatrixCacheConfig
 	now         func() time.Time
 	eventHook   MatrixEventHook
 	metrics     MatrixMetricsCollector
@@ -33,20 +35,20 @@ type GoogleMapsMatrix struct {
 
 type GoogleMapsMatrixOption func(*GoogleMapsMatrix)
 
-func (g *GoogleMapsMatrix) SetCache(cache MatrixCache, cfg MatrixCacheConfig) {
+func (g *GoogleMapsMatrix) SetCache(cache MatrixCache, cfg model.MatrixCacheConfig) {
 	g.cache = cache
 	g.cacheConfig = cfg
 }
 
-func (g *GoogleMapsMatrix) EnableInMemoryCache(cfg MatrixCacheConfig) {
+func (g *GoogleMapsMatrix) EnableInMemoryCache(cfg model.MatrixCacheConfig) {
 	g.cache = NewMemoryMatrixCache()
 	g.cacheConfig = cfg
 }
 
-func (g *GoogleMapsMatrix) SetEventHook(hook MatrixEventHook)               { g.eventHook = hook }
-func (g *GoogleMapsMatrix) SetMetricsCollector(c MatrixMetricsCollector)    { g.metrics = c }
+func (g *GoogleMapsMatrix) SetEventHook(hook MatrixEventHook)            { g.eventHook = hook }
+func (g *GoogleMapsMatrix) SetMetricsCollector(c MatrixMetricsCollector) { g.metrics = c }
 
-func (g *GoogleMapsMatrix) ExecuteMatrix(ctx context.Context, req DistanceMatrixRequest) (*DistanceMatrixResult, error) {
+func (g *GoogleMapsMatrix) ExecuteMatrix(ctx context.Context, req model.DistanceMatrixRequest) (*model.DistanceMatrixResult, error) {
 	if err := validateDistanceMatrixRequest(req); err != nil {
 		return nil, err
 	}
@@ -77,7 +79,7 @@ func (g *GoogleMapsMatrix) ExecuteMatrix(ctx context.Context, req DistanceMatrix
 }
 
 // BuildMatrix is a convenience wrapper around ExecuteMatrix for square n×n matrices.
-func (g *GoogleMapsMatrix) BuildMatrix(ctx context.Context, locs []Location, opts MatrixOptions) ([][]int, [][]int, error) {
+func (g *GoogleMapsMatrix) BuildMatrix(ctx context.Context, locs []model.Location, opts model.MatrixOptions) ([][]int, [][]int, error) {
 	req := buildDistanceMatrixRequest(locs, opts)
 	result, err := g.ExecuteMatrix(ctx, req)
 	if err != nil {
@@ -86,83 +88,90 @@ func (g *GoogleMapsMatrix) BuildMatrix(ctx context.Context, locs []Location, opt
 	return result.Durations, result.Distances, nil
 }
 
-func (g *GoogleMapsMatrix) getCachedMatrix(ctx context.Context, req DistanceMatrixRequest) (*DistanceMatrixResult, bool, error) {
+type cacheDecision struct {
+	active bool
+	key    string
+	policy model.CachePolicy
+	ttl    time.Duration
+}
+
+func (g *GoogleMapsMatrix) resolveCacheDecision(req model.DistanceMatrixRequest) (cacheDecision, error) {
 	policy := ResolveCachePolicy(req)
-	key, ok, err := g.resolveCacheKey(req)
+	if !g.cacheConfig.Enabled || g.cache == nil {
+		return cacheDecision{policy: policy}, nil
+	}
+	if policy == model.CachePolicyTraffic && !g.cacheConfig.TrafficEnabled {
+		return cacheDecision{policy: policy}, nil
+	}
+	nowFn := g.now
+	if nowFn == nil {
+		nowFn = time.Now
+	}
+	now := nowFn()
+	keyParts, err := BuildMatrixCacheKey(req, now, g.cacheConfig)
 	if err != nil {
-		g.emitEvent(ctx, MatrixEvent{Name: "cache_lookup_error", Policy: policy, Error: err.Error()})
+		return cacheDecision{}, err
+	}
+	return cacheDecision{
+		active: true,
+		key:    keyParts.Key,
+		policy: policy,
+		ttl:    MatrixCacheTTL(req, now, g.cacheConfig),
+	}, nil
+}
+
+func (g *GoogleMapsMatrix) getCachedMatrix(ctx context.Context, req model.DistanceMatrixRequest) (*model.DistanceMatrixResult, bool, error) {
+	dec, err := g.resolveCacheDecision(req)
+	if err != nil {
+		g.emitEvent(ctx, model.MatrixEvent{Name: "cache_lookup_error", Policy: dec.policy, Error: err.Error()})
 		return nil, false, err
 	}
-	if !ok {
+	if !dec.active {
 		reason := "cache_disabled"
-		if g.cacheConfig.Enabled && policy == CachePolicyTraffic {
+		if g.cacheConfig.Enabled && dec.policy == model.CachePolicyTraffic {
 			reason = "traffic_cache_disabled"
 		}
-		g.emitEvent(ctx, MatrixEvent{Name: "cache_bypass", Policy: policy, Reason: reason})
+		g.emitEvent(ctx, model.MatrixEvent{Name: "cache_bypass", Policy: dec.policy, Reason: reason})
 		return nil, false, nil
 	}
-	value, hit, err := g.cache.Get(ctx, key)
+	value, hit, err := g.cache.Get(ctx, dec.key)
 	if err != nil {
-		g.emitEvent(ctx, MatrixEvent{Name: "cache_lookup_error", Policy: policy, CacheKey: key, Error: err.Error()})
+		g.emitEvent(ctx, model.MatrixEvent{Name: "cache_lookup_error", Policy: dec.policy, CacheKey: dec.key, Error: err.Error()})
 		return nil, false, err
 	}
 	if hit {
-		g.emitEvent(ctx, MatrixEvent{Name: "cache_hit", Policy: policy, CacheKey: key})
+		g.emitEvent(ctx, model.MatrixEvent{Name: "cache_hit", Policy: dec.policy, CacheKey: dec.key})
 		return value, true, nil
 	}
-	g.emitEvent(ctx, MatrixEvent{Name: "cache_miss", Policy: policy, CacheKey: key})
+	g.emitEvent(ctx, model.MatrixEvent{Name: "cache_miss", Policy: dec.policy, CacheKey: dec.key})
 	return nil, false, nil
 }
 
-func (g *GoogleMapsMatrix) setCachedMatrix(ctx context.Context, result *DistanceMatrixResult) error {
+func (g *GoogleMapsMatrix) setCachedMatrix(ctx context.Context, result *model.DistanceMatrixResult) error {
 	if result == nil {
 		return nil
 	}
-	policy := ResolveCachePolicy(result.Request)
-	key, ok, err := g.resolveCacheKey(result.Request)
+	dec, err := g.resolveCacheDecision(result.Request)
 	if err != nil {
-		g.emitEvent(ctx, MatrixEvent{Name: "cache_store_error", Policy: policy, Error: err.Error()})
+		g.emitEvent(ctx, model.MatrixEvent{Name: "cache_store_error", Policy: dec.policy, Error: err.Error()})
 		return err
 	}
-	if !ok {
+	if !dec.active {
 		return nil
 	}
-	nowFn := g.now
-	if nowFn == nil {
-		nowFn = time.Now
-	}
-	ttl := MatrixCacheTTL(result.Request, nowFn(), g.cacheConfig)
-	if ttl <= 0 {
-		g.emitEvent(ctx, MatrixEvent{Name: "cache_bypass", Policy: policy, CacheKey: key, Reason: "ttl_disabled"})
+	if dec.ttl <= 0 {
+		g.emitEvent(ctx, model.MatrixEvent{Name: "cache_bypass", Policy: dec.policy, CacheKey: dec.key, Reason: "ttl_disabled"})
 		return nil
 	}
-	if err := g.cache.Set(ctx, key, result, ttl); err != nil {
-		g.emitEvent(ctx, MatrixEvent{Name: "cache_store_error", Policy: policy, CacheKey: key, Error: err.Error()})
+	if err := g.cache.Set(ctx, dec.key, result, dec.ttl); err != nil {
+		g.emitEvent(ctx, model.MatrixEvent{Name: "cache_store_error", Policy: dec.policy, CacheKey: dec.key, Error: err.Error()})
 		return err
 	}
-	g.emitEvent(ctx, MatrixEvent{Name: "cache_store", Policy: policy, CacheKey: key, Reason: ttl.String()})
+	g.emitEvent(ctx, model.MatrixEvent{Name: "cache_store", Policy: dec.policy, CacheKey: dec.key, Reason: dec.ttl.String()})
 	return nil
 }
 
-func (g *GoogleMapsMatrix) resolveCacheKey(req DistanceMatrixRequest) (string, bool, error) {
-	if !g.cacheConfig.Enabled || g.cache == nil {
-		return "", false, nil
-	}
-	if ResolveCachePolicy(req) == CachePolicyTraffic && !g.cacheConfig.TrafficEnabled {
-		return "", false, nil
-	}
-	nowFn := g.now
-	if nowFn == nil {
-		nowFn = time.Now
-	}
-	keyParts, err := BuildMatrixCacheKey(req, nowFn(), g.cacheConfig)
-	if err != nil {
-		return "", false, err
-	}
-	return keyParts.Key, true, nil
-}
-
-func (g *GoogleMapsMatrix) emitEvent(ctx context.Context, event MatrixEvent) {
+func (g *GoogleMapsMatrix) emitEvent(ctx context.Context, event model.MatrixEvent) {
 	if g.eventHook != nil {
 		g.eventHook(ctx, event)
 	}
@@ -171,7 +180,7 @@ func (g *GoogleMapsMatrix) emitEvent(ctx context.Context, event MatrixEvent) {
 	}
 }
 
-func elementDurationMinutes(el DistanceMatrixElement) (int, error) {
+func elementDurationMinutes(el model.DistanceMatrixElement) (int, error) {
 	if el.DurationInTraffic != nil {
 		return el.DurationInTraffic.Value / 60, nil
 	}

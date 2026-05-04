@@ -5,14 +5,16 @@ import (
 	"strconv"
 	"strings"
 	"sync"
+
+	"github.com/ROP-TEAM/rop-algorithm/model"
 )
 
 // MatrixEventHook is a lightweight logging hook for cache and API events.
-type MatrixEventHook func(ctx context.Context, event MatrixEvent)
+type MatrixEventHook func(ctx context.Context, event model.MatrixEvent)
 
 // MatrixMetricsCollector records matrix events into a metrics backend.
 type MatrixMetricsCollector interface {
-	RecordMatrixEvent(event MatrixEvent)
+	RecordMatrixEvent(event model.MatrixEvent)
 }
 
 // MatrixMetrics is a simple in-memory counter collector for matrix events.
@@ -27,7 +29,7 @@ func NewMatrixMetrics() *MatrixMetrics {
 	}
 }
 
-func (m *MatrixMetrics) RecordMatrixEvent(event MatrixEvent) {
+func (m *MatrixMetrics) RecordMatrixEvent(event model.MatrixEvent) {
 	if m == nil {
 		return
 	}
@@ -54,7 +56,7 @@ func (m *MatrixMetrics) Snapshot() map[string]int64 {
 	return out
 }
 
-func matrixMetricKey(event MatrixEvent) string {
+func matrixMetricKey(event model.MatrixEvent) string {
 	parts := []string{event.Name}
 	if event.Policy != "" {
 		parts = append(parts, "policy="+string(event.Policy))

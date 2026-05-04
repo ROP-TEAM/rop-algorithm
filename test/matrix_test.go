@@ -12,12 +12,13 @@ import (
 	"testing"
 	"time"
 
-	gmap "github.com/ROP-TEAM/rop-algorithm/gmap"
+	"github.com/ROP-TEAM/rop-algorithm/gmap"
+	"github.com/ROP-TEAM/rop-algorithm/model"
 )
 
 func testEventHook(t *testing.T) gmap.MatrixEventHook {
 	t.Helper()
-	return func(ctx context.Context, event gmap.MatrixEvent) {
+	return func(ctx context.Context, event model.MatrixEvent) {
 		t.Logf("event=%-25s policy=%-8s key=%s origins=%d dests=%d err=%v",
 			event.Name, event.Policy, event.CacheKey,
 			event.ChunkOrigins, event.ChunkDestinations, event.Error)
@@ -36,7 +37,7 @@ func TestGoogleMapsMatrix(t *testing.T) {
 	}
 	m.SetEventHook(testEventHook(t))
 
-	req := gmap.DistanceMatrixRequest{
+	req := model.DistanceMatrixRequest{
 		Origins:      []string{"13.756300,100.501800", "13.746900,100.534600", "13.730800,100.541800"},
 		Destinations: []string{"13.756300,100.501800", "13.746900,100.534600", "13.730800,100.541800"},
 	}
@@ -67,12 +68,12 @@ func TestGoogleMapsMatrixBatch(t *testing.T) {
 	}
 	m.SetEventHook(testEventHook(t))
 
-	locs := make([]gmap.Location, 30)
+	locs := make([]model.Location, 30)
 	for i := range locs {
-		locs[i] = gmap.NewLatLngLocation(13.70+float64(i)*0.005, 100.50+float64(i)*0.003)
+		locs[i] = model.NewLatLngLocation(13.70+float64(i)*0.005, 100.50+float64(i)*0.003)
 	}
 
-	durations, distances, err := m.BuildMatrix(context.Background(), locs, gmap.MatrixOptions{})
+	durations, distances, err := m.BuildMatrix(context.Background(), locs, model.MatrixOptions{})
 	if err != nil {
 		t.Fatalf("BuildMatrix: %v", err)
 	}
@@ -89,16 +90,16 @@ func TestGoogleMapsMatrixBatch(t *testing.T) {
 }
 
 func TestBuildDistanceMatrixQueryIncludesOptions(t *testing.T) {
-	req := gmap.DistanceMatrixRequest{
+	req := model.DistanceMatrixRequest{
 		Origins:                  []string{"place_id:origin"},
 		Destinations:             []string{"heading=90:13.756300,100.501800"},
-		Mode:                     gmap.ModeTransit,
+		Mode:                     model.ModeTransit,
 		Units:                    "imperial",
 		Language:                 "th",
 		Region:                   "th",
-		Avoid:                    []string{gmap.AvoidTolls, gmap.AvoidFerries},
+		Avoid:                    []string{model.AvoidTolls, model.AvoidFerries},
 		DepartureTime:            1713574800,
-		TrafficModel:             gmap.TrafficModelBestGuess,
+		TrafficModel:             model.TrafficModelBestGuess,
 		TransitMode:              []string{"train", "subway"},
 		TransitRoutingPreference: "less_walking",
 	}
@@ -120,7 +121,7 @@ func TestBuildDistanceMatrixQueryIncludesOptions(t *testing.T) {
 }
 
 func TestBuildDistanceMatrixQueryDepartureTimeNow(t *testing.T) {
-	query := gmap.BuildDistanceMatrixQuery(gmap.DistanceMatrixRequest{
+	query := gmap.BuildDistanceMatrixQuery(model.DistanceMatrixRequest{
 		Origins:          []string{"13.1,100.1"},
 		Destinations:     []string{"13.2,100.2"},
 		DepartureTimeNow: true,
@@ -130,7 +131,7 @@ func TestBuildDistanceMatrixQueryDepartureTimeNow(t *testing.T) {
 }
 
 func TestValidateDistanceMatrixRequestRejectsConflictingTimes(t *testing.T) {
-	err := gmap.ValidateDistanceMatrixRequest(gmap.DistanceMatrixRequest{
+	err := gmap.ValidateDistanceMatrixRequest(model.DistanceMatrixRequest{
 		Origins:       []string{"a"},
 		Destinations:  []string{"b"},
 		DepartureTime: 1,
@@ -148,23 +149,23 @@ func TestExecuteMatrixRectangularBatching(t *testing.T) {
 
 		origins := strings.Split(r.URL.Query().Get("origins"), "|")
 		destinations := strings.Split(r.URL.Query().Get("destinations"), "|")
-		resp := gmap.DistanceMatrixResponse{
+		resp := model.DistanceMatrixResponse{
 			Status:               "OK",
 			OriginAddresses:      append([]string(nil), origins...),
 			DestinationAddresses: append([]string(nil), destinations...),
-			Rows:                 make([]gmap.DistanceMatrixRow, len(origins)),
+			Rows:                 make([]model.DistanceMatrixRow, len(origins)),
 		}
 
 		for i := range origins {
-			resp.Rows[i] = gmap.DistanceMatrixRow{Elements: make([]gmap.DistanceMatrixElement, len(destinations))}
+			resp.Rows[i] = model.DistanceMatrixRow{Elements: make([]model.DistanceMatrixElement, len(destinations))}
 			for j := range destinations {
-				resp.Rows[i].Elements[j] = gmap.DistanceMatrixElement{
+				resp.Rows[i].Elements[j] = model.DistanceMatrixElement{
 					Status: "OK",
-					Distance: &gmap.ValueText{
+					Distance: &model.ValueText{
 						Value: (i+1)*1000 + (j + 1),
 						Text:  fmt.Sprintf("%d m", (i+1)*1000+(j+1)),
 					},
-					Duration: &gmap.ValueText{
+					Duration: &model.ValueText{
 						Value: (i+1)*600 + (j * 60),
 						Text:  fmt.Sprintf("%d mins", (i+1)*10+j),
 					},
@@ -184,7 +185,7 @@ func TestExecuteMatrixRectangularBatching(t *testing.T) {
 	}
 	m.SetEventHook(testEventHook(t))
 
-	req := gmap.DistanceMatrixRequest{
+	req := model.DistanceMatrixRequest{
 		Origins:      makeLocations("o", 11),
 		Destinations: makeLocations("d", 3),
 	}
@@ -204,16 +205,16 @@ func TestExecuteMatrixRectangularBatching(t *testing.T) {
 
 func TestExecuteMatrixUsesDurationInTrafficWhenPresent(t *testing.T) {
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		_ = json.NewEncoder(w).Encode(gmap.DistanceMatrixResponse{
+		_ = json.NewEncoder(w).Encode(model.DistanceMatrixResponse{
 			Status:               "OK",
 			OriginAddresses:      []string{"o1"},
 			DestinationAddresses: []string{"d1"},
-			Rows: []gmap.DistanceMatrixRow{{
-				Elements: []gmap.DistanceMatrixElement{{
+			Rows: []model.DistanceMatrixRow{{
+				Elements: []model.DistanceMatrixElement{{
 					Status:            "OK",
-					Distance:          &gmap.ValueText{Value: 1500, Text: "1.5 km"},
-					Duration:          &gmap.ValueText{Value: 600, Text: "10 mins"},
-					DurationInTraffic: &gmap.ValueText{Value: 900, Text: "15 mins"},
+					Distance:          &model.ValueText{Value: 1500, Text: "1.5 km"},
+					Duration:          &model.ValueText{Value: 600, Text: "10 mins"},
+					DurationInTraffic: &model.ValueText{Value: 900, Text: "15 mins"},
 				}},
 			}},
 		})
@@ -222,7 +223,7 @@ func TestExecuteMatrixUsesDurationInTrafficWhenPresent(t *testing.T) {
 
 	m, _ := gmap.NewGoogleMapsMatrix("test-key", gmap.WithBaseURL(server.URL))
 	m.SetEventHook(testEventHook(t))
-	result, err := m.ExecuteMatrix(context.Background(), gmap.DistanceMatrixRequest{
+	result, err := m.ExecuteMatrix(context.Background(), model.DistanceMatrixRequest{
 		Origins:          []string{"o1"},
 		Destinations:     []string{"d1"},
 		DepartureTimeNow: true,
@@ -237,12 +238,12 @@ func TestExecuteMatrixUsesDurationInTrafficWhenPresent(t *testing.T) {
 
 func TestExecuteMatrixErrorOnMissingDuration(t *testing.T) {
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		_ = json.NewEncoder(w).Encode(gmap.DistanceMatrixResponse{
+		_ = json.NewEncoder(w).Encode(model.DistanceMatrixResponse{
 			Status:               "OK",
 			OriginAddresses:      []string{"o1"},
 			DestinationAddresses: []string{"d1"},
-			Rows: []gmap.DistanceMatrixRow{{
-				Elements: []gmap.DistanceMatrixElement{{
+			Rows: []model.DistanceMatrixRow{{
+				Elements: []model.DistanceMatrixElement{{
 					Status: "OK",
 					// Duration and DurationInTraffic intentionally absent
 				}},
@@ -253,7 +254,7 @@ func TestExecuteMatrixErrorOnMissingDuration(t *testing.T) {
 
 	m, _ := gmap.NewGoogleMapsMatrix("test-key", gmap.WithBaseURL(server.URL))
 	m.SetEventHook(testEventHook(t))
-	_, err := m.ExecuteMatrix(context.Background(), gmap.DistanceMatrixRequest{
+	_, err := m.ExecuteMatrix(context.Background(), model.DistanceMatrixRequest{
 		Origins:      []string{"o1"},
 		Destinations: []string{"d1"},
 	})
@@ -265,7 +266,7 @@ func TestExecuteMatrixErrorOnMissingDuration(t *testing.T) {
 
 func TestExecuteMatrixReturnsTopLevelAPIError(t *testing.T) {
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		_ = json.NewEncoder(w).Encode(gmap.DistanceMatrixResponse{
+		_ = json.NewEncoder(w).Encode(model.DistanceMatrixResponse{
 			Status:       "REQUEST_DENIED",
 			ErrorMessage: "bad key",
 		})
@@ -274,7 +275,7 @@ func TestExecuteMatrixReturnsTopLevelAPIError(t *testing.T) {
 
 	m, _ := gmap.NewGoogleMapsMatrix("test-key", gmap.WithBaseURL(server.URL))
 	m.SetEventHook(testEventHook(t))
-	_, err := m.ExecuteMatrix(context.Background(), gmap.DistanceMatrixRequest{
+	_, err := m.ExecuteMatrix(context.Background(), model.DistanceMatrixRequest{
 		Origins:      []string{"o1"},
 		Destinations: []string{"d1"},
 	})
@@ -287,14 +288,14 @@ func TestExecuteMatrixSupportsRegionAndLanguage(t *testing.T) {
 	var gotQuery url.Values
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		gotQuery = r.URL.Query()
-		_ = json.NewEncoder(w).Encode(gmap.DistanceMatrixResponse{
+		_ = json.NewEncoder(w).Encode(model.DistanceMatrixResponse{
 			Status:               "OK",
 			OriginAddresses:      []string{"Bangkok"},
 			DestinationAddresses: []string{"Asok"},
-			Rows: []gmap.DistanceMatrixRow{{Elements: []gmap.DistanceMatrixElement{{
+			Rows: []model.DistanceMatrixRow{{Elements: []model.DistanceMatrixElement{{
 				Status:   "OK",
-				Distance: &gmap.ValueText{Value: 1000, Text: "1 km"},
-				Duration: &gmap.ValueText{Value: 300, Text: "5 mins"},
+				Distance: &model.ValueText{Value: 1000, Text: "1 km"},
+				Duration: &model.ValueText{Value: 300, Text: "5 mins"},
 			}}}},
 		})
 	}))
@@ -302,7 +303,7 @@ func TestExecuteMatrixSupportsRegionAndLanguage(t *testing.T) {
 
 	m, _ := gmap.NewGoogleMapsMatrix("test-key", gmap.WithBaseURL(server.URL))
 	m.SetEventHook(testEventHook(t))
-	_, err := m.ExecuteMatrix(context.Background(), gmap.DistanceMatrixRequest{
+	_, err := m.ExecuteMatrix(context.Background(), model.DistanceMatrixRequest{
 		Origins:      []string{"Bangkok"},
 		Destinations: []string{"Asok"},
 		Language:     "th",
@@ -319,14 +320,14 @@ func TestExecuteMatrixUsesStaticCache(t *testing.T) {
 	var calls int
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		calls++
-		_ = json.NewEncoder(w).Encode(gmap.DistanceMatrixResponse{
+		_ = json.NewEncoder(w).Encode(model.DistanceMatrixResponse{
 			Status:               "OK",
 			OriginAddresses:      []string{"o1"},
 			DestinationAddresses: []string{"d1"},
-			Rows: []gmap.DistanceMatrixRow{{Elements: []gmap.DistanceMatrixElement{{
+			Rows: []model.DistanceMatrixRow{{Elements: []model.DistanceMatrixElement{{
 				Status:   "OK",
-				Distance: &gmap.ValueText{Value: 1200, Text: "1.2 km"},
-				Duration: &gmap.ValueText{Value: 600, Text: "10 mins"},
+				Distance: &model.ValueText{Value: 1200, Text: "1.2 km"},
+				Duration: &model.ValueText{Value: 600, Text: "10 mins"},
 			}}}},
 		})
 	}))
@@ -340,7 +341,7 @@ func TestExecuteMatrixUsesStaticCache(t *testing.T) {
 	cfg.Enabled = true
 	m.EnableInMemoryCache(cfg)
 
-	req := gmap.DistanceMatrixRequest{Origins: []string{"o1"}, Destinations: []string{"d1"}}
+	req := model.DistanceMatrixRequest{Origins: []string{"o1"}, Destinations: []string{"d1"}}
 	first, err := m.ExecuteMatrix(context.Background(), req)
 	if err != nil {
 		t.Fatalf("first ExecuteMatrix: %v", err)
@@ -357,14 +358,14 @@ func TestExecuteMatrixUsesStaticCache(t *testing.T) {
 
 func TestExecuteMatrixEmitsCacheEventsAndMetrics(t *testing.T) {
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		_ = json.NewEncoder(w).Encode(gmap.DistanceMatrixResponse{
+		_ = json.NewEncoder(w).Encode(model.DistanceMatrixResponse{
 			Status:               "OK",
 			OriginAddresses:      []string{"o1"},
 			DestinationAddresses: []string{"d1"},
-			Rows: []gmap.DistanceMatrixRow{{Elements: []gmap.DistanceMatrixElement{{
+			Rows: []model.DistanceMatrixRow{{Elements: []model.DistanceMatrixElement{{
 				Status:   "OK",
-				Distance: &gmap.ValueText{Value: 1200, Text: "1.2 km"},
-				Duration: &gmap.ValueText{Value: 600, Text: "10 mins"},
+				Distance: &model.ValueText{Value: 1200, Text: "1.2 km"},
+				Duration: &model.ValueText{Value: 600, Text: "10 mins"},
 			}}}},
 		})
 	}))
@@ -377,15 +378,15 @@ func TestExecuteMatrixEmitsCacheEventsAndMetrics(t *testing.T) {
 	cfg.Enabled = true
 	m.EnableInMemoryCache(cfg)
 
-	var events []gmap.MatrixEvent
-	m.SetEventHook(func(ctx context.Context, event gmap.MatrixEvent) {
+	var events []model.MatrixEvent
+	m.SetEventHook(func(ctx context.Context, event model.MatrixEvent) {
 		testEventHook(t)(ctx, event)
 		events = append(events, event)
 	})
 	metrics := gmap.NewMatrixMetrics()
 	m.SetMetricsCollector(metrics)
 
-	req := gmap.DistanceMatrixRequest{Origins: []string{"o1"}, Destinations: []string{"d1"}}
+	req := model.DistanceMatrixRequest{Origins: []string{"o1"}, Destinations: []string{"d1"}}
 	_, _ = m.ExecuteMatrix(context.Background(), req)
 	_, _ = m.ExecuteMatrix(context.Background(), req)
 
@@ -406,7 +407,7 @@ func makeLocations(prefix string, n int) []string {
 	return out
 }
 
-func containsEvent(events []gmap.MatrixEvent, name string) bool {
+func containsEvent(events []model.MatrixEvent, name string) bool {
 	for _, event := range events {
 		if event.Name == name {
 			return true

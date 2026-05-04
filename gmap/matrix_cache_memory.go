@@ -4,16 +4,18 @@ import (
 	"context"
 	"sync"
 	"time"
+
+	"github.com/ROP-TEAM/rop-algorithm/model"
 )
 
 // MatrixCache is the storage contract for caching resolved matrix results.
 type MatrixCache interface {
-	Get(ctx context.Context, key string) (*DistanceMatrixResult, bool, error)
-	Set(ctx context.Context, key string, value *DistanceMatrixResult, ttl time.Duration) error
+	Get(ctx context.Context, key string) (*model.DistanceMatrixResult, bool, error)
+	Set(ctx context.Context, key string, value *model.DistanceMatrixResult, ttl time.Duration) error
 }
 
 type memoryMatrixCacheEntry struct {
-	value     *DistanceMatrixResult
+	value     *model.DistanceMatrixResult
 	expiresAt time.Time
 }
 
@@ -31,7 +33,7 @@ func NewMemoryMatrixCache() *MemoryMatrixCache {
 	}
 }
 
-func (c *MemoryMatrixCache) Get(ctx context.Context, key string) (*DistanceMatrixResult, bool, error) {
+func (c *MemoryMatrixCache) Get(ctx context.Context, key string) (*model.DistanceMatrixResult, bool, error) {
 	_ = ctx
 
 	nowFn := c.now
@@ -56,7 +58,7 @@ func (c *MemoryMatrixCache) Get(ctx context.Context, key string) (*DistanceMatri
 	return cloneDistanceMatrixResult(entry.value), true, nil
 }
 
-func (c *MemoryMatrixCache) Set(ctx context.Context, key string, value *DistanceMatrixResult, ttl time.Duration) error {
+func (c *MemoryMatrixCache) Set(ctx context.Context, key string, value *model.DistanceMatrixResult, ttl time.Duration) error {
 	_ = ctx
 
 	nowFn := c.now
@@ -77,12 +79,12 @@ func (c *MemoryMatrixCache) Set(ctx context.Context, key string, value *Distance
 	return nil
 }
 
-func cloneDistanceMatrixResult(src *DistanceMatrixResult) *DistanceMatrixResult {
+func cloneDistanceMatrixResult(src *model.DistanceMatrixResult) *model.DistanceMatrixResult {
 	if src == nil {
 		return nil
 	}
 
-	dst := &DistanceMatrixResult{
+	dst := &model.DistanceMatrixResult{
 		Request:   cloneDistanceMatrixRequest(src.Request),
 		Response:  cloneDistanceMatrixResponse(src.Response),
 		Durations: cloneIntMatrix(src.Durations),
@@ -91,8 +93,8 @@ func cloneDistanceMatrixResult(src *DistanceMatrixResult) *DistanceMatrixResult 
 	return dst
 }
 
-func cloneDistanceMatrixRequest(src DistanceMatrixRequest) DistanceMatrixRequest {
-	return DistanceMatrixRequest{
+func cloneDistanceMatrixRequest(src model.DistanceMatrixRequest) model.DistanceMatrixRequest {
+	return model.DistanceMatrixRequest{
 		Origins:                  append([]string(nil), src.Origins...),
 		Destinations:             append([]string(nil), src.Destinations...),
 		Mode:                     src.Mode,
@@ -109,21 +111,21 @@ func cloneDistanceMatrixRequest(src DistanceMatrixRequest) DistanceMatrixRequest
 	}
 }
 
-func cloneDistanceMatrixResponse(src DistanceMatrixResponse) DistanceMatrixResponse {
-	dst := DistanceMatrixResponse{
+func cloneDistanceMatrixResponse(src model.DistanceMatrixResponse) model.DistanceMatrixResponse {
+	dst := model.DistanceMatrixResponse{
 		Status:               src.Status,
 		ErrorMessage:         src.ErrorMessage,
 		OriginAddresses:      append([]string(nil), src.OriginAddresses...),
 		DestinationAddresses: append([]string(nil), src.DestinationAddresses...),
-		Rows:                 make([]DistanceMatrixRow, len(src.Rows)),
+		Rows:                 make([]model.DistanceMatrixRow, len(src.Rows)),
 	}
 
 	for i, row := range src.Rows {
-		dst.Rows[i] = DistanceMatrixRow{
-			Elements: make([]DistanceMatrixElement, len(row.Elements)),
+		dst.Rows[i] = model.DistanceMatrixRow{
+			Elements: make([]model.DistanceMatrixElement, len(row.Elements)),
 		}
 		for j, el := range row.Elements {
-			dst.Rows[i].Elements[j] = DistanceMatrixElement{
+			dst.Rows[i].Elements[j] = model.DistanceMatrixElement{
 				Status:            el.Status,
 				Distance:          cloneValueText(el.Distance),
 				Duration:          cloneValueText(el.Duration),
@@ -148,7 +150,7 @@ func cloneIntMatrix(src [][]int) [][]int {
 	return dst
 }
 
-func cloneValueText(src *ValueText) *ValueText {
+func cloneValueText(src *model.ValueText) *model.ValueText {
 	if src == nil {
 		return nil
 	}
@@ -157,7 +159,7 @@ func cloneValueText(src *ValueText) *ValueText {
 	return &dst
 }
 
-func cloneTransitFare(src *TransitFare) *TransitFare {
+func cloneTransitFare(src *model.TransitFare) *model.TransitFare {
 	if src == nil {
 		return nil
 	}

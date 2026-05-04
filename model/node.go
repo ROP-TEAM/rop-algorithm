@@ -19,6 +19,23 @@ const (
 	PriorityLow      Priority = "low"
 )
 
+// Rank returns the numeric priority used for sorting and proto encoding.
+// critical=4 > high=3 > medium=2 > low=1 > ""=0.
+func (p Priority) Rank() int32 {
+	switch p {
+	case PriorityCritical:
+		return 4
+	case PriorityHigh:
+		return 3
+	case PriorityMedium:
+		return 2
+	case PriorityLow:
+		return 1
+	default:
+		return 0
+	}
+}
+
 // Node is a stop in the routing problem.
 type Node struct {
 	ID          string

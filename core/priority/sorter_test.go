@@ -162,8 +162,8 @@ func TestPriorityRank(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(string(tt.priority), func(t *testing.T) {
-			if got := priorityRank(tt.priority); got != tt.want {
-				t.Errorf("priorityRank(%q) = %d, want %d", tt.priority, got, tt.want)
+			if got := int(tt.priority.Rank()); got != tt.want {
+				t.Errorf("Priority(%q).Rank() = %d, want %d", tt.priority, got, tt.want)
 			}
 		})
 	}
