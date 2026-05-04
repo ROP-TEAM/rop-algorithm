@@ -3,9 +3,18 @@
 #include "priority_shape_clustering/slender_solver.h"
 #include "priority_shape_clustering/types.h"
 #include "priority/sorter.h"
+#include "priority_shape_clustering/slender_utils.h"
 #include <numeric>
 #include <unordered_set>
 #include <climits>
+#include <random>
+#include <chrono>
+#include <algorithm>
+#include <iostream>
+
+const double FIXED_COST_PER_VEHICLE = 450.0;
+const double COST_PER_KM            = 40.02;
+const double INF                    = 1e18;
 
 static std::vector<Node> buildAllNodes(const solver::SolveRequest* req) {
     int N = req->matrix_size();
@@ -55,142 +64,240 @@ static Adj buildSubAdj(const std::vector<int>& node_ids,
     return sub;
 }
 
-// Evenly-spaced seeding: spreads K centers across the priority-sorted candidate list
-// so each vehicle gets a geographically distinct starting region.
-static std::vector<int> pickCenters(const std::vector<int>& ids, int K) {
-    int sz = (int)ids.size();
-    std::vector<int> centers(K);
-    for (int k = 0; k < K; ++k)
-        centers[k] = ids[k * (sz - 1) / std::max(K - 1, 1) % sz];
-    return centers;
+/*
+   Evaluate one subset of vehicles (their indices in full fleet)
+   Returns {total_cost, plan}, where plan is a vector of trips per SELECTED vehicle (size = K)
+   If infeasible, cost = INF.
+*/
+std::pair<double, std::vector<std::vector<Cluster>>> evaluateSubset(
+    const std::vector<int>& veh_indices,
+    const std::vector<Node>& nodes,
+    const std::vector<std::vector<double>>& delta,
+    const std::vector<std::vector<double>>& dist,
+    const solver::SolveRequest* req,
+    const std::vector<int>& sorted_unassigned,
+    double fixed_cost_per_veh,
+    double cost_per_km)
+{
+  int K = veh_indices.size();
+  if (K == 0) return {INF, {}};
+
+  // Capacity and daily order limit for each selected vehicle
+  std::vector<double> caps(K);
+  std::vector<int> max_orders(K);
+  for (int i = 0; i < K; ++i) {
+    const auto& v = req->vehicles(veh_indices[i]);
+    caps[i] = v.capacity();
+    // max_tasks == 0 → unlimited // temporary
+    max_orders[i] = (v.max_tasks() == 0) ? INT_MAX : v.max_tasks();
+  }
+
+  // Multi‑round assignment
+  std::vector<int> unassigned = sorted_unassigned;   // copy
+  std::vector<int> orders_served(K, 0);
+  std::vector<std::vector<Cluster>> trips(K);         // per selected vehicle (local index)
+
+  bool feasible = true;
+  while (!unassigned.empty()) {
+    // Determine active vehicles (still have daily capacity)
+    std::vector<int> active_idx;                   // local indices 0..K-1
+    std::vector<double> active_caps;
+    std::vector<int> active_rem_orders;
+    for (int i = 0; i < K; ++i) {
+      int left = max_orders[i] - orders_served[i];
+      if (left > 0) {
+        active_idx.push_back(i);
+        active_caps.push_back(caps[i]);
+        active_rem_orders.push_back(left);
+      }
+    }
+    if (active_idx.empty()) { feasible = false; break; }
+
+    size_t size_before = unassigned.size();
+
+    auto clusters = SlenderSolver::runOneRound(
+        nodes, delta, active_caps, active_rem_orders, unassigned);
+
+    // No progress → infeasible
+    if (unassigned.size() == size_before) { feasible = false; break; }
+
+    // Attach clusters to the right vehicle
+    for (size_t ci = 0; ci < clusters.size(); ++ci) {
+      if (clusters[ci].node_ids.empty()) continue;
+      int veh_local = active_idx[ci];
+      if (clusters[ci].total_weight > caps[veh_local] + 1e-9) continue;
+      trips[veh_local].push_back(clusters[ci]);
+      orders_served[veh_local] += (int)clusters[ci].node_ids.size();
+    }
+  }
+
+  if (!unassigned.empty() || !feasible) return {INF, {}};
+
+  // Solve TSP for each trip and compute total distance
+  double total_dist = 0.0;
+  std::unordered_set<int> assigned_set;
+
+  for (int i = 0; i < K; ++i) {
+    for (auto& trip : trips[i]) {
+
+      Adj sub = buildSubAdj(trip.node_ids, dist);
+      RouteResult res = optimizeRoute(sub, (int)sub.size());
+
+      trip.distance = res.distance;
+
+      // convert route back to global node IDs
+      trip.route.clear();
+      for (int idx : res.route) {
+          if (idx == 0) continue;           // ข้าม depot (index 0)
+          trip.route.push_back(trip.node_ids[idx - 1]);
+      }
+
+      total_dist += trip.distance;
+      for (int nid : trip.node_ids) assigned_set.insert(nid);
+
+    }
+  }
+
+  if (assigned_set.size() != (nodes.size() - 1)) return {INF, {}};
+
+  double total_cost = K * fixed_cost_per_veh + (total_dist/1000.0) * cost_per_km;
+  return {total_cost, trips};
 }
 
 grpc::Status SolverServiceImpl::Solve(grpc::ServerContext*,
                                        const solver::SolveRequest* req,
                                        solver::SolveResponse* resp)
 {
+
+    auto t0 = std::chrono::high_resolution_clock::now();
     int N = req->matrix_size();
+    int V = req->vehicles_size();
+
     if (N < 2) {
         resp->set_status("OK");
         return grpc::Status::OK;
     }
 
+    // 1. build data structures
     std::vector<Node> all_nodes   = buildAllNodes(req);
-    auto              dist_matrix = unflatten(req->distances(), N);
-    auto              dur_matrix  = unflatten(req->durations(), N);
+    auto              dist = unflatten(req->distances(), N);
+    auto              dur  = unflatten(req->durations(), N);
 
-    std::vector<int> all_indices(N - 1);
-    std::iota(all_indices.begin(), all_indices.end(), 1);
-    std::vector<int> sorted_unassigned = sortNodeIndices(all_nodes, all_indices);
-
-    int V = req->vehicles_size();
-    std::vector<double> caps(V);
-    std::vector<int>    max_tasks(V);
-    std::vector<int>    tasks_done(V, 0);
-    for (int v = 0; v < V; ++v) {
-        caps[v]      = req->vehicles(v).capacity();
-        max_tasks[v] = req->vehicles(v).max_tasks();
+    // Pre-compute Slender Matrix
+    std::vector<double> theta(N), rho(N);
+    double max_rho = 0;
+    for (int i = 1; i < N; ++i) {
+      theta[i] = calculateAngle(all_nodes[0].lat, all_nodes[0].lon, all_nodes[i].lat, all_nodes[i].lon);
+      rho[i] = dist[0][i];
+      if (rho[i] > max_rho) max_rho = rho[i];
     }
+    std::vector<std::vector<double>> delta(N, std::vector<double>(N));
+    computeSlenderMatrix(N, theta, rho, delta, max_rho);
 
-    std::vector<std::vector<Cluster>> vehicle_trips(V);
-    std::unordered_set<int> all_assigned;
+    // Priority sorted order
+    std::vector<int> indices(N - 1);
+    std::iota(indices.begin(), indices.end(), 1);
+    auto sorted_unassigned = sortNodeIndices(all_nodes, indices);
 
-    while (!sorted_unassigned.empty()) {
-        std::vector<double> active_caps;
-        std::vector<int>    active_rem;
-        std::vector<int>    active_v;
-        for (int v = 0; v < V; ++v) {
-            int left = max_tasks[v] == 0 ? INT_MAX : max_tasks[v] - tasks_done[v];
-            if (left > 0) {
-                active_caps.push_back(caps[v]);
-                active_rem.push_back(left);
-                active_v.push_back(v);
-            }
+    // ---------- 2. Try every possible K and random subsets ----------
+    std::mt19937 rng(std::random_device{}());
+    const int RANDOM_TRIALS = 30;   // per K
+
+    double       best_total_cost = INF;
+    double       best_total_dist = 0;
+    int          best_K          = -1;
+    std::vector<int> best_subset;                     // indices into full fleet
+    std::vector<std::vector<Cluster>> best_plan;      // plan[selected_index] = trips
+
+    for (int K = 1; K <= V; ++K) {
+      std::cout << "[Solve] trying K=" << K << std::endl;
+      double best_K_cost = INF;
+      std::vector<int> best_K_subset;
+      std::vector<std::vector<Cluster>> best_K_plan;
+
+      for (int trial = 0; trial < RANDOM_TRIALS; ++trial) {
+        // Random subset of size K
+        std::vector<int> veh_indices(V);
+        std::iota(veh_indices.begin(), veh_indices.end(), 0);
+        std::shuffle(veh_indices.begin(), veh_indices.end(), rng);
+        std::vector<int> subset(veh_indices.begin(), veh_indices.begin() + K);
+
+        auto [cost, plan] = evaluateSubset(subset, all_nodes, delta, dist, req,
+            sorted_unassigned,
+            FIXED_COST_PER_VEHICLE, COST_PER_KM);
+        if (cost < best_K_cost) {
+          best_K_cost = cost;
+          best_K_subset = subset;
+          best_K_plan = plan;
         }
-        if (active_v.empty()) break;
+      }
 
-        int K = (int)active_v.size();
-
-        std::vector<Node> candidates;
-        candidates.reserve(sorted_unassigned.size());
-        for (int idx : sorted_unassigned) candidates.push_back(all_nodes[idx]);
-
-        std::vector<int> centers = pickCenters(sorted_unassigned, K);
-
-        std::vector<Cluster> clusters = SlenderSolver::clusterWithCenters(
-            candidates, all_nodes, centers, dist_matrix, active_caps, active_rem);
-
-        int assigned_total = 0;
-
-        for (int i = 0; i < K; ++i) {
-            if (i >= (int)clusters.size() || clusters[i].node_ids.empty()) continue;
-            Cluster& c = clusters[i];
-
-            Adj sub = buildSubAdj(c.node_ids, dist_matrix);
-            RouteResult result = optimizeRoute(sub, (int)sub.size());
-
-            c.route.resize(result.route.size());
-            for (int j = 0; j < (int)result.route.size(); ++j)
-                c.route[j] = result.route[j] == 0 ? 0 : c.node_ids[result.route[j] - 1];
-            c.distance = result.distance;
-
-            int v = active_v[i];
-            vehicle_trips[v].push_back(c);
-            tasks_done[v] += (int)c.node_ids.size();
-            for (int id : c.node_ids) all_assigned.insert(id);
-            assigned_total++;
+      if (best_K_cost < INF) {
+        std::cout << "  best cost=" << best_K_cost << " Baht\n";
+        if (best_K_cost < best_total_cost) {
+          best_total_cost = best_K_cost;
+          best_K = K;
+          best_subset = best_K_subset;
+          best_plan = best_K_plan;
         }
-
-        if (assigned_total == 0) break;
-
-        sorted_unassigned.erase(
-            std::remove_if(sorted_unassigned.begin(), sorted_unassigned.end(),
-                [&](int idx) { return all_assigned.count(idx) > 0; }),
-            sorted_unassigned.end());
+      }
     }
 
-    double total_obj = 0.0;
+    // ---------- 3. Build response from best plan ----------
+    if (best_K == -1) {
+      resp->set_status("INFEASIBLE");
+      return grpc::Status::OK;
+    }
 
-    for (int v = 0; v < V; ++v) {
-        if (vehicle_trips[v].empty()) continue;
-        auto* route = resp->add_routes();
-        route->set_vehicle_id(req->vehicles(v).id());
+    // For each selected vehicle, output its trips with time windows
+    for (int i = 0; i < best_K; ++i) {
+      int global_idx = best_subset[i];
+      const auto& veh_info = req->vehicles(global_idx);
+      if (best_plan[i].empty()) continue;
 
-        double vdist = 0.0;
-        int    vtime = req->vehicles(v).shift_start();
-        int    cur   = 0;
+      auto* route = resp->add_routes();
+      route->set_vehicle_id(veh_info.id());
 
-        for (const auto& trip : vehicle_trips[v]) {
-            for (int global_id : trip.route) {
-                if (global_id == 0) continue;
-                const auto& pn = req->nodes(global_id - 1);
-                int travel = (int)dur_matrix[cur][global_id];
-                int arr    = vtime + travel;
-                if (pn.tw_start() > 0 && arr < pn.tw_start()) arr = pn.tw_start();
-                int depart = arr + pn.service_time();
+      double v_dist = 0.0;
+      int v_time = veh_info.shift_start();   // initial time from depot
+      int cur = 0;   // start at depot
 
-                auto* stop = route->add_stops();
-                stop->set_node_id(pn.id());
-                stop->set_arrival_min(arr);
-                stop->set_depart_min(depart);
+      for (const auto& trip : best_plan[i]) {
+        for (int node_id : trip.route) {
+          // Travel time + waiting time logic
+          int travel = (int)dur[cur][node_id];
+          int arr = v_time + travel;
+          const auto& pn = req->nodes(node_id - 1);
+          if (pn.tw_start() > 0 && arr < pn.tw_start())
+            arr = pn.tw_start();
+          int depart = arr + pn.service_time();
 
-                vdist += dist_matrix[cur][global_id];
-                vtime  = depart;
-                cur    = global_id;
-            }
+          auto* stop = route->add_stops();
+          stop->set_node_id(pn.id());
+          stop->set_arrival_min(arr);
+          stop->set_depart_min(depart);
+
+          v_dist += dist[cur][node_id];
+          v_time = depart;
+          cur = node_id;
         }
-        vdist += dist_matrix[cur][0];
-        route->set_total_distance(vdist);
-        route->set_total_duration(vtime - req->vehicles(v).shift_start());
-        total_obj += vdist;
+      }
+      v_dist += dist[cur][0];   // return to depot
+      route->set_total_distance(v_dist);
+      route->set_total_duration(v_time - veh_info.shift_start());
+      best_total_dist += v_dist;
     }
 
-    for (int i = 0; i < req->nodes_size(); ++i) {
-        if (!all_assigned.count(i + 1))
-            resp->add_unassigned(req->nodes(i).id());
-    }
+    resp->set_objective(best_total_dist);
+    resp->set_status("OK");
 
-    resp->set_objective(total_obj);
-    resp->set_status(resp->unassigned_size() == 0 ? "OK" : "INFEASIBLE");
+    auto t1 = std::chrono::high_resolution_clock::now();
+    std::cout << "[Solve] finished in "
+      << std::chrono::duration_cast<std::chrono::milliseconds>(t1 - t0).count()
+      << " ms, best K=" << best_K
+      << ", vehicles used=" << best_subset.size()
+      << ", total distance=" << best_total_dist << " m"
+      << ", total cost=" << best_total_cost << " Baht\n";
+
     return grpc::Status::OK;
 }

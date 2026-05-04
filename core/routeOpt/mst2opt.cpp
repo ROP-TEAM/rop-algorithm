@@ -108,9 +108,9 @@ vector<int> twoOpt(vector<int> route, Adj& adj) {
   int  swapCount = 0;
   bool improved  = true;
 
-  while (improved)
+  while (improved && iter) {
     improved = twoOptPass(route, adj, swapCount);
-
+  }
   // std::cout << "  Total 2-opt swaps applied: " << swapCount << "\n";
   return route;
 }
