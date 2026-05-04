@@ -6,35 +6,37 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+
+	"github.com/ROP-TEAM/rop-algorithm/model"
 )
 
-func (g *GoogleMapsMatrix) doDistanceMatrixRequest(ctx context.Context, req DistanceMatrixRequest) (*DistanceMatrixResponse, error) {
+func (g *GoogleMapsMatrix) doDistanceMatrixRequest(ctx context.Context, req model.DistanceMatrixRequest) (*model.DistanceMatrixResponse, error) {
 	policy := ResolveCachePolicy(req)
 	nO, nD := len(req.Origins), len(req.Destinations)
 
-	g.emitEvent(ctx, MatrixEvent{Name: "api_request", Policy: policy, ChunkOrigins: nO, ChunkDestinations: nD})
+	g.emitEvent(ctx, model.MatrixEvent{Name: "api_request", Policy: policy, ChunkOrigins: nO, ChunkDestinations: nD})
 
 	httpResp, err := g.executeHTTPRequest(ctx, req)
 	if err != nil {
-		g.emitEvent(ctx, MatrixEvent{Name: "api_request_error", Policy: policy, Error: err.Error(), ChunkOrigins: nO, ChunkDestinations: nD})
+		g.emitEvent(ctx, model.MatrixEvent{Name: "api_request_error", Policy: policy, Error: err.Error(), ChunkOrigins: nO, ChunkDestinations: nD})
 		return nil, err
 	}
 	defer httpResp.Body.Close()
 
 	if httpResp.StatusCode != http.StatusOK {
-		g.emitEvent(ctx, MatrixEvent{Name: "api_response_error", Policy: policy, Error: httpResp.Status, ChunkOrigins: nO, ChunkDestinations: nD})
+		g.emitEvent(ctx, model.MatrixEvent{Name: "api_response_error", Policy: policy, Error: httpResp.Status, ChunkOrigins: nO, ChunkDestinations: nD})
 		return nil, fmt.Errorf("distance matrix API unexpected HTTP status: %s", httpResp.Status)
 	}
 
 	apiResp, eventName, err := decodeAndValidateAPIResponse(httpResp.Body, len(req.Origins))
 	if err != nil {
-		g.emitEvent(ctx, MatrixEvent{Name: eventName, Policy: policy, Error: err.Error(), ChunkOrigins: nO, ChunkDestinations: nD})
+		g.emitEvent(ctx, model.MatrixEvent{Name: eventName, Policy: policy, Error: err.Error(), ChunkOrigins: nO, ChunkDestinations: nD})
 		return nil, err
 	}
 	return apiResp, nil
 }
 
-func (g *GoogleMapsMatrix) executeHTTPRequest(ctx context.Context, req DistanceMatrixRequest) (*http.Response, error) {
+func (g *GoogleMapsMatrix) executeHTTPRequest(ctx context.Context, req model.DistanceMatrixRequest) (*http.Response, error) {
 	client := g.httpClient
 	if client == nil {
 		client = http.DefaultClient
@@ -50,8 +52,8 @@ func (g *GoogleMapsMatrix) executeHTTPRequest(ctx context.Context, req DistanceM
 	return resp, nil
 }
 
-func decodeAndValidateAPIResponse(body io.Reader, expectedRows int) (*DistanceMatrixResponse, string, error) {
-	var resp DistanceMatrixResponse
+func decodeAndValidateAPIResponse(body io.Reader, expectedRows int) (*model.DistanceMatrixResponse, string, error) {
+	var resp model.DistanceMatrixResponse
 	if err := json.NewDecoder(body).Decode(&resp); err != nil {
 		return nil, "api_decode_error", fmt.Errorf("distance matrix API decode: %w", err)
 	}

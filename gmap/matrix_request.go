@@ -5,9 +5,11 @@ import (
 	"net/url"
 	"strconv"
 	"strings"
+
+	"github.com/ROP-TEAM/rop-algorithm/model"
 )
 
-func (g *GoogleMapsMatrix) buildDistanceMatrixURL(req DistanceMatrixRequest) string {
+func (g *GoogleMapsMatrix) buildDistanceMatrixURL(req model.DistanceMatrixRequest) string {
 	baseURL := g.baseURL
 	if baseURL == "" {
 		baseURL = defaultDistanceMatrixURL
@@ -16,7 +18,7 @@ func (g *GoogleMapsMatrix) buildDistanceMatrixURL(req DistanceMatrixRequest) str
 	return baseURL + "?" + buildDistanceMatrixQuery(req, g.apiKey).Encode()
 }
 
-func buildDistanceMatrixQuery(req DistanceMatrixRequest, apiKey string) url.Values {
+func buildDistanceMatrixQuery(req model.DistanceMatrixRequest, apiKey string) url.Values {
 	query := url.Values{}
 	query.Set("origins", strings.Join(req.Origins, "|"))
 	query.Set("destinations", strings.Join(req.Destinations, "|"))
@@ -65,17 +67,17 @@ func buildDistanceMatrixQuery(req DistanceMatrixRequest, apiKey string) url.Valu
 }
 
 // BuildDistanceMatrixQuery is the public export of buildDistanceMatrixQuery.
-func BuildDistanceMatrixQuery(req DistanceMatrixRequest, apiKey string) url.Values {
+func BuildDistanceMatrixQuery(req model.DistanceMatrixRequest, apiKey string) url.Values {
 	return buildDistanceMatrixQuery(req, apiKey)
 }
 
-func buildDistanceMatrixRequest(locs []Location, opts MatrixOptions) DistanceMatrixRequest {
+func buildDistanceMatrixRequest(locs []model.Location, opts model.MatrixOptions) model.DistanceMatrixRequest {
 	points := make([]string, len(locs))
 	for i, loc := range locs {
 		points[i] = locationRequestValue(loc)
 	}
 
-	req := DistanceMatrixRequest{
+	req := model.DistanceMatrixRequest{
 		Origins:                  points,
 		Destinations:             points,
 		Mode:                     "driving",
@@ -100,7 +102,7 @@ func buildDistanceMatrixRequest(locs []Location, opts MatrixOptions) DistanceMat
 	return req
 }
 
-func validateDistanceMatrixRequest(req DistanceMatrixRequest) error {
+func validateDistanceMatrixRequest(req model.DistanceMatrixRequest) error {
 	if len(req.Origins) == 0 {
 		return fmt.Errorf("origins are required")
 	}
@@ -118,11 +120,11 @@ func validateDistanceMatrixRequest(req DistanceMatrixRequest) error {
 }
 
 // ValidateDistanceMatrixRequest is the public export of validateDistanceMatrixRequest.
-func ValidateDistanceMatrixRequest(req DistanceMatrixRequest) error {
+func ValidateDistanceMatrixRequest(req model.DistanceMatrixRequest) error {
 	return validateDistanceMatrixRequest(req)
 }
 
-func locationRequestValue(l Location) string {
+func locationRequestValue(l model.Location) string {
 	if strings.TrimSpace(l.Raw) != "" {
 		return l.Raw
 	}

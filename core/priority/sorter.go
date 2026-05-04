@@ -23,7 +23,7 @@ func isMoreUrgent(a, b model.Node) bool {
 	if a.TWEnd != b.TWEnd {
 		return a.TWEnd < b.TWEnd
 	}
-	return priorityRank(a.Priority) > priorityRank(b.Priority)
+	return a.Priority.Rank() > b.Priority.Rank()
 }
 
 func deadlineKey(n model.Node) int {
@@ -31,19 +31,4 @@ func deadlineKey(n model.Node) int {
 		return math.MaxInt32
 	}
 	return n.DeadlineMin
-}
-
-func priorityRank(p model.Priority) int {
-	switch p {
-	case model.PriorityCritical:
-		return 4
-	case model.PriorityHigh:
-		return 3
-	case model.PriorityMedium:
-		return 2
-	case model.PriorityLow:
-		return 1
-	default:
-		return 0
-	}
 }
