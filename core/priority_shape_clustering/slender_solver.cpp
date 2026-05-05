@@ -78,6 +78,7 @@ std::vector<Cluster> SlenderSolver::runOneRound(
     std::vector<Cluster> best_clusters;
     double best_score = 1e18;
     std::mt19937 rng(42);
+    // std::mt19937 rng(std::random_device{}());
 
     for (int run = 0; run < 20; ++run) {
         std::vector<int> shuffled = pool;

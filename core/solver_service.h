@@ -1,5 +1,6 @@
 #pragma once
 #include <grpcpp/grpcpp.h>
+#include <random>
 #include "solver.grpc.pb.h"
 
 struct SolveConfig {
@@ -7,6 +8,7 @@ struct SolveConfig {
     double   costPerKm           = 40.02;
     int      randomTrials        = 30;
     uint32_t seed                = 42;
+    // uint32_t seed                = std::random_device{}();
 };
 
 class SolverServiceImpl final : public solver::SolverService::Service {
