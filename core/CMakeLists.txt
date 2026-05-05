@@ -26,12 +26,22 @@ add_custom_command(
     DEPENDS ${PROTO_FILE}
 )
 
+set(FEASIBILITY_SRCS
+    feasibility/capacity.cpp
+    feasibility/tags.cpp
+    feasibility/max_distance.cpp
+    feasibility/precedence.cpp
+    feasibility/shift.cpp
+    feasibility/break.cpp
+)
+
 # gRPC solver binary — started by Go's solver/process package
 add_executable(solver
     main.cpp
     solver_service.cpp
     priority_shape_clustering/slender_utils.cpp
     priority_shape_clustering/slender_solver.cpp
+    ${FEASIBILITY_SRCS}
     ${PROTO_SRCS}
     ${GRPC_SRCS}
 )
@@ -47,6 +57,7 @@ add_executable(demo_solve
     solver_service.cpp
     priority_shape_clustering/slender_utils.cpp
     priority_shape_clustering/slender_solver.cpp
+    ${FEASIBILITY_SRCS}
     ${PROTO_SRCS}
     ${GRPC_SRCS}
 )
@@ -63,6 +74,7 @@ add_executable(bench_solve
     solver_service.cpp
     priority_shape_clustering/slender_utils.cpp
     priority_shape_clustering/slender_solver.cpp
+    ${FEASIBILITY_SRCS}
     ${PROTO_SRCS}
     ${GRPC_SRCS}
 )
@@ -79,6 +91,7 @@ add_executable(bench_compare
     solver_service.cpp
     priority_shape_clustering/slender_utils.cpp
     priority_shape_clustering/slender_solver.cpp
+    ${FEASIBILITY_SRCS}
     ${PROTO_SRCS}
     ${GRPC_SRCS}
 )

@@ -1,5 +1,6 @@
 #include "slender_solver.h"
 #include "slender_utils.h"
+#include "../feasibility/capacity.h"
 #include <algorithm>
 #include <random>
 #include <unordered_set>
@@ -27,8 +28,8 @@ std::vector<Cluster> SlenderSolver::kMedoidsIterate(
             double min_score = 1e18;
             int best_k = -1;
             for (int k = 0; k < K; ++k) {
-                if (clusters[k].total_weight + node.weight <= active_capacities[k] &&
-                    (int)clusters[k].node_ids.size() < active_remaining_orders[k]) {
+                if (feasibility::fitsCapacity(clusters[k].total_weight, node.weight, active_capacities[k]) &&
+                    feasibility::fitsMaxTasks((int)clusters[k].node_ids.size(), active_remaining_orders[k])) {
                     double score = delta[node.id][centers[k]];
                     if (score < min_score) { min_score = score; best_k = k; }
                 }

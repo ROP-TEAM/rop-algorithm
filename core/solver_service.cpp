@@ -4,6 +4,12 @@
 #include "priority_shape_clustering/types.h"
 #include "priority/sorter.h"
 #include "priority_shape_clustering/slender_utils.h"
+#include "feasibility/capacity.h"
+#include "feasibility/tags.h"
+#include "feasibility/max_distance.h"
+#include "feasibility/precedence.h"
+#include "feasibility/shift.h"
+#include "feasibility/break.h"
 #include <numeric>
 #include <unordered_set>
 #include <climits>
@@ -166,7 +172,18 @@ static std::pair<double, std::vector<std::vector<Cluster>>> evaluateSubset(
         for (size_t ci = 0; ci < clusters.size(); ++ci) {
             if (clusters[ci].node_ids.empty()) continue;
             int veh_local = active_idx[ci];
-            if (clusters[ci].total_weight > caps[veh_local] + 1e-9) continue;
+            if (!feasibility::fitsCapacity(clusters[ci].total_weight, 0.0, caps[veh_local])) continue;
+
+            const auto& v = req->vehicles(veh_indices[veh_local]);
+            bool tags_ok = true;
+            for (int node_id : clusters[ci].node_ids) {
+                if (!feasibility::isTagCompatible(v, req->nodes(node_id - 1))) {
+                    tags_ok = false;
+                    break;
+                }
+            }
+            if (!tags_ok) { feasible = false; break; }
+
             trips[veh_local].push_back(clusters[ci]);
             orders_served[veh_local] += (int)clusters[ci].node_ids.size();
         }
@@ -178,6 +195,7 @@ static std::pair<double, std::vector<std::vector<Cluster>>> evaluateSubset(
     std::unordered_set<int> assigned_set;
 
     for (int i = 0; i < K; ++i) {
+        const auto& v = req->vehicles(veh_indices[i]);
         for (auto& trip : trips[i]) {
             Adj sub = buildSubAdj(trip.node_ids, ctx.dist);
             RouteResult res = optimizeRoute(sub, (int)sub.size());
@@ -188,6 +206,13 @@ static std::pair<double, std::vector<std::vector<Cluster>>> evaluateSubset(
                 if (idx == 0) continue;
                 trip.route.push_back(trip.node_ids[idx - 1]);
             }
+
+            if (!feasibility::isMaxDistanceFeasible(trip.distance, v.max_distance()))
+                return {INF, {}};
+            if (!feasibility::isLBPrecedenceFeasible(trip.route, req->nodes()))
+                return {INF, {}};
+            if (!feasibility::isPDPairFeasible(trip.route, req->nodes()))
+                return {INF, {}};
 
             total_dist += trip.distance;
             for (int nid : trip.node_ids) assigned_set.insert(nid);
@@ -251,7 +276,7 @@ static BestPlan findBestPlan(const SolveContext& ctx,
 // Stage 3: serialise best plan into the gRPC response
 // ---------------------------------------------------------------------------
 
-static void buildResponse(const BestPlan& plan,
+static bool buildResponse(const BestPlan& plan,
                           const SolveContext& ctx,
                           const solver::SolveRequest* req,
                           solver::SolveResponse* resp)
@@ -269,11 +294,14 @@ static void buildResponse(const BestPlan& plan,
         double v_dist = 0.0;
         int    v_time = veh_info.shift_start();
         int    cur    = 0;
+        std::vector<std::pair<int, int>> travel_gaps;
 
         for (const auto& trip : plan.trips[i]) {
             for (int node_id : trip.route) {
-                int travel = (int)ctx.dur[cur][node_id];
-                int arr    = v_time + travel;
+                int travel    = (int)ctx.dur[cur][node_id];
+                int gap_start = v_time;
+                int arr       = v_time + travel;
+                travel_gaps.push_back({gap_start, arr});
 
                 const auto& pn = req->nodes(node_id - 1);
                 if (pn.tw_start() > 0 && arr < pn.tw_start())
@@ -290,6 +318,12 @@ static void buildResponse(const BestPlan& plan,
                 cur     = node_id;
             }
         }
+
+        if (!feasibility::isShiftWindowFeasible(v_time, veh_info.shift_end()))
+            return false;
+        if (!feasibility::isBreakWindowFeasible(travel_gaps, veh_info.break_start(), veh_info.break_end()))
+            return false;
+
         v_dist += ctx.dist[cur][0];
         route->set_total_distance(v_dist);
         route->set_total_duration(v_time - veh_info.shift_start());
@@ -298,6 +332,7 @@ static void buildResponse(const BestPlan& plan,
 
     resp->set_objective(total_dist);
     resp->set_status("OK");
+    return true;
 }
 
 // ---------------------------------------------------------------------------
@@ -324,7 +359,11 @@ grpc::Status SolverServiceImpl::Solve(grpc::ServerContext*,
         return grpc::Status::OK;
     }
 
-    buildResponse(best, ctx, req, resp);
+    if (!buildResponse(best, ctx, req, resp)) {
+        resp->clear_routes();
+        resp->set_status("INFEASIBLE");
+        return grpc::Status::OK;
+    }
 
     auto t1 = std::chrono::high_resolution_clock::now();
     std::cout << "[Solve] finished in "
@@ -399,6 +438,9 @@ solver::SolveResponse SolverV2::Solve(const solver::SolveRequest& req) {
         return resp;
     }
 
-    buildResponse(best, ctx, &req, &resp);
+    if (!buildResponse(best, ctx, &req, &resp)) {
+        resp.clear_routes();
+        resp.set_status("INFEASIBLE");
+    }
     return resp;
 }
