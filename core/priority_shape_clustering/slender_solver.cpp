@@ -62,7 +62,8 @@ std::vector<Cluster> SlenderSolver::runOneRound(
     const std::vector<std::vector<double>>& delta,
     const std::vector<double>& active_capacities,
     const std::vector<int>& active_remaining_orders,
-    std::vector<int>& unassigned_nodes)
+    std::vector<int>& unassigned_nodes,
+    uint32_t seed)
 {
     int K = active_capacities.size();
     if (K == 0 || unassigned_nodes.empty()) return {};
@@ -78,8 +79,7 @@ std::vector<Cluster> SlenderSolver::runOneRound(
 
     std::vector<Cluster> best_clusters;
     double best_score = 1e18;
-    std::mt19937 rng(42);
-    // std::mt19937 rng(std::random_device{}());
+    std::mt19937 rng(seed);
 
     for (int run = 0; run < 20; ++run) {
         std::vector<int> shuffled = pool;

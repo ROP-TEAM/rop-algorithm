@@ -1,6 +1,7 @@
 #ifndef SLENDER_SOLVER_H
 #define SLENDER_SOLVER_H
 
+#include <cstdint>
 #include <vector>
 #include "types.h"
 
@@ -11,7 +12,8 @@ class SlenderSolver {
         const std::vector<std::vector<double>>& delta,
         const std::vector<double>& active_capacities,
         const std::vector<int>& active_remaining_orders,
-        std::vector<int>& unassigned_nodes
+        std::vector<int>& unassigned_nodes,
+        uint32_t seed
         );
 
     static std::vector<Cluster> clusterWithCenters(

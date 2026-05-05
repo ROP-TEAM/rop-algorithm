@@ -7,8 +7,7 @@ struct SolveConfig {
     double   fixedCostPerVehicle = 450.0;
     double   costPerKm           = 40.02;
     int      randomTrials        = 30;
-    uint32_t seed                = 42;
-    // uint32_t seed                = std::random_device{}();
+    uint32_t seed                = std::random_device{}();
 };
 
 class SolverServiceImpl final : public solver::SolverService::Service {

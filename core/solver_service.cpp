@@ -131,7 +131,8 @@ static std::pair<double, std::vector<std::vector<Cluster>>> evaluateSubset(
     const SolveContext&                  ctx,
     const solver::SolveRequest*          req,
     double                               fixed_cost_per_veh,
-    double                               cost_per_km)
+    double                               cost_per_km,
+    uint32_t                             seed)
 {
     int K = veh_indices.size();
     if (K == 0) return {INF, {}};
@@ -165,7 +166,7 @@ static std::pair<double, std::vector<std::vector<Cluster>>> evaluateSubset(
 
         size_t size_before = unassigned.size();
         auto clusters = SlenderSolver::runOneRound(
-            ctx.nodes, ctx.delta, active_caps, active_rem_orders, unassigned);
+            ctx.nodes, ctx.delta, active_caps, active_rem_orders, unassigned, seed);
 
         if (unassigned.size() == size_before) { feasible = false; break; }
 
@@ -250,7 +251,7 @@ static BestPlan findBestPlan(const SolveContext& ctx,
             std::vector<int> subset(veh_indices.begin(), veh_indices.begin() + K);
 
             auto [cost, trips] = evaluateSubset(subset, ctx, req,
-                                                cfg.fixedCostPerVehicle, cfg.costPerKm);
+                                                cfg.fixedCostPerVehicle, cfg.costPerKm, cfg.seed);
             if (cost < best_K_cost) {
                 best_K_cost   = cost;
                 best_K_subset = subset;
@@ -400,7 +401,7 @@ static BestPlan findBestPlanV2(const SolveContext& ctx,
             std::vector<int> subset(veh_indices.begin(), veh_indices.begin() + K);
 
             auto [cost, trips] = evaluateSubset(subset, ctx, req,
-                                                cfg.fixedCostPerVehicle, cfg.costPerKm);
+                                                cfg.fixedCostPerVehicle, cfg.costPerKm, cfg.seed);
             if (cost < best_K_cost) {
                 best_K_cost   = cost;
                 best_K_subset = subset;
