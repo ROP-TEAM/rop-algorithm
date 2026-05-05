@@ -71,3 +71,19 @@ target_include_directories(bench_solve PRIVATE
     ${CMAKE_CURRENT_BINARY_DIR}
     ${CMAKE_CURRENT_SOURCE_DIR}
 )
+
+# V1 vs V2 comparison harness — Dobj%=0 on identical algo confirms harness is correct
+add_executable(bench_compare
+    bench_compare.cpp
+    bench_gen.cpp
+    solver_service.cpp
+    priority_shape_clustering/slender_utils.cpp
+    priority_shape_clustering/slender_solver.cpp
+    ${PROTO_SRCS}
+    ${GRPC_SRCS}
+)
+target_link_libraries(bench_compare PRIVATE gRPC::grpc++ protobuf::libprotobuf)
+target_include_directories(bench_compare PRIVATE
+    ${CMAKE_CURRENT_BINARY_DIR}
+    ${CMAKE_CURRENT_SOURCE_DIR}
+)

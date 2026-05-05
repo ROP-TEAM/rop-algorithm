@@ -209,7 +209,7 @@ static BestPlan findBestPlan(const SolveContext& ctx,
                              const SolveConfig& cfg)
 {
     int V = req->vehicles_size();
-    std::mt19937 rng(std::random_device{}());
+    std::mt19937 rng(cfg.seed);
     BestPlan best;
 
     for (int K = 1; K <= V; ++K) {
@@ -335,4 +335,70 @@ grpc::Status SolverServiceImpl::Solve(grpc::ServerContext*,
               << ", total cost=" << best.cost << " Baht\n";
 
     return grpc::Status::OK;
+}
+
+// ---------------------------------------------------------------------------
+// findBestPlanV2 — starting point for the new algorithm
+// ---------------------------------------------------------------------------
+
+static BestPlan findBestPlanV2(const SolveContext& ctx,
+                               const solver::SolveRequest* req,
+                               const SolveConfig& cfg)
+{
+    int V = req->vehicles_size();
+    std::mt19937 rng(cfg.seed);
+    BestPlan best;
+
+    for (int K = 1; K <= V; ++K) {
+        double                            best_K_cost = INF;
+        std::vector<int>                  best_K_subset;
+        std::vector<std::vector<Cluster>> best_K_trips;
+
+        for (int trial = 0; trial < cfg.randomTrials; ++trial) {
+            std::vector<int> veh_indices(V);
+            std::iota(veh_indices.begin(), veh_indices.end(), 0);
+            std::shuffle(veh_indices.begin(), veh_indices.end(), rng);
+            std::vector<int> subset(veh_indices.begin(), veh_indices.begin() + K);
+
+            auto [cost, trips] = evaluateSubset(subset, ctx, req,
+                                                cfg.fixedCostPerVehicle, cfg.costPerKm);
+            if (cost < best_K_cost) {
+                best_K_cost   = cost;
+                best_K_subset = subset;
+                best_K_trips  = trips;
+            }
+        }
+
+        if (best_K_cost < INF && best_K_cost < best.cost) {
+            best.K      = K;
+            best.cost   = best_K_cost;
+            best.subset = best_K_subset;
+            best.trips  = best_K_trips;
+        }
+    }
+
+    return best;
+}
+
+// ---------------------------------------------------------------------------
+// SolverV2 entry point
+// ---------------------------------------------------------------------------
+
+solver::SolveResponse SolverV2::Solve(const solver::SolveRequest& req) {
+    solver::SolveResponse resp;
+    if (req.matrix_size() < 2) {
+        resp.set_status("OK");
+        return resp;
+    }
+
+    SolveContext ctx  = buildSolveContext(&req);
+    BestPlan     best = findBestPlanV2(ctx, &req, cfg_);
+
+    if (best.K == -1) {
+        resp.set_status("INFEASIBLE");
+        return resp;
+    }
+
+    buildResponse(best, ctx, &req, &resp);
+    return resp;
 }
