@@ -50,6 +50,7 @@ message Route {
   repeated RouteStop stops          = 2;
   double             total_distance = 3; // meters
   int32              total_duration = 4; // minutes
+  repeated int32     trip_sizes     = 5; // number of stops per trip (multi-trip vehicles)
 }
 
 message SolveResponse {

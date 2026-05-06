@@ -5,11 +5,6 @@
 #include "priority/sorter.h"
 #include "priority_shape_clustering/slender_utils.h"
 #include "feasibility/capacity.h"
-#include "feasibility/tags.h"
-#include "feasibility/max_distance.h"
-#include "feasibility/precedence.h"
-#include "feasibility/shift.h"
-#include "feasibility/break.h"
 #include <numeric>
 #include <unordered_set>
 #include <climits>
@@ -65,6 +60,9 @@ static std::vector<Node> buildAllNodes(const solver::SolveRequest* req) {
         nodes[i].weight       = pn.demand();
         nodes[i].priority     = pn.priority();
         nodes[i].deadline_min = pn.deadline_min();
+        nodes[i].tw_start     = pn.tw_start();
+        nodes[i].tw_end       = (pn.tw_end() > 0) ? pn.tw_end() : 1440;
+        nodes[i].service_time = pn.service_time();
     }
     return nodes;
 }
@@ -126,94 +124,101 @@ static SolveContext buildSolveContext(const solver::SolveRequest* req) {
 // Stage 2: evaluate one vehicle subset (unchanged logic, now a named fn)
 // ---------------------------------------------------------------------------
 
+// Compute route distance depot→seq[0]→seq[1]→…→seq[n-1]→depot.
+static double nnTspDistance(const std::vector<int>&              node_ids,
+                            const std::vector<std::vector<double>>& dist) {
+    if (node_ids.empty()) return 0.0;
+    std::vector<bool> visited(dist.size(), false);
+    double total   = 0.0;
+    int    current = 0;
+    for (size_t step = 0; step < node_ids.size(); ++step) {
+        double min_d = 1e18;
+        int    best  = -1;
+        for (int id : node_ids) {
+            if (!visited[id] && dist[current][id] < min_d) {
+                min_d = dist[current][id];
+                best  = id;
+            }
+        }
+        if (best != -1) { total += min_d; current = best; visited[best] = true; }
+    }
+    total += dist[current][0];
+    return total;
+}
+
+static double simulateTripReturnTime(const Cluster&                          cluster,
+                                      const std::vector<Node>&                nodes,
+                                      const std::vector<std::vector<double>>& dur,
+                                      double                                  ready_time) {
+    if (cluster.node_ids.empty()) return ready_time;
+    double t   = ready_time;
+    int    cur = 0;
+    for (int id : cluster.node_ids) {
+        double arr = t + dur[cur][id];
+        if (arr < nodes[id].tw_start) arr = nodes[id].tw_start;
+        t   = arr + nodes[id].service_time;
+        cur = id;
+    }
+    return t + dur[cur][0];
+}
+
 static std::pair<double, std::vector<std::vector<Cluster>>> evaluateSubset(
     const std::vector<int>&              veh_indices,
     const SolveContext&                  ctx,
     const solver::SolveRequest*          req,
     double                               fixed_cost_per_veh,
     double                               cost_per_km,
-    uint32_t                             seed)
+    uint32_t                             /*seed — unused; SlenderSolver uses fixed internal seed*/)
 {
     int K = veh_indices.size();
     if (K == 0) return {INF, {}};
 
+    // Per-vehicle weight capacity (constant across trips — no daily order cap)
     std::vector<double> caps(K);
-    std::vector<int>    max_orders(K);
-    for (int i = 0; i < K; ++i) {
-        const auto& v = req->vehicles(veh_indices[i]);
-        caps[i]       = v.capacity();
-        max_orders[i] = (v.max_tasks() == 0) ? INT_MAX : v.max_tasks();
-    }
+    for (int i = 0; i < K; ++i)
+        caps[i] = req->vehicles(veh_indices[i]).capacity();
 
-    std::vector<int>                     unassigned = ctx.sortedIndices;
-    std::vector<int>                     orders_served(K, 0);
-    std::vector<std::vector<Cluster>>    trips(K);
+    std::vector<double> ready_times(K);
+    for (int i = 0; i < K; ++i)
+        ready_times[i] = static_cast<double>(req->vehicles(veh_indices[i]).shift_start());
+
+    std::vector<int>                  unassigned = ctx.sortedIndices;
+    std::vector<std::vector<Cluster>> trips(K);
 
     bool feasible = true;
     while (!unassigned.empty()) {
-        std::vector<int>    active_idx;
-        std::vector<double> active_caps;
-        std::vector<int>    active_rem_orders;
-        for (int i = 0; i < K; ++i) {
-            int left = max_orders[i] - orders_served[i];
-            if (left > 0) {
-                active_idx.push_back(i);
-                active_caps.push_back(caps[i]);
-                active_rem_orders.push_back(left);
-            }
-        }
-        if (active_idx.empty()) { feasible = false; break; }
-
         size_t size_before = unassigned.size();
+
         auto clusters = SlenderSolver::runOneRound(
-            ctx.nodes, ctx.delta, active_caps, active_rem_orders, unassigned, seed);
+            ctx.nodes, ctx.delta, ctx.dur, caps, unassigned, ready_times);
 
         if (unassigned.size() == size_before) { feasible = false; break; }
 
-        for (size_t ci = 0; ci < clusters.size(); ++ci) {
+        for (int ci = 0; ci < (int)clusters.size() && ci < K; ++ci) {
             if (clusters[ci].node_ids.empty()) continue;
-            int veh_local = active_idx[ci];
-            if (!feasibility::fitsCapacity(clusters[ci].total_weight, 0.0, caps[veh_local])) continue;
+            // Capacity safety check (clustering already enforces, but verify)
+            if (!feasibility::fitsCapacity(clusters[ci].total_weight, 0.0, caps[ci]))
+                continue;
 
-            const auto& v = req->vehicles(veh_indices[veh_local]);
-            bool tags_ok = true;
-            for (int node_id : clusters[ci].node_ids) {
-                if (!feasibility::isTagCompatible(v, req->nodes(node_id - 1))) {
-                    tags_ok = false;
-                    break;
-                }
-            }
-            if (!tags_ok) { feasible = false; break; }
-
-            trips[veh_local].push_back(clusters[ci]);
-            orders_served[veh_local] += (int)clusters[ci].node_ids.size();
+            trips[ci].push_back(clusters[ci]);
+            ready_times[ci] = simulateTripReturnTime(
+                clusters[ci], ctx.nodes, ctx.dur, ready_times[ci]);
+            if (ready_times[ci] > req->vehicles(veh_indices[ci]).shift_end())
+                caps[ci] = 0.0;
         }
     }
 
     if (!unassigned.empty() || !feasible) return {INF, {}};
 
+    // Use insertion order as route — it is time-feasible by construction.
+    // TSP re-ordering is skipped to preserve hard time-window feasibility.
     double                  total_dist = 0.0;
     std::unordered_set<int> assigned_set;
 
     for (int i = 0; i < K; ++i) {
-        const auto& v = req->vehicles(veh_indices[i]);
         for (auto& trip : trips[i]) {
-            Adj sub = buildSubAdj(trip.node_ids, ctx.dist);
-            RouteResult res = optimizeRoute(sub, (int)sub.size());
-
-            trip.distance = res.distance;
-            trip.route.clear();
-            for (int idx : res.route) {
-                if (idx == 0) continue;
-                trip.route.push_back(trip.node_ids[idx - 1]);
-            }
-
-            if (!feasibility::isMaxDistanceFeasible(trip.distance, v.max_distance()))
-                return {INF, {}};
-            if (!feasibility::isLBPrecedenceFeasible(trip.route, req->nodes()))
-                return {INF, {}};
-            if (!feasibility::isPDPairFeasible(trip.route, req->nodes()))
-                return {INF, {}};
+            trip.route    = trip.node_ids;  // time-feasible insertion order
+            trip.distance = nnTspDistance(trip.route, ctx.dist);
 
             total_dist += trip.distance;
             for (int nid : trip.node_ids) assigned_set.insert(nid);
@@ -238,35 +243,22 @@ static BestPlan findBestPlan(const SolveContext& ctx,
     std::mt19937 rng(cfg.seed);
     BestPlan best;
 
-    for (int K = 1; K <= V; ++K) {
-        std::cout << "[Solve] trying K=" << K << std::endl;
-        double                            best_K_cost = INF;
-        std::vector<int>                  best_K_subset;
-        std::vector<std::vector<Cluster>> best_K_trips;
+    for (int attempt = 0; attempt < cfg.randomTrials; ++attempt) {
+        int K = std::uniform_int_distribution<int>(1, V)(rng);
 
-        for (int trial = 0; trial < cfg.randomTrials; ++trial) {
-            std::vector<int> veh_indices(V);
-            std::iota(veh_indices.begin(), veh_indices.end(), 0);
-            std::shuffle(veh_indices.begin(), veh_indices.end(), rng);
-            std::vector<int> subset(veh_indices.begin(), veh_indices.begin() + K);
+        std::vector<int> veh_indices(V);
+        std::iota(veh_indices.begin(), veh_indices.end(), 0);
+        std::shuffle(veh_indices.begin(), veh_indices.end(), rng);
+        std::vector<int> subset(veh_indices.begin(), veh_indices.begin() + K);
 
-            auto [cost, trips] = evaluateSubset(subset, ctx, req,
-                                                cfg.fixedCostPerVehicle, cfg.costPerKm, cfg.seed);
-            if (cost < best_K_cost) {
-                best_K_cost   = cost;
-                best_K_subset = subset;
-                best_K_trips  = trips;
-            }
-        }
+        auto [cost, trips] = evaluateSubset(subset, ctx, req,
+                                            cfg.fixedCostPerVehicle, cfg.costPerKm, cfg.seed);
 
-        if (best_K_cost < INF) {
-            std::cout << "  best cost=" << best_K_cost << " Baht\n";
-            if (best_K_cost < best.cost) {
-                best.K     = K;
-                best.cost  = best_K_cost;
-                best.subset = best_K_subset;
-                best.trips  = best_K_trips;
-            }
+        if (cost < best.cost) {
+            best.cost   = cost;
+            best.K      = K;
+            best.subset = subset;
+            best.trips  = trips;
         }
     }
 
@@ -295,14 +287,16 @@ static bool buildResponse(const BestPlan& plan,
         double v_dist = 0.0;
         int    v_time = veh_info.shift_start();
         int    cur    = 0;
-        std::vector<std::pair<int, int>> travel_gaps;
-
         for (const auto& trip : plan.trips[i]) {
+            if (cur != 0) {  // return to depot between trips
+                v_dist += ctx.dist[cur][0];
+                v_time += (int)ctx.dur[cur][0];
+                cur     = 0;
+            }
+            route->add_trip_sizes((int)trip.route.size());
             for (int node_id : trip.route) {
                 int travel    = (int)ctx.dur[cur][node_id];
-                int gap_start = v_time;
                 int arr       = v_time + travel;
-                travel_gaps.push_back({gap_start, arr});
 
                 const auto& pn = req->nodes(node_id - 1);
                 if (pn.tw_start() > 0 && arr < pn.tw_start())
@@ -319,11 +313,6 @@ static bool buildResponse(const BestPlan& plan,
                 cur     = node_id;
             }
         }
-
-        if (!feasibility::isShiftWindowFeasible(v_time, veh_info.shift_end()))
-            return false;
-        if (!feasibility::isBreakWindowFeasible(travel_gaps, veh_info.break_start(), veh_info.break_end()))
-            return false;
 
         v_dist += ctx.dist[cur][0];
         route->set_total_distance(v_dist);

@@ -4,9 +4,9 @@
 #include "solver.grpc.pb.h"
 
 struct SolveConfig {
-    double   fixedCostPerVehicle = 450.0;
-    double   costPerKm           = 40.02;
-    int      randomTrials        = 30;
+    double   fixedCostPerVehicle = 550.0;
+    double   costPerKm           = 4.0003;
+    int      randomTrials        = 10000;
     uint32_t seed                = std::random_device{}();
 };
 

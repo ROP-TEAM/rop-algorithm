@@ -5,9 +5,14 @@
 #include "solver.pb.h"
 #include <iostream>
 #include <iomanip>
+#include <algorithm>
+#include <cstdio>
+#include <string>
 
 static std::string toHHMM(int m) {
-    return std::to_string(m / 60) + ":" + (m % 60 < 10 ? "0" : "") + std::to_string(m % 60);
+    char buf[8];
+    std::snprintf(buf, sizeof(buf), "%02d:%02d", m / 60, m % 60);
+    return buf;
 }
 
 // ---------------------------------------------------------------------------
@@ -153,6 +158,18 @@ static const VehicleDef VEHICLES[12] = {
     {"V-12",  16, 420,1020, 5, "refrigerated","fragile"},
 };
 
+static int nodeIndex(const std::string& id) {
+    for (int i = 0; i < 30; ++i)
+        if (id == NODES[i].id) return i + 1;
+    return -1;
+}
+
+static int vehicleIndex(const std::string& id) {
+    for (int i = 0; i < 12; ++i)
+        if (id == VEHICLES[i].id) return i;
+    return -1;
+}
+
 // ---------------------------------------------------------------------------
 int main() {
     solver::SolveRequest req;
@@ -205,31 +222,77 @@ int main() {
     service.Solve(nullptr, &req, &resp);
 
     // Print results
+    int    K           = resp.routes_size();
+    double dist_m      = resp.objective();
+    double total_cost  = K * 550.0 + (dist_m / 1000.0) * 4.0003;
+
     std::cout << "============================================================\n";
     std::cout << "  ROP Mock Demo  |  Vehicles: 12  |  Orders: 30\n";
     std::cout << "  Depot: 16.4442, 102.8352 (Khon Kaen)\n";
     std::cout << "============================================================\n\n";
-    std::cout << "Status    : " << resp.status() << "\n";
-    std::cout << "Objective : " << std::fixed << std::setprecision(0)
-              << resp.objective() << " m\n\n";
+    std::cout << "Status : " << resp.status() << "\n";
+    std::cout << "K      : " << K << "\n";
+    std::cout << "Dist   : " << std::fixed << std::setprecision(1) << dist_m / 1000.0 << " km\n";
+    std::cout << "Cost   : " << std::fixed << std::setprecision(2) << total_cost << " THB\n\n";
 
     for (const auto& route : resp.routes()) {
-        std::cout << "Vehicle : " << route.vehicle_id()
-                  << "  (stops: " << route.stops_size() << ")\n";
-        std::cout << "  " << std::left
-                  << std::setw(10) << "Order"
-                  << std::setw(8)  << "Arrive"
-                  << std::setw(8)  << "Depart"
-                  << "\n";
-        for (const auto& stop : route.stops()) {
-            std::cout << "  " << std::setw(10) << stop.node_id()
-                      << std::setw(8)  << toHHMM(stop.arrival_min())
-                      << std::setw(8)  << toHHMM(stop.depart_min())
-                      << "\n";
+        int vi = vehicleIndex(route.vehicle_id());
+        const VehicleDef& veh = VEHICLES[vi];
+        std::printf("%s (cap %d kg, shift %s-%s):\n",
+                    veh.id,
+                    veh.capacity,
+                    toHHMM(veh.shift_start).c_str(),
+                    toHHMM(veh.shift_end).c_str());
+
+        int stop_idx = 0;
+        int cur_idx  = 0;
+        int cur_time = veh.shift_start;
+
+        for (int ti = 0; ti < route.trip_sizes_size(); ++ti) {
+            int trip_sz = route.trip_sizes(ti);
+
+            double trip_weight = 0.0;
+            for (int si = stop_idx; si < stop_idx + trip_sz; ++si) {
+                int ni = nodeIndex(route.stops(si).node_id());
+                if (ni > 0) trip_weight += NODES[ni - 1].demand;
+            }
+            std::printf("  Trip %d | weight=%.1f kg | stops=%d\n",
+                        ti + 1, trip_weight, trip_sz);
+
+            for (int si = stop_idx; si < stop_idx + trip_sz; ++si) {
+                const auto& stop = route.stops(si);
+                int ni = nodeIndex(stop.node_id());
+                const NodeDef& nd = NODES[ni - 1];
+
+                int travel = (int)DUR[cur_idx][ni];
+                int unadj  = cur_time + travel;
+                int wait   = std::max(0, nd.tw_start - unadj);
+                int arr    = unadj + wait;
+                int dep    = arr + nd.service_time;
+                bool late  = (arr > nd.tw_end);
+
+                std::printf("      %-12s  arr %s  dep %s  TW [%s-%s]%s%s\n",
+                            nd.id,
+                            toHHMM(arr).c_str(),
+                            toHHMM(dep).c_str(),
+                            toHHMM(nd.tw_start).c_str(),
+                            toHHMM(nd.tw_end).c_str(),
+                            wait > 0 ? ("  wait " + std::to_string(wait) + "m").c_str() : "",
+                            late ? "  *** LATE ***" : "");
+
+                cur_idx  = ni;
+                cur_time = dep;
+            }
+
+            int return_arr = cur_time + (int)DUR[cur_idx][0];
+            std::printf("      %-12s  arr %s\n", "-> Depot", toHHMM(return_arr).c_str());
+            cur_idx  = 0;
+            cur_time = return_arr;
+            stop_idx += trip_sz;
         }
-        std::cout << "  dist: " << std::setprecision(0)
-                  << route.total_distance() << " m"
-                  << "  |  duration: " << route.total_duration() << " min\n\n";
+
+        std::printf("  dist: %.0f m  |  duration: %d min\n\n",
+                    route.total_distance(), route.total_duration());
     }
 
     if (resp.unassigned_size() > 0) {
