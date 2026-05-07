@@ -2,6 +2,9 @@
 
 #include "construction/adaptive_constructor.h"
 #include "drop/drop_logic.h"
+#include "routeOpt/or_opt.h"
+#include "routeOpt/two_opt.h"
+#include "validator/route_state.h"
 #include "validator/route_validator.h"
 #include <chrono>
 #include <iostream>
@@ -33,7 +36,10 @@ bool writeRoute(const solver::SolveRequest& req,
     auto validation = hfvrptwb::validateTrips(
         req, vehicle, trips, cfg.fixedCostPerVehicle, cfg.costPerKm, cfg.reloadMin);
     if (!validation.feasible) {
-        addDrop(resp, vehicle.id(), validation.code, validation.detail);
+        for (int node_index : constructed.nodes) {
+            const auto& node = req.nodes(node_index - 1);
+            addDrop(resp, node.id(), validation.code, validation.detail);
+        }
         return false;
     }
 
@@ -92,11 +98,84 @@ void writeResponse(const solver::SolveRequest& req,
     }
 }
 
+void applyTwoOpt(hfvrptwb::ConstructionResult& plan,
+                 const solver::SolveRequest& req,
+                 const SolveConfig& cfg)
+{
+    for (auto& route : plan.routes) {
+        const auto& vehicle = req.vehicles(route.vehicle_index);
+
+        // เก็บสำเนาเดิมไว้ใช้ fallback
+        auto original_nodes = route.nodes;
+        auto original_trips = route.trips;
+        double original_total_cost = route.total_cost;
+
+        bool single = route.trips.empty();
+        if (single && !route.nodes.empty()) {
+            // push เฉพาะกรณีมี nodes จริง
+            route.trips.push_back(route.nodes);
+        }
+
+        double new_cost = 0.0;
+        bool any_infeasible = false;
+
+        for (auto& trip_nodes : route.trips) {
+            if (trip_nodes.empty()) continue; // ข้าม trip ว่าง
+
+            hfvrptwb::RouteState init;
+            init.vehicle_index = route.vehicle_index;
+
+            auto seed = hfvrptwb::evaluateRouteState(
+                req, vehicle, init, trip_nodes,
+                cfg.fixedCostPerVehicle, cfg.costPerKm);
+
+            if (!seed.feasible || !std::isfinite(seed.next.cost)) {
+                any_infeasible = true;
+                continue;
+            }
+
+            auto opt = hfvrptwb::twoOptTrip(
+                req, vehicle, std::move(seed.next),
+                cfg.fixedCostPerVehicle, cfg.costPerKm);
+
+            if (!std::isfinite(opt.cost)) {
+                any_infeasible = true;
+                continue;
+            }
+
+            trip_nodes = opt.nodes;
+            new_cost += opt.cost;
+        }
+
+        if (any_infeasible) {
+            // fallback กลับไปใช้ route เดิม
+            route.nodes = std::move(original_nodes);
+            route.trips = std::move(original_trips);
+            route.total_cost = original_total_cost;
+        } else {
+            // rebuild nodes และอัพเดท cost
+            if (single) {
+                if (!route.trips.empty())
+                    route.nodes = route.trips[0];
+                else
+                    route.nodes.clear();
+                route.trips.clear();
+            } else {
+                route.nodes.clear();
+                for (const auto& t : route.trips)
+                    route.nodes.insert(route.nodes.end(), t.begin(), t.end());
+            }
+            route.total_cost = new_cost;
+        }
+    }
+}
+
 grpc::Status solveRequest(const solver::SolveRequest* req,
                           const SolveConfig& cfg,
                           solver::SolveResponse* resp)
 {
-    auto t0 = std::chrono::high_resolution_clock::now();
+    using Clock = std::chrono::high_resolution_clock;
+    auto t0 = Clock::now();
 
     if (req->matrix_size() < 2 || req->nodes_size() == 0) {
         resp->set_status("OK");
@@ -113,14 +192,26 @@ grpc::Status solveRequest(const solver::SolveRequest* req,
 
     auto plan = hfvrptwb::adaptiveConstruct(
         *req, cfg.fixedCostPerVehicle, cfg.costPerKm, cfg.enableMultiTrip, cfg.reloadMin);
+    auto t1 = Clock::now();
+
+    applyTwoOpt(plan, *req, cfg);
+    auto t2 = Clock::now();
+
+    hfvrptwb::orOptRelocate(plan, *req, cfg);
+    auto t3 = Clock::now();
+
     writeResponse(*req, cfg, plan, resp);
 
-    auto t1 = std::chrono::high_resolution_clock::now();
-    std::cout << "[Solve] adaptive construction finished in "
-              << std::chrono::duration_cast<std::chrono::milliseconds>(t1 - t0).count()
-              << " ms, routes=" << resp->routes_size()
-              << ", unassigned=" << resp->unassigned_size()
-              << ", objective=" << resp->objective() << "\n";
+    auto ms = [](auto a, auto b) {
+        return std::chrono::duration_cast<std::chrono::milliseconds>(b - a).count();
+    };
+    std::cout << "[Solve] construction=" << ms(t0, t1)
+              << "ms  2-opt=" << ms(t1, t2)
+            //   << "ms  or-opt=" << ms(t2, t3)
+              << "ms  total=" << ms(t0, t2)
+              << "ms  routes=" << resp->routes_size()
+              << "  unassigned=" << resp->unassigned_size()
+              << "  objective=" << resp->objective() << "\n";
 
     return grpc::Status::OK;
 }

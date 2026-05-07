@@ -2,6 +2,7 @@ cmake_minimum_required(VERSION 3.15)
 project(ROPSolver)
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
+set(CMAKE_BUILD_TYPE Release)
 
 find_package(gRPC CONFIG REQUIRED)
 find_package(Protobuf REQUIRED)
@@ -35,6 +36,8 @@ set(FEASIBILITY_SRCS
     feasibility/break.cpp
     drop/drop_logic.cpp
     construction/adaptive_constructor.cpp
+    routeOpt/or_opt.cpp
+    routeOpt/two_opt.cpp
     validator/labels.cpp
     validator/route_state.cpp
     validator/route_validator.cpp
@@ -130,5 +133,18 @@ add_executable(labels_test
     validator/labels.cpp
 )
 target_include_directories(labels_test PRIVATE
+    ${CMAKE_CURRENT_SOURCE_DIR}
+)
+
+add_executable(or_opt_direct_test
+    or_opt_direct_test.cpp
+    solver_service.cpp
+    ${FEASIBILITY_SRCS}
+    ${PROTO_SRCS}
+    ${GRPC_SRCS}
+)
+target_link_libraries(or_opt_direct_test PRIVATE gRPC::grpc++ protobuf::libprotobuf)
+target_include_directories(or_opt_direct_test PRIVATE
+    ${CMAKE_CURRENT_BINARY_DIR}
     ${CMAKE_CURRENT_SOURCE_DIR}
 )
