@@ -9,6 +9,7 @@ namespace hfvrptwb {
 struct ConstructedRoute {
     int vehicle_index = -1;
     std::vector<int> nodes;
+    std::vector<std::vector<int>> trips;
     double total_cost = 0.0;
 };
 
@@ -27,6 +28,8 @@ struct ConstructionResult {
 ConstructionResult adaptiveConstruct(
     const solver::SolveRequest& req,
     double default_fixed_cost,
-    double default_cost_per_km);
+    double default_cost_per_km,
+    bool enable_multi_trip = false,
+    int reload_min = 0);
 
 } // namespace hfvrptwb

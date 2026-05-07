@@ -55,6 +55,11 @@ solver::SolveResponse solve(const solver::SolveRequest& req) {
     return solver.Solve(req);
 }
 
+solver::SolveResponse solve(const solver::SolveRequest& req, SolveConfig cfg) {
+    SolverV2 solver(cfg);
+    return solver.Solve(req);
+}
+
 bool expect(bool condition, const std::string& message) {
     if (condition) return true;
     std::cerr << message << "\n";
@@ -126,6 +131,23 @@ int main() {
         if (!expect(resp.routes(0).stops_size() == 2, "paired order should have two stops")) return 1;
         if (!expect(resp.routes(0).stops(0).node_id() == "PICKUP", "pickup must be before delivery")) return 1;
         if (!expect(resp.routes(0).stops(1).node_id() == "DELIVERY", "delivery must follow pickup")) return 1;
+    }
+
+    {
+        auto req = baseRequest(2);
+        addDelivery(req, "ORD-1", 7);
+        addDelivery(req, "ORD-2", 7);
+
+        SolveConfig cfg;
+        cfg.enableMultiTrip = true;
+        cfg.reloadMin = 0;
+        auto resp = solve(req, cfg);
+
+        if (!expect(resp.unassigned_size() == 0, "multi-trip should assign both orders")) return 1;
+        if (!expect(resp.routes_size() == 1, "multi-trip should use one vehicle route")) return 1;
+        if (!expect(resp.routes(0).trip_sizes_size() == 2, "multi-trip should emit two trips")) return 1;
+        if (!expect(resp.routes(0).trip_sizes(0) == 1, "first trip should contain one stop")) return 1;
+        if (!expect(resp.routes(0).trip_sizes(1) == 1, "second trip should contain one stop")) return 1;
     }
 
     return 0;

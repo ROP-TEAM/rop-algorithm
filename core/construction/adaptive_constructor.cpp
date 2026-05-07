@@ -13,6 +13,7 @@ namespace {
 
 struct Candidate {
     int vehicle_index = -1;
+    int trip_index = -1;
     int insert_pos = -1;
     double score = std::numeric_limits<double>::infinity();
     double route_cost = 0.0;
@@ -92,6 +93,109 @@ Candidate bestSingleInsertion(
     }
 
     return best;
+}
+
+struct ScheduleState {
+    int vehicle_index = -1;
+    std::vector<RouteState> trips;
+    double cost = 0.0;
+};
+
+double scheduleCost(const std::vector<RouteState>& trips) {
+    double cost = 0.0;
+    for (const auto& trip : trips) cost += trip.cost;
+    return cost;
+}
+
+std::vector<int> flattenTrips(const std::vector<RouteState>& trips) {
+    std::vector<int> nodes;
+    for (const auto& trip : trips) {
+        nodes.insert(nodes.end(), trip.nodes.begin(), trip.nodes.end());
+    }
+    return nodes;
+}
+
+Candidate bestMultiTripInsertion(
+    const solver::SolveRequest& req,
+    int node_index,
+    const std::vector<ScheduleState>& schedules,
+    double default_fixed_cost,
+    double default_cost_per_km)
+{
+    Candidate best;
+    const auto& node = req.nodes(node_index - 1);
+
+    for (int vi = 0; vi < req.vehicles_size(); ++vi) {
+        const auto& schedule = schedules[vi];
+        for (int ti = 0; ti < (int)schedule.trips.size(); ++ti) {
+            const auto& trip = schedule.trips[ti];
+            for (int pos = 0; pos <= (int)trip.nodes.size(); ++pos) {
+                auto eval = evaluateInsertion(
+                    req, req.vehicles(vi), trip, node_index, pos,
+                    default_fixed_cost, default_cost_per_km);
+                if (!eval.feasible) {
+                    best.fail_code = eval.fail_code;
+                    best.fail_detail = eval.fail_detail;
+                    continue;
+                }
+                double delta = eval.next.cost - trip.cost;
+                double score = delta - priorityBonus(node);
+                if (score < best.score) {
+                    best.vehicle_index = vi;
+                    best.trip_index = ti;
+                    best.insert_pos = pos;
+                    best.score = score;
+                    best.route_cost = eval.next.cost;
+                }
+            }
+        }
+
+        RouteState new_trip;
+        new_trip.vehicle_index = vi;
+        auto eval = evaluateInsertion(
+            req, req.vehicles(vi), new_trip, node_index, 0,
+            default_fixed_cost, default_cost_per_km);
+        if (eval.feasible) {
+            double score = eval.next.cost - priorityBonus(node);
+            if (score < best.score) {
+                best.vehicle_index = vi;
+                best.trip_index = (int)schedule.trips.size();
+                best.insert_pos = 0;
+                best.score = score;
+                best.route_cost = eval.next.cost;
+            }
+        } else {
+            best.fail_code = eval.fail_code;
+            best.fail_detail = eval.fail_detail;
+        }
+    }
+
+    return best;
+}
+
+void applyMultiTripInsertion(
+    ScheduleState& schedule,
+    const solver::SolveRequest& req,
+    int node_index,
+    const Candidate& best,
+    double default_fixed_cost,
+    double default_cost_per_km)
+{
+    if (best.trip_index == (int)schedule.trips.size()) {
+        RouteState new_trip;
+        new_trip.vehicle_index = schedule.vehicle_index;
+        auto eval = evaluateInsertion(
+            req, req.vehicles(schedule.vehicle_index), new_trip, node_index, 0,
+            default_fixed_cost, default_cost_per_km);
+        schedule.trips.push_back(std::move(eval.next));
+    } else {
+        auto& trip = schedule.trips[best.trip_index];
+        auto eval = evaluateInsertion(
+            req, req.vehicles(schedule.vehicle_index), trip, node_index, best.insert_pos,
+            default_fixed_cost, default_cost_per_km);
+        trip = std::move(eval.next);
+    }
+    schedule.cost = scheduleCost(schedule.trips);
 }
 
 int findPair(const solver::SolveRequest& req, const solver::Node& node) {
@@ -183,9 +287,67 @@ void applyPairInsertion(
 ConstructionResult adaptiveConstruct(
     const solver::SolveRequest& req,
     double default_fixed_cost,
-    double default_cost_per_km)
+    double default_cost_per_km,
+    bool enable_multi_trip,
+    int /*reload_min*/)
 {
     ConstructionResult result;
+    if (enable_multi_trip) {
+        std::vector<ScheduleState> schedules(req.vehicles_size());
+        for (int vi = 0; vi < req.vehicles_size(); ++vi) schedules[vi].vehicle_index = vi;
+
+        auto start = std::chrono::steady_clock::now();
+        std::unordered_set<int> assigned;
+
+        for (int node_index : priorityOrder(req)) {
+            if (assigned.count(node_index) != 0) continue;
+            if (expired(start, req.time_limit_ms())) {
+                result.timed_out = true;
+                break;
+            }
+
+            const auto& node = req.nodes(node_index - 1);
+            if (findPair(req, node) > 0) {
+                result.drops.push_back({
+                    node.id(),
+                    "NO_FEASIBLE_INSERTION",
+                    "paired pickup/delivery multi-trip insertion is not enabled yet",
+                });
+                continue;
+            }
+
+            auto best = bestMultiTripInsertion(
+                req, node_index, schedules, default_fixed_cost, default_cost_per_km);
+            if (best.vehicle_index >= 0) {
+                applyMultiTripInsertion(
+                    schedules[best.vehicle_index], req, node_index, best,
+                    default_fixed_cost, default_cost_per_km);
+                assigned.insert(node_index);
+            } else {
+                result.drops.push_back({
+                    node.id(),
+                    best.fail_code.empty() ? "NO_FEASIBLE_INSERTION" : best.fail_code,
+                    best.fail_detail.empty() ? "no vehicle/trip/position passed validator" : best.fail_detail,
+                });
+            }
+        }
+
+        for (auto& schedule : schedules) {
+            if (schedule.trips.empty()) continue;
+            auto flat_nodes = flattenTrips(schedule.trips);
+            std::vector<std::vector<int>> trips;
+            trips.reserve(schedule.trips.size());
+            for (auto& trip : schedule.trips) trips.push_back(std::move(trip.nodes));
+            result.routes.push_back({
+                schedule.vehicle_index,
+                std::move(flat_nodes),
+                std::move(trips),
+                schedule.cost,
+            });
+        }
+        return result;
+    }
+
     std::vector<RouteState> routes(req.vehicles_size());
     for (int vi = 0; vi < req.vehicles_size(); ++vi) routes[vi].vehicle_index = vi;
 
@@ -245,6 +407,7 @@ ConstructionResult adaptiveConstruct(
             result.routes.push_back({
                 route.vehicle_index,
                 std::move(route.nodes),
+                {},
                 route.cost,
             });
         }

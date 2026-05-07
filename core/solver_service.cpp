@@ -27,8 +27,11 @@ bool writeRoute(const solver::SolveRequest& req,
                 const SolveConfig& cfg,
                 solver::SolveResponse* resp)
 {
+    std::vector<std::vector<int>> trips = constructed.trips.empty()
+        ? std::vector<std::vector<int>>{constructed.nodes}
+        : constructed.trips;
     auto validation = hfvrptwb::validateTrips(
-        req, vehicle, {constructed.nodes}, cfg.fixedCostPerVehicle, cfg.costPerKm);
+        req, vehicle, trips, cfg.fixedCostPerVehicle, cfg.costPerKm);
     if (!validation.feasible) {
         addDrop(resp, vehicle.id(), validation.code, validation.detail);
         return false;
@@ -39,7 +42,9 @@ bool writeRoute(const solver::SolveRequest& req,
     route->set_total_distance(validation.total_distance_m);
     route->set_total_duration(validation.total_duration_min);
     route->set_total_cost(validation.total_cost);
-    route->add_trip_sizes((int)constructed.nodes.size());
+    for (const auto& trip : trips) {
+        route->add_trip_sizes((int)trip.size());
+    }
 
     for (const auto& timing : validation.timings) {
         const auto& node = req.nodes(timing.node_index - 1);
@@ -107,7 +112,7 @@ grpc::Status solveRequest(const solver::SolveRequest* req,
     }
 
     auto plan = hfvrptwb::adaptiveConstruct(
-        *req, cfg.fixedCostPerVehicle, cfg.costPerKm);
+        *req, cfg.fixedCostPerVehicle, cfg.costPerKm, cfg.enableMultiTrip, cfg.reloadMin);
     writeResponse(*req, cfg, plan, resp);
 
     auto t1 = std::chrono::high_resolution_clock::now();
