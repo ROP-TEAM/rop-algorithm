@@ -1,6 +1,7 @@
 #include "construction/adaptive_constructor.h"
 
 #include "validator/route_state.h"
+#include "validator/route_validator.h"
 #include <algorithm>
 #include <chrono>
 #include <climits>
@@ -107,6 +108,13 @@ double scheduleCost(const std::vector<RouteState>& trips) {
     return cost;
 }
 
+std::vector<std::vector<int>> tripNodes(const std::vector<RouteState>& trips) {
+    std::vector<std::vector<int>> result;
+    result.reserve(trips.size());
+    for (const auto& trip : trips) result.push_back(trip.nodes);
+    return result;
+}
+
 std::vector<int> flattenTrips(const std::vector<RouteState>& trips) {
     std::vector<int> nodes;
     for (const auto& trip : trips) {
@@ -120,7 +128,8 @@ Candidate bestMultiTripInsertion(
     int node_index,
     const std::vector<ScheduleState>& schedules,
     double default_fixed_cost,
-    double default_cost_per_km)
+    double default_cost_per_km,
+    int reload_min)
 {
     Candidate best;
     const auto& node = req.nodes(node_index - 1);
@@ -136,6 +145,16 @@ Candidate bestMultiTripInsertion(
                 if (!eval.feasible) {
                     best.fail_code = eval.fail_code;
                     best.fail_detail = eval.fail_detail;
+                    continue;
+                }
+                auto candidate_trips = schedule.trips;
+                candidate_trips[ti] = eval.next;
+                auto validation = validateTrips(
+                    req, req.vehicles(vi), tripNodes(candidate_trips),
+                    default_fixed_cost, default_cost_per_km, reload_min);
+                if (!validation.feasible) {
+                    best.fail_code = validation.code;
+                    best.fail_detail = validation.detail;
                     continue;
                 }
                 double delta = eval.next.cost - trip.cost;
@@ -156,6 +175,16 @@ Candidate bestMultiTripInsertion(
             req, req.vehicles(vi), new_trip, node_index, 0,
             default_fixed_cost, default_cost_per_km);
         if (eval.feasible) {
+            auto candidate_trips = schedule.trips;
+            candidate_trips.push_back(eval.next);
+            auto validation = validateTrips(
+                req, req.vehicles(vi), tripNodes(candidate_trips),
+                default_fixed_cost, default_cost_per_km, reload_min);
+            if (!validation.feasible) {
+                best.fail_code = validation.code;
+                best.fail_detail = validation.detail;
+                continue;
+            }
             double score = eval.next.cost - priorityBonus(node);
             if (score < best.score) {
                 best.vehicle_index = vi;
@@ -289,7 +318,7 @@ ConstructionResult adaptiveConstruct(
     double default_fixed_cost,
     double default_cost_per_km,
     bool enable_multi_trip,
-    int /*reload_min*/)
+    int reload_min)
 {
     ConstructionResult result;
     if (enable_multi_trip) {
@@ -317,7 +346,7 @@ ConstructionResult adaptiveConstruct(
             }
 
             auto best = bestMultiTripInsertion(
-                req, node_index, schedules, default_fixed_cost, default_cost_per_km);
+                req, node_index, schedules, default_fixed_cost, default_cost_per_km, reload_min);
             if (best.vehicle_index >= 0) {
                 applyMultiTripInsertion(
                     schedules[best.vehicle_index], req, node_index, best,
@@ -326,8 +355,8 @@ ConstructionResult adaptiveConstruct(
             } else {
                 result.drops.push_back({
                     node.id(),
-                    best.fail_code.empty() ? "NO_FEASIBLE_INSERTION" : best.fail_code,
-                    best.fail_detail.empty() ? "no vehicle/trip/position passed validator" : best.fail_detail,
+                    best.fail_code.empty() ? std::string("NO_FEASIBLE_INSERTION") : best.fail_code,
+                    best.fail_detail.empty() ? std::string("no vehicle/trip/position passed validator") : best.fail_detail,
                 });
             }
         }

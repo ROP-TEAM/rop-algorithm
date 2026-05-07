@@ -104,7 +104,8 @@ RouteValidationResult validateTrips(
     const solver::Vehicle& vehicle,
     const std::vector<std::vector<int>>& trips,
     double default_fixed_cost,
-    double default_cost_per_km)
+    double default_cost_per_km,
+    int reload_min)
 {
     if (req.matrix_size() <= 0) return fail("MATRIX", "matrix_size must be positive");
     if (req.distances_size() != req.matrix_size() * req.matrix_size()) {
@@ -119,7 +120,8 @@ RouteValidationResult validateTrips(
     const int shift_end = vehicle.shift_end() == 0 ? 1440 : vehicle.shift_end();
     bool break_taken = vehicle.break_start() == 0;
 
-    for (const auto& trip : trips) {
+    for (size_t trip_index = 0; trip_index < trips.size(); ++trip_index) {
+        const auto& trip = trips[trip_index];
         if (vehicle.max_tasks() > 0 && (int)trip.size() > vehicle.max_tasks()) {
             return fail("MAX_TASKS", "trip stop count exceeds max_tasks");
         }
@@ -177,6 +179,9 @@ RouteValidationResult validateTrips(
 
         out.total_distance_m += distAt(req, cur, 0);
         time += (int)durAt(req, cur, 0);
+        if (trip_index + 1 < trips.size()) {
+            time += reload_min;
+        }
     }
 
     if (!break_taken && !trips.empty()) {

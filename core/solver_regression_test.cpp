@@ -150,5 +150,21 @@ int main() {
         if (!expect(resp.routes(0).trip_sizes(1) == 1, "second trip should contain one stop")) return 1;
     }
 
+    {
+        auto req = baseRequest(2);
+        req.mutable_vehicles(0)->set_shift_end(540);
+        addDelivery(req, "ORD-1", 7);
+        addDelivery(req, "ORD-2", 7);
+
+        SolveConfig cfg;
+        cfg.enableMultiTrip = true;
+        cfg.reloadMin = 30;
+        auto resp = solve(req, cfg);
+
+        if (!expect(resp.unassigned_size() == 1, "reload time should make second trip infeasible")) return 1;
+        if (!expect(resp.routes_size() == 1, "first trip should remain assigned")) return 1;
+        if (!expect(resp.routes(0).trip_sizes_size() == 1, "only one trip should be emitted")) return 1;
+    }
+
     return 0;
 }

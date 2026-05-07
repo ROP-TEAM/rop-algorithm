@@ -27,6 +27,7 @@ RouteValidationResult validateTrips(
     const solver::Vehicle& vehicle,
     const std::vector<std::vector<int>>& trips,
     double default_fixed_cost,
-    double default_cost_per_km);
+    double default_cost_per_km,
+    int reload_min = 0);
 
 } // namespace hfvrptwb

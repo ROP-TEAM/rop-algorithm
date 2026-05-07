@@ -31,7 +31,7 @@ bool writeRoute(const solver::SolveRequest& req,
         ? std::vector<std::vector<int>>{constructed.nodes}
         : constructed.trips;
     auto validation = hfvrptwb::validateTrips(
-        req, vehicle, trips, cfg.fixedCostPerVehicle, cfg.costPerKm);
+        req, vehicle, trips, cfg.fixedCostPerVehicle, cfg.costPerKm, cfg.reloadMin);
     if (!validation.feasible) {
         addDrop(resp, vehicle.id(), validation.code, validation.detail);
         return false;
