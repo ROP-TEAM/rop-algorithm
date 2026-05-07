@@ -8,6 +8,10 @@ struct SolveConfig {
     double   costPerKm           = 4.0003;
     int      randomTrials        = 10000;
     uint32_t seed                = std::random_device{}();
+    bool     enableALNS          = false;
+    bool     enableMultiTrip     = false;
+    bool     enableClustering    = false;
+    int      reloadMin           = 30;
 };
 
 class SolverServiceImpl final : public solver::SolverService::Service {

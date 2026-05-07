@@ -71,7 +71,7 @@ static void printTable(const std::vector<BenchResult>& results) {
               << std::setw(5)  << "V"
               << std::setw(12) << "Status"
               << std::setw(10) << "Assigned"
-              << std::setw(12) << "Obj(m)"
+              << std::setw(12) << "Objective"
               << std::setw(10) << "ms"
               << "\n" << std::string(73, '-') << "\n";
     for (const auto& r : results) {

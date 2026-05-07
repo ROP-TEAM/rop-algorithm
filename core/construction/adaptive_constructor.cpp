@@ -1,6 +1,6 @@
 #include "construction/adaptive_constructor.h"
 
-#include "validator/route_validator.h"
+#include "validator/route_state.h"
 #include <algorithm>
 #include <chrono>
 #include <climits>
@@ -62,7 +62,7 @@ std::vector<int> inserted(const std::vector<int>& route, int node_index, int pos
 Candidate bestSingleInsertion(
     const solver::SolveRequest& req,
     int node_index,
-    const std::vector<ConstructedRoute>& routes,
+    const std::vector<RouteState>& routes,
     double default_fixed_cost,
     double default_cost_per_km)
 {
@@ -72,22 +72,21 @@ Candidate bestSingleInsertion(
     for (int vi = 0; vi < req.vehicles_size(); ++vi) {
         const auto& current = routes[vi];
         for (int pos = 0; pos <= (int)current.nodes.size(); ++pos) {
-            auto candidate_nodes = inserted(current.nodes, node_index, pos);
-            auto validation = validateTrips(
-                req, req.vehicles(vi), {candidate_nodes}, default_fixed_cost, default_cost_per_km);
-            if (!validation.feasible) {
-                best.fail_code = validation.code;
-                best.fail_detail = validation.detail;
+            auto eval = evaluateInsertion(
+                req, req.vehicles(vi), current, node_index, pos,
+                default_fixed_cost, default_cost_per_km);
+            if (!eval.feasible) {
+                best.fail_code = eval.fail_code;
+                best.fail_detail = eval.fail_detail;
                 continue;
             }
 
-            double delta = validation.total_cost - current.total_cost;
-            double score = delta - priorityBonus(node);
+            double score = eval.delta_cost - priorityBonus(node);
             if (score < best.score) {
                 best.vehicle_index = vi;
                 best.insert_pos = pos;
                 best.score = score;
-                best.route_cost = validation.total_cost;
+                best.route_cost = eval.next.cost;
             }
         }
     }
@@ -109,7 +108,7 @@ Candidate bestPairInsertion(
     const solver::SolveRequest& req,
     int first_index,
     int second_index,
-    const std::vector<ConstructedRoute>& routes,
+    const std::vector<RouteState>& routes,
     double default_fixed_cost,
     double default_cost_per_km)
 {
@@ -122,21 +121,21 @@ Candidate bestPairInsertion(
             auto with_first = inserted(current.nodes, first_index, p1);
             for (int p2 = p1 + 1; p2 <= (int)with_first.size(); ++p2) {
                 auto candidate_nodes = inserted(with_first, second_index, p2);
-                auto validation = validateTrips(
-                    req, req.vehicles(vi), {candidate_nodes}, default_fixed_cost, default_cost_per_km);
-                if (!validation.feasible) {
-                    best.fail_code = validation.code;
-                    best.fail_detail = validation.detail;
+                auto eval = evaluateRouteState(
+                    req, req.vehicles(vi), current, std::move(candidate_nodes),
+                    default_fixed_cost, default_cost_per_km);
+                if (!eval.feasible) {
+                    best.fail_code = eval.fail_code;
+                    best.fail_detail = eval.fail_detail;
                     continue;
                 }
 
-                double delta = validation.total_cost - current.total_cost;
-                double score = delta - priorityBonus(first) - priorityBonus(req.nodes(second_index - 1));
+                double score = eval.delta_cost - priorityBonus(first) - priorityBonus(req.nodes(second_index - 1));
                 if (score < best.score) {
                     best.vehicle_index = vi;
                     best.insert_pos = p1;
                     best.score = score;
-                    best.route_cost = validation.total_cost;
+                    best.route_cost = eval.next.cost;
                 }
             }
         }
@@ -146,7 +145,7 @@ Candidate bestPairInsertion(
 }
 
 void applyPairInsertion(
-    ConstructedRoute& route,
+    RouteState& route,
     int pickup_index,
     int delivery_index,
     double route_cost,
@@ -160,23 +159,22 @@ void applyPairInsertion(
         auto with_pickup = inserted(route.nodes, pickup_index, p1);
         for (int p2 = p1 + 1; p2 <= (int)with_pickup.size(); ++p2) {
             auto candidate_nodes = inserted(with_pickup, delivery_index, p2);
-            auto validation = validateTrips(
-                req, req.vehicles(route.vehicle_index), {candidate_nodes},
+            auto eval = evaluateRouteState(
+                req, req.vehicles(route.vehicle_index), route, std::move(candidate_nodes),
                 default_fixed_cost, default_cost_per_km);
-            if (validation.feasible && std::abs(validation.total_cost - route_cost) < 1e-6) {
-                route.nodes = candidate_nodes;
-                route.total_cost = route_cost;
+            if (eval.feasible && std::abs(eval.next.cost - route_cost) < 1e-6) {
+                route = std::move(eval.next);
                 return;
             }
-            if (validation.feasible && validation.total_cost < best_score) {
-                best_score = validation.total_cost;
-                best_nodes = std::move(candidate_nodes);
+            if (eval.feasible && eval.next.cost < best_score) {
+                best_score = eval.next.cost;
+                best_nodes = std::move(eval.next.nodes);
             }
         }
     }
     if (!best_nodes.empty()) {
         route.nodes = std::move(best_nodes);
-        route.total_cost = best_score;
+        route.cost = best_score;
     }
 }
 
@@ -188,7 +186,7 @@ ConstructionResult adaptiveConstruct(
     double default_cost_per_km)
 {
     ConstructionResult result;
-    std::vector<ConstructedRoute> routes(req.vehicles_size());
+    std::vector<RouteState> routes(req.vehicles_size());
     for (int vi = 0; vi < req.vehicles_size(); ++vi) routes[vi].vehicle_index = vi;
 
     auto start = std::chrono::steady_clock::now();
@@ -228,8 +226,10 @@ ConstructionResult adaptiveConstruct(
                                         default_fixed_cost, default_cost_per_km);
         if (best.vehicle_index >= 0) {
             auto& route = routes[best.vehicle_index];
-            route.nodes.insert(route.nodes.begin() + best.insert_pos, node_index);
-            route.total_cost = best.route_cost;
+            auto eval = evaluateInsertion(
+                req, req.vehicles(best.vehicle_index), route, node_index, best.insert_pos,
+                default_fixed_cost, default_cost_per_km);
+            route = std::move(eval.next);
             assigned.insert(node_index);
         } else {
             result.drops.push_back({
@@ -241,7 +241,13 @@ ConstructionResult adaptiveConstruct(
     }
 
     for (auto& route : routes) {
-        if (!route.nodes.empty()) result.routes.push_back(std::move(route));
+        if (!route.nodes.empty()) {
+            result.routes.push_back({
+                route.vehicle_index,
+                std::move(route.nodes),
+                route.cost,
+            });
+        }
     }
     return result;
 }

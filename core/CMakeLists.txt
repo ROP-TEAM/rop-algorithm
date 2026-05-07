@@ -34,6 +34,7 @@ set(FEASIBILITY_SRCS
     feasibility/shift.cpp
     feasibility/break.cpp
     construction/adaptive_constructor.cpp
+    validator/route_state.cpp
     validator/route_validator.cpp
 )
 
@@ -91,6 +92,19 @@ add_executable(bench_compare
 )
 target_link_libraries(bench_compare PRIVATE gRPC::grpc++ protobuf::libprotobuf)
 target_include_directories(bench_compare PRIVATE
+    ${CMAKE_CURRENT_BINARY_DIR}
+    ${CMAKE_CURRENT_SOURCE_DIR}
+)
+
+add_executable(route_state_test
+    validator/route_state_test.cpp
+    validator/route_state.cpp
+    validator/route_validator.cpp
+    ${PROTO_SRCS}
+    ${GRPC_SRCS}
+)
+target_link_libraries(route_state_test PRIVATE gRPC::grpc++ protobuf::libprotobuf)
+target_include_directories(route_state_test PRIVATE
     ${CMAKE_CURRENT_BINARY_DIR}
     ${CMAKE_CURRENT_SOURCE_DIR}
 )
