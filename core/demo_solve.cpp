@@ -6,6 +6,7 @@
 #include <iostream>
 #include <iomanip>
 #include <algorithm>
+#include <chrono>
 #include <cstdio>
 #include <string>
 
@@ -170,17 +171,25 @@ static int vehicleIndex(const std::string& id) {
     return -1;
 }
 
+static long long ms(std::chrono::steady_clock::time_point a,
+                    std::chrono::steady_clock::time_point b) {
+    return std::chrono::duration_cast<std::chrono::milliseconds>(b - a).count();
+}
+
 // ---------------------------------------------------------------------------
 int main() {
+    auto t_start = std::chrono::steady_clock::now();
+
     solver::SolveRequest req;
 
-    // Depot
+    // Phase 1: build request
+    auto t0 = std::chrono::steady_clock::now();
+
     auto* depot = req.mutable_depot();
     depot->set_id("depot");
     depot->set_lat(16.4442);
     depot->set_lng(102.8352);
 
-    // Nodes
     for (const auto& n : NODES) {
         auto* pn = req.add_nodes();
         pn->set_id(n.id);
@@ -196,7 +205,6 @@ int main() {
         if (n.tag[0] != '\0') pn->add_tags(n.tag);
     }
 
-    // Vehicles
     for (const auto& v : VEHICLES) {
         auto* pv = req.add_vehicles();
         pv->set_id(v.id);
@@ -208,7 +216,6 @@ int main() {
         if (v.tag2[0] != '\0') pv->add_tags(v.tag2);
     }
 
-    // Matrices — flatten row-major from pre-computed 31×31 arrays
     req.set_matrix_size(N);
     for (int i = 0; i < N; ++i)
         for (int j = 0; j < N; ++j) {
@@ -216,24 +223,41 @@ int main() {
             req.add_durations(DUR[i][j]);
         }
 
-    // Solve
+    auto t1 = std::chrono::steady_clock::now();
+
+    // Phase 2: solve
     SolverServiceImpl service(SolveConfig{.enableMultiTrip = true});
     solver::SolveResponse resp;
     service.Solve(nullptr, &req, &resp);
 
-    // Print results
-    int    K           = resp.routes_size();
-    double dist_m      = resp.objective();
-    double total_cost  = K * 550.0 + (dist_m / 1000.0) * 4.0003;
+    auto t2 = std::chrono::steady_clock::now();
+
+    // Phase 3: aggregate results
+    int    K          = resp.routes_size();
+    double total_dist = 0.0;
+    int    total_trips = 0;
+    for (const auto& r : resp.routes()) {
+        total_dist  += r.total_distance();
+        total_trips += r.trip_sizes_size();
+    }
+
+    auto t3 = std::chrono::steady_clock::now();
 
     std::cout << "============================================================\n";
     std::cout << "  ROP Mock Demo  |  Vehicles: 12  |  Orders: 30\n";
     std::cout << "  Depot: 16.4442, 102.8352 (Khon Kaen)\n";
     std::cout << "============================================================\n\n";
-    std::cout << "Status : " << resp.status() << "\n";
-    std::cout << "K      : " << K << "\n";
-    std::cout << "Dist   : " << std::fixed << std::setprecision(1) << dist_m / 1000.0 << " km\n";
-    std::cout << "Cost   : " << std::fixed << std::setprecision(2) << total_cost << " THB\n\n";
+    std::cout << "---- Timing ------------------------------------------------\n";
+    std::cout << "  Build request : " << ms(t0, t1) << " ms\n";
+    std::cout << "  Solve         : " << ms(t1, t2) << " ms\n";
+    std::cout << "  Aggregate     : " << ms(t2, t3) << " ms\n";
+    std::cout << "  Total         : " << ms(t_start, t3) << " ms\n";
+    std::cout << "------------------------------------------------------------\n\n";
+    std::cout << "Status     : " << resp.status() << "\n";
+    std::cout << "Vehicles   : " << K << " / 12 used\n";
+    std::cout << "Trips      : " << total_trips << "\n";
+    std::cout << "Total dist : " << std::fixed << std::setprecision(1) << total_dist / 1000.0 << " km\n";
+    std::cout << "Objective  : " << std::fixed << std::setprecision(2) << resp.objective() << " THB\n\n";
 
     for (const auto& route : resp.routes()) {
         int vi = vehicleIndex(route.vehicle_id());
