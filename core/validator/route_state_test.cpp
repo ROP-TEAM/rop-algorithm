@@ -59,6 +59,9 @@ int main() {
         if (!expect(eval.next.duration_min == 25, "route duration should include wait, service, return")) return 1;
         if (!expect(std::abs(eval.next.cost - (550.0 + 2.0 * 4.0003)) < 0.01,
                     "route cost should use fixed + km cost")) return 1;
+        if (!expect(eval.next.forward_labels.size() == 1, "route should store one forward label")) return 1;
+        if (!expect(eval.next.forward_labels[0].earliest_arrival == 480, "label should store arrival time")) return 1;
+        if (!expect(eval.next.forward_labels[0].load_linehaul == 0, "label should track delivered load")) return 1;
     }
 
     {

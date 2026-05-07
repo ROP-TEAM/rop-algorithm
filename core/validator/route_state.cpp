@@ -3,6 +3,64 @@
 #include "validator/route_validator.h"
 
 namespace hfvrptwb {
+namespace {
+
+int linehaulDemand(const solver::Node& node) {
+    if (node.linehaul_demand() != 0 || node.backhaul_demand() != 0) {
+        return node.linehaul_demand();
+    }
+    return node.type() == "pickup" ? 0 : node.demand();
+}
+
+int backhaulDemand(const solver::Node& node) {
+    if (node.linehaul_demand() != 0 || node.backhaul_demand() != 0) {
+        return node.backhaul_demand();
+    }
+    return node.type() == "pickup" ? node.demand() : 0;
+}
+
+int travelAt(const solver::SolveRequest& req, int from, int to) {
+    return (int)req.durations(from * req.matrix_size() + to);
+}
+
+double distanceAt(const solver::SolveRequest& req, int from, int to) {
+    return req.distances(from * req.matrix_size() + to);
+}
+
+std::vector<ForwardLabel> buildForwardLabels(
+    const solver::SolveRequest& req,
+    const solver::Vehicle& vehicle,
+    const std::vector<int>& nodes)
+{
+    std::vector<ForwardLabel> labels;
+    labels.reserve(nodes.size());
+
+    ForwardLabel label;
+    label.earliest_arrival = vehicle.shift_start();
+    label.latest_arrival = vehicle.shift_end() == 0 ? 1440 : vehicle.shift_end();
+    label.departure_time = vehicle.shift_start();
+    for (int idx : nodes) {
+        label.load_linehaul += linehaulDemand(req.nodes(idx - 1));
+    }
+    for (int idx : nodes) {
+        const auto& node = req.nodes(idx - 1);
+        StopSpec stop{
+            node.tw_start(),
+            node.tw_end() > 0 ? node.tw_end() : 1440,
+            node.service_time(),
+            linehaulDemand(node),
+            backhaulDemand(node),
+        };
+        int from = labels.empty() ? 0 : nodes[labels.size() - 1];
+        label = extendForwardLabel(
+            label, stop, travelAt(req, from, idx), distanceAt(req, from, idx));
+        labels.push_back(label);
+    }
+
+    return labels;
+}
+
+} // namespace
 
 InsertionEval evaluateRouteState(
     const solver::SolveRequest& req,
@@ -29,6 +87,7 @@ InsertionEval evaluateRouteState(
     eval.next.distance_m = validation.total_distance_m;
     eval.next.duration_min = validation.total_duration_min;
     eval.next.cost = validation.total_cost;
+    eval.next.forward_labels = buildForwardLabels(req, vehicle, eval.next.nodes);
     return eval;
 }
 

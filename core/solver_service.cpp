@@ -1,6 +1,7 @@
 #include "solver_service.h"
 
 #include "construction/adaptive_constructor.h"
+#include "drop/drop_logic.h"
 #include "validator/route_validator.h"
 #include <chrono>
 #include <iostream>
@@ -16,7 +17,7 @@ void addDrop(solver::SolveResponse* resp,
     resp->add_unassigned(node_id);
     auto* dr = resp->add_drop_reasons();
     dr->set_node_id(node_id);
-    dr->set_code(code);
+    dr->set_code(hfvrptwb::normalizeDropCode(code));
     dr->set_detail(detail);
 }
 

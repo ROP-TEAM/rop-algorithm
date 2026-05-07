@@ -1,5 +1,6 @@
 #pragma once
 
+#include "validator/labels.h"
 #include "solver.pb.h"
 #include <string>
 #include <vector>
@@ -12,6 +13,7 @@ struct RouteState {
     double distance_m = 0.0;
     int duration_min = 0;
     double cost = 0.0;
+    std::vector<ForwardLabel> forward_labels;
 };
 
 struct InsertionEval {
