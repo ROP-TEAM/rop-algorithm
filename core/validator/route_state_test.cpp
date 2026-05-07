@@ -62,6 +62,8 @@ int main() {
         if (!expect(eval.next.forward_labels.size() == 1, "route should store one forward label")) return 1;
         if (!expect(eval.next.forward_labels[0].earliest_arrival == 480, "label should store arrival time")) return 1;
         if (!expect(eval.next.forward_labels[0].load_linehaul == 0, "label should track delivered load")) return 1;
+        if (!expect(eval.next.label_summary.feasible, "label summary should be feasible")) return 1;
+        if (!expect(eval.next.label_summary.max_load == 0, "label summary should expose max remaining load")) return 1;
     }
 
     {

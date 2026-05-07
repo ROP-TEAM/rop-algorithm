@@ -14,6 +14,7 @@ struct RouteState {
     int duration_min = 0;
     double cost = 0.0;
     std::vector<ForwardLabel> forward_labels;
+    RouteLabelSummary label_summary;
 };
 
 struct InsertionEval {

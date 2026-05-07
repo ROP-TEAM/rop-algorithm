@@ -1,5 +1,8 @@
 #pragma once
 
+#include <string>
+#include <vector>
+
 namespace hfvrptwb {
 
 struct StopSpec {
@@ -31,10 +34,26 @@ struct BackwardLabel {
     double distance_m = 0.0;
 };
 
+struct RouteLabelSummary {
+    bool feasible = true;
+    std::string fail_code;
+    std::string fail_detail;
+    int last_departure = 0;
+    int max_load = 0;
+    int time_warp = 0;
+    double total_distance_m = 0.0;
+};
+
 ForwardLabel extendForwardLabel(
     const ForwardLabel& label,
     const StopSpec& stop,
     int travel_min,
     double distance_m);
+
+RouteLabelSummary summarizeForwardLabels(
+    const std::vector<ForwardLabel>& labels,
+    int vehicle_capacity,
+    int shift_end,
+    double total_distance_m);
 
 } // namespace hfvrptwb

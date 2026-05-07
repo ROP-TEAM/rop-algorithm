@@ -88,6 +88,11 @@ InsertionEval evaluateRouteState(
     eval.next.duration_min = validation.total_duration_min;
     eval.next.cost = validation.total_cost;
     eval.next.forward_labels = buildForwardLabels(req, vehicle, eval.next.nodes);
+    eval.next.label_summary = summarizeForwardLabels(
+        eval.next.forward_labels,
+        vehicle.capacity(),
+        vehicle.shift_end() == 0 ? 1440 : vehicle.shift_end(),
+        eval.next.distance_m);
     return eval;
 }
 

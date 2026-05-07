@@ -44,8 +44,22 @@ int main() {
     pickup.latest = 720;
     pickup.service = 5;
     pickup.backhaul = 4;
-    auto pickup_next = hfvrptwb::extendForwardLabel(depot, pickup, 10, 500.0);
+    auto pickup_next = hfvrptwb::extendForwardLabel(next, pickup, 10, 500.0);
     if (!expect(pickup_next.load_backhaul == 4, "backhaul load should increase after pickup")) return 1;
+
+    auto summary = hfvrptwb::summarizeForwardLabels({next, pickup_next}, 10, 700, 2500.0);
+    if (!expect(summary.feasible, "summary should be feasible when labels are feasible")) return 1;
+    if (!expect(summary.last_departure == pickup_next.departure_time, "summary should expose last departure")) return 1;
+    if (!expect(summary.max_load == 6, "summary should expose max combined load")) return 1;
+    if (!expect(summary.total_distance_m == 2500.0, "summary should use supplied total distance")) return 1;
+
+    auto capacity_summary = hfvrptwb::summarizeForwardLabels({next, pickup_next}, 3, 700, 2500.0);
+    if (!expect(!capacity_summary.feasible, "summary should fail capacity")) return 1;
+    if (!expect(capacity_summary.fail_code == "CAPACITY", "capacity fail code should be CAPACITY")) return 1;
+
+    auto shift_summary = hfvrptwb::summarizeForwardLabels({next}, 10, 505, 2000.0);
+    if (!expect(!shift_summary.feasible, "summary should fail shift")) return 1;
+    if (!expect(shift_summary.fail_code == "SHIFT", "shift fail code should be SHIFT")) return 1;
 
     return 0;
 }
