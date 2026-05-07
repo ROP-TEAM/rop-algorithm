@@ -22,21 +22,24 @@ const (
 )
 
 type Node struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	Id            string                 `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
-	Lat           float64                `protobuf:"fixed64,2,opt,name=lat,proto3" json:"lat,omitempty"`
-	Lng           float64                `protobuf:"fixed64,3,opt,name=lng,proto3" json:"lng,omitempty"`
-	Demand        int32                  `protobuf:"varint,4,opt,name=demand,proto3" json:"demand,omitempty"`
-	ServiceTime   int32                  `protobuf:"varint,5,opt,name=service_time,json=serviceTime,proto3" json:"service_time,omitempty"`
-	TwStart       int32                  `protobuf:"varint,6,opt,name=tw_start,json=twStart,proto3" json:"tw_start,omitempty"` // minutes from midnight
-	TwEnd         int32                  `protobuf:"varint,7,opt,name=tw_end,json=twEnd,proto3" json:"tw_end,omitempty"`       // minutes from midnight
-	Tags          []string               `protobuf:"bytes,8,rep,name=tags,proto3" json:"tags,omitempty"`
-	Type          string                 `protobuf:"bytes,9,opt,name=type,proto3" json:"type,omitempty"`                                    // depot | delivery | pickup
-	PairId        string                 `protobuf:"bytes,10,opt,name=pair_id,json=pairId,proto3" json:"pair_id,omitempty"`                 // links pickup↔delivery; empty if not a PD pair
-	Priority      int32                  `protobuf:"varint,11,opt,name=priority,proto3" json:"priority,omitempty"`                          // 1=low 2=medium 3=high 4=critical 0=unset
-	DeadlineMin   int32                  `protobuf:"varint,12,opt,name=deadline_min,json=deadlineMin,proto3" json:"deadline_min,omitempty"` // minutes from planning midnight; 0=no deadline
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
+	state          protoimpl.MessageState `protogen:"open.v1"`
+	Id             string                 `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
+	Lat            float64                `protobuf:"fixed64,2,opt,name=lat,proto3" json:"lat,omitempty"`
+	Lng            float64                `protobuf:"fixed64,3,opt,name=lng,proto3" json:"lng,omitempty"`
+	Demand         int32                  `protobuf:"varint,4,opt,name=demand,proto3" json:"demand,omitempty"`
+	ServiceTime    int32                  `protobuf:"varint,5,opt,name=service_time,json=serviceTime,proto3" json:"service_time,omitempty"`
+	TwStart        int32                  `protobuf:"varint,6,opt,name=tw_start,json=twStart,proto3" json:"tw_start,omitempty"` // minutes from midnight
+	TwEnd          int32                  `protobuf:"varint,7,opt,name=tw_end,json=twEnd,proto3" json:"tw_end,omitempty"`       // minutes from midnight
+	Tags           []string               `protobuf:"bytes,8,rep,name=tags,proto3" json:"tags,omitempty"`
+	Type           string                 `protobuf:"bytes,9,opt,name=type,proto3" json:"type,omitempty"`                                             // depot | delivery | pickup
+	PairId         string                 `protobuf:"bytes,10,opt,name=pair_id,json=pairId,proto3" json:"pair_id,omitempty"`                          // links pickup↔delivery; empty if not a PD pair
+	Priority       int32                  `protobuf:"varint,11,opt,name=priority,proto3" json:"priority,omitempty"`                                   // 1=low 2=medium 3=high 4=critical 0=unset
+	DeadlineMin    int32                  `protobuf:"varint,12,opt,name=deadline_min,json=deadlineMin,proto3" json:"deadline_min,omitempty"`          // minutes from planning midnight; 0=no deadline
+	LinehaulDemand int32                  `protobuf:"varint,13,opt,name=linehaul_demand,json=linehaulDemand,proto3" json:"linehaul_demand,omitempty"` // delivery load consumed from depot; 0 = derive from demand/type
+	BackhaulDemand int32                  `protobuf:"varint,14,opt,name=backhaul_demand,json=backhaulDemand,proto3" json:"backhaul_demand,omitempty"` // pickup load added on route; 0 = derive from demand/type
+	MustServe      bool                   `protobuf:"varint,15,opt,name=must_serve,json=mustServe,proto3" json:"must_serve,omitempty"`                // true = should not be dropped unless infeasible
+	unknownFields  protoimpl.UnknownFields
+	sizeCache      protoimpl.SizeCache
 }
 
 func (x *Node) Reset() {
@@ -153,6 +156,27 @@ func (x *Node) GetDeadlineMin() int32 {
 	return 0
 }
 
+func (x *Node) GetLinehaulDemand() int32 {
+	if x != nil {
+		return x.LinehaulDemand
+	}
+	return 0
+}
+
+func (x *Node) GetBackhaulDemand() int32 {
+	if x != nil {
+		return x.BackhaulDemand
+	}
+	return 0
+}
+
+func (x *Node) GetMustServe() bool {
+	if x != nil {
+		return x.MustServe
+	}
+	return false
+}
+
 type Vehicle struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	Id            string                 `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
@@ -164,6 +188,9 @@ type Vehicle struct {
 	MaxTasks      int32                  `protobuf:"varint,7,opt,name=max_tasks,json=maxTasks,proto3" json:"max_tasks,omitempty"`           // 0 = unlimited
 	MaxDistance   float64                `protobuf:"fixed64,8,opt,name=max_distance,json=maxDistance,proto3" json:"max_distance,omitempty"` // meters; 0 = unlimited
 	Tags          []string               `protobuf:"bytes,9,rep,name=tags,proto3" json:"tags,omitempty"`
+	FixedCost     float64                `protobuf:"fixed64,10,opt,name=fixed_cost,json=fixedCost,proto3" json:"fixed_cost,omitempty"`
+	CostPerKm     float64                `protobuf:"fixed64,11,opt,name=cost_per_km,json=costPerKm,proto3" json:"cost_per_km,omitempty"`
+	Type          string                 `protobuf:"bytes,12,opt,name=type,proto3" json:"type,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -261,6 +288,27 @@ func (x *Vehicle) GetTags() []string {
 	return nil
 }
 
+func (x *Vehicle) GetFixedCost() float64 {
+	if x != nil {
+		return x.FixedCost
+	}
+	return 0
+}
+
+func (x *Vehicle) GetCostPerKm() float64 {
+	if x != nil {
+		return x.CostPerKm
+	}
+	return 0
+}
+
+func (x *Vehicle) GetType() string {
+	if x != nil {
+		return x.Type
+	}
+	return ""
+}
+
 type SolveRequest struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	Depot         *Node                  `protobuf:"bytes,1,opt,name=depot,proto3" json:"depot,omitempty"`
@@ -353,6 +401,66 @@ func (x *SolveRequest) GetTimeLimitMs() int32 {
 	return 0
 }
 
+type DropReason struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	NodeId        string                 `protobuf:"bytes,1,opt,name=node_id,json=nodeId,proto3" json:"node_id,omitempty"`
+	Code          string                 `protobuf:"bytes,2,opt,name=code,proto3" json:"code,omitempty"`
+	Detail        string                 `protobuf:"bytes,3,opt,name=detail,proto3" json:"detail,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *DropReason) Reset() {
+	*x = DropReason{}
+	mi := &file_solver_proto_msgTypes[3]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *DropReason) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*DropReason) ProtoMessage() {}
+
+func (x *DropReason) ProtoReflect() protoreflect.Message {
+	mi := &file_solver_proto_msgTypes[3]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use DropReason.ProtoReflect.Descriptor instead.
+func (*DropReason) Descriptor() ([]byte, []int) {
+	return file_solver_proto_rawDescGZIP(), []int{3}
+}
+
+func (x *DropReason) GetNodeId() string {
+	if x != nil {
+		return x.NodeId
+	}
+	return ""
+}
+
+func (x *DropReason) GetCode() string {
+	if x != nil {
+		return x.Code
+	}
+	return ""
+}
+
+func (x *DropReason) GetDetail() string {
+	if x != nil {
+		return x.Detail
+	}
+	return ""
+}
+
 type RouteStop struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	NodeId        string                 `protobuf:"bytes,1,opt,name=node_id,json=nodeId,proto3" json:"node_id,omitempty"`
@@ -364,7 +472,7 @@ type RouteStop struct {
 
 func (x *RouteStop) Reset() {
 	*x = RouteStop{}
-	mi := &file_solver_proto_msgTypes[3]
+	mi := &file_solver_proto_msgTypes[4]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -376,7 +484,7 @@ func (x *RouteStop) String() string {
 func (*RouteStop) ProtoMessage() {}
 
 func (x *RouteStop) ProtoReflect() protoreflect.Message {
-	mi := &file_solver_proto_msgTypes[3]
+	mi := &file_solver_proto_msgTypes[4]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -389,7 +497,7 @@ func (x *RouteStop) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use RouteStop.ProtoReflect.Descriptor instead.
 func (*RouteStop) Descriptor() ([]byte, []int) {
-	return file_solver_proto_rawDescGZIP(), []int{3}
+	return file_solver_proto_rawDescGZIP(), []int{4}
 }
 
 func (x *RouteStop) GetNodeId() string {
@@ -419,13 +527,15 @@ type Route struct {
 	Stops         []*RouteStop           `protobuf:"bytes,2,rep,name=stops,proto3" json:"stops,omitempty"`
 	TotalDistance float64                `protobuf:"fixed64,3,opt,name=total_distance,json=totalDistance,proto3" json:"total_distance,omitempty"` // meters
 	TotalDuration int32                  `protobuf:"varint,4,opt,name=total_duration,json=totalDuration,proto3" json:"total_duration,omitempty"`  // minutes
+	TripSizes     []int32                `protobuf:"varint,5,rep,packed,name=trip_sizes,json=tripSizes,proto3" json:"trip_sizes,omitempty"`       // number of stops per trip (multi-trip vehicles)
+	TotalCost     float64                `protobuf:"fixed64,6,opt,name=total_cost,json=totalCost,proto3" json:"total_cost,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
 
 func (x *Route) Reset() {
 	*x = Route{}
-	mi := &file_solver_proto_msgTypes[4]
+	mi := &file_solver_proto_msgTypes[5]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -437,7 +547,7 @@ func (x *Route) String() string {
 func (*Route) ProtoMessage() {}
 
 func (x *Route) ProtoReflect() protoreflect.Message {
-	mi := &file_solver_proto_msgTypes[4]
+	mi := &file_solver_proto_msgTypes[5]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -450,7 +560,7 @@ func (x *Route) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use Route.ProtoReflect.Descriptor instead.
 func (*Route) Descriptor() ([]byte, []int) {
-	return file_solver_proto_rawDescGZIP(), []int{4}
+	return file_solver_proto_rawDescGZIP(), []int{5}
 }
 
 func (x *Route) GetVehicleId() string {
@@ -481,19 +591,34 @@ func (x *Route) GetTotalDuration() int32 {
 	return 0
 }
 
+func (x *Route) GetTripSizes() []int32 {
+	if x != nil {
+		return x.TripSizes
+	}
+	return nil
+}
+
+func (x *Route) GetTotalCost() float64 {
+	if x != nil {
+		return x.TotalCost
+	}
+	return 0
+}
+
 type SolveResponse struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	Routes        []*Route               `protobuf:"bytes,1,rep,name=routes,proto3" json:"routes,omitempty"`
 	Unassigned    []string               `protobuf:"bytes,2,rep,name=unassigned,proto3" json:"unassigned,omitempty"`
 	Objective     float64                `protobuf:"fixed64,3,opt,name=objective,proto3" json:"objective,omitempty"`
 	Status        string                 `protobuf:"bytes,4,opt,name=status,proto3" json:"status,omitempty"` // OK | INFEASIBLE | TIMEOUT
+	DropReasons   []*DropReason          `protobuf:"bytes,5,rep,name=drop_reasons,json=dropReasons,proto3" json:"drop_reasons,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
 
 func (x *SolveResponse) Reset() {
 	*x = SolveResponse{}
-	mi := &file_solver_proto_msgTypes[5]
+	mi := &file_solver_proto_msgTypes[6]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -505,7 +630,7 @@ func (x *SolveResponse) String() string {
 func (*SolveResponse) ProtoMessage() {}
 
 func (x *SolveResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_solver_proto_msgTypes[5]
+	mi := &file_solver_proto_msgTypes[6]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -518,7 +643,7 @@ func (x *SolveResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use SolveResponse.ProtoReflect.Descriptor instead.
 func (*SolveResponse) Descriptor() ([]byte, []int) {
-	return file_solver_proto_rawDescGZIP(), []int{5}
+	return file_solver_proto_rawDescGZIP(), []int{6}
 }
 
 func (x *SolveResponse) GetRoutes() []*Route {
@@ -549,11 +674,18 @@ func (x *SolveResponse) GetStatus() string {
 	return ""
 }
 
+func (x *SolveResponse) GetDropReasons() []*DropReason {
+	if x != nil {
+		return x.DropReasons
+	}
+	return nil
+}
+
 var File_solver_proto protoreflect.FileDescriptor
 
 const file_solver_proto_rawDesc = "" +
 	"\n" +
-	"\fsolver.proto\x12\x06solver\"\xa7\x02\n" +
+	"\fsolver.proto\x12\x06solver\"\x98\x03\n" +
 	"\x04Node\x12\x0e\n" +
 	"\x02id\x18\x01 \x01(\tR\x02id\x12\x10\n" +
 	"\x03lat\x18\x02 \x01(\x01R\x03lat\x12\x10\n" +
@@ -567,7 +699,11 @@ const file_solver_proto_rawDesc = "" +
 	"\apair_id\x18\n" +
 	" \x01(\tR\x06pairId\x12\x1a\n" +
 	"\bpriority\x18\v \x01(\x05R\bpriority\x12!\n" +
-	"\fdeadline_min\x18\f \x01(\x05R\vdeadlineMin\"\x85\x02\n" +
+	"\fdeadline_min\x18\f \x01(\x05R\vdeadlineMin\x12'\n" +
+	"\x0flinehaul_demand\x18\r \x01(\x05R\x0elinehaulDemand\x12'\n" +
+	"\x0fbackhaul_demand\x18\x0e \x01(\x05R\x0ebackhaulDemand\x12\x1d\n" +
+	"\n" +
+	"must_serve\x18\x0f \x01(\bR\tmustServe\"\xd8\x02\n" +
 	"\aVehicle\x12\x0e\n" +
 	"\x02id\x18\x01 \x01(\tR\x02id\x12\x1a\n" +
 	"\bcapacity\x18\x02 \x01(\x05R\bcapacity\x12\x1f\n" +
@@ -579,7 +715,12 @@ const file_solver_proto_rawDesc = "" +
 	"\tbreak_end\x18\x06 \x01(\x05R\bbreakEnd\x12\x1b\n" +
 	"\tmax_tasks\x18\a \x01(\x05R\bmaxTasks\x12!\n" +
 	"\fmax_distance\x18\b \x01(\x01R\vmaxDistance\x12\x12\n" +
-	"\x04tags\x18\t \x03(\tR\x04tags\"\x84\x02\n" +
+	"\x04tags\x18\t \x03(\tR\x04tags\x12\x1d\n" +
+	"\n" +
+	"fixed_cost\x18\n" +
+	" \x01(\x01R\tfixedCost\x12\x1e\n" +
+	"\vcost_per_km\x18\v \x01(\x01R\tcostPerKm\x12\x12\n" +
+	"\x04type\x18\f \x01(\tR\x04type\"\x84\x02\n" +
 	"\fSolveRequest\x12\"\n" +
 	"\x05depot\x18\x01 \x01(\v2\f.solver.NodeR\x05depot\x12\"\n" +
 	"\x05nodes\x18\x02 \x03(\v2\f.solver.NodeR\x05nodes\x12+\n" +
@@ -588,26 +729,36 @@ const file_solver_proto_rawDesc = "" +
 	"\tdistances\x18\x05 \x03(\x01R\tdistances\x12\x1f\n" +
 	"\vmatrix_size\x18\x06 \x01(\x05R\n" +
 	"matrixSize\x12\"\n" +
-	"\rtime_limit_ms\x18\a \x01(\x05R\vtimeLimitMs\"d\n" +
+	"\rtime_limit_ms\x18\a \x01(\x05R\vtimeLimitMs\"Q\n" +
+	"\n" +
+	"DropReason\x12\x17\n" +
+	"\anode_id\x18\x01 \x01(\tR\x06nodeId\x12\x12\n" +
+	"\x04code\x18\x02 \x01(\tR\x04code\x12\x16\n" +
+	"\x06detail\x18\x03 \x01(\tR\x06detail\"d\n" +
 	"\tRouteStop\x12\x17\n" +
 	"\anode_id\x18\x01 \x01(\tR\x06nodeId\x12\x1f\n" +
 	"\varrival_min\x18\x02 \x01(\x05R\n" +
 	"arrivalMin\x12\x1d\n" +
 	"\n" +
-	"depart_min\x18\x03 \x01(\x05R\tdepartMin\"\x9d\x01\n" +
+	"depart_min\x18\x03 \x01(\x05R\tdepartMin\"\xdb\x01\n" +
 	"\x05Route\x12\x1d\n" +
 	"\n" +
 	"vehicle_id\x18\x01 \x01(\tR\tvehicleId\x12'\n" +
 	"\x05stops\x18\x02 \x03(\v2\x11.solver.RouteStopR\x05stops\x12%\n" +
 	"\x0etotal_distance\x18\x03 \x01(\x01R\rtotalDistance\x12%\n" +
-	"\x0etotal_duration\x18\x04 \x01(\x05R\rtotalDuration\"\x8c\x01\n" +
+	"\x0etotal_duration\x18\x04 \x01(\x05R\rtotalDuration\x12\x1d\n" +
+	"\n" +
+	"trip_sizes\x18\x05 \x03(\x05R\ttripSizes\x12\x1d\n" +
+	"\n" +
+	"total_cost\x18\x06 \x01(\x01R\ttotalCost\"\xc3\x01\n" +
 	"\rSolveResponse\x12%\n" +
 	"\x06routes\x18\x01 \x03(\v2\r.solver.RouteR\x06routes\x12\x1e\n" +
 	"\n" +
 	"unassigned\x18\x02 \x03(\tR\n" +
 	"unassigned\x12\x1c\n" +
 	"\tobjective\x18\x03 \x01(\x01R\tobjective\x12\x16\n" +
-	"\x06status\x18\x04 \x01(\tR\x06status2E\n" +
+	"\x06status\x18\x04 \x01(\tR\x06status\x125\n" +
+	"\fdrop_reasons\x18\x05 \x03(\v2\x12.solver.DropReasonR\vdropReasons2E\n" +
 	"\rSolverService\x124\n" +
 	"\x05Solve\x12\x14.solver.SolveRequest\x1a\x15.solver.SolveResponseB2Z0github.com/ROP-TEAM/rop-algorithm/solver/grpc/pbb\x06proto3"
 
@@ -623,28 +774,30 @@ func file_solver_proto_rawDescGZIP() []byte {
 	return file_solver_proto_rawDescData
 }
 
-var file_solver_proto_msgTypes = make([]protoimpl.MessageInfo, 6)
+var file_solver_proto_msgTypes = make([]protoimpl.MessageInfo, 7)
 var file_solver_proto_goTypes = []any{
 	(*Node)(nil),          // 0: solver.Node
 	(*Vehicle)(nil),       // 1: solver.Vehicle
 	(*SolveRequest)(nil),  // 2: solver.SolveRequest
-	(*RouteStop)(nil),     // 3: solver.RouteStop
-	(*Route)(nil),         // 4: solver.Route
-	(*SolveResponse)(nil), // 5: solver.SolveResponse
+	(*DropReason)(nil),    // 3: solver.DropReason
+	(*RouteStop)(nil),     // 4: solver.RouteStop
+	(*Route)(nil),         // 5: solver.Route
+	(*SolveResponse)(nil), // 6: solver.SolveResponse
 }
 var file_solver_proto_depIdxs = []int32{
 	0, // 0: solver.SolveRequest.depot:type_name -> solver.Node
 	0, // 1: solver.SolveRequest.nodes:type_name -> solver.Node
 	1, // 2: solver.SolveRequest.vehicles:type_name -> solver.Vehicle
-	3, // 3: solver.Route.stops:type_name -> solver.RouteStop
-	4, // 4: solver.SolveResponse.routes:type_name -> solver.Route
-	2, // 5: solver.SolverService.Solve:input_type -> solver.SolveRequest
-	5, // 6: solver.SolverService.Solve:output_type -> solver.SolveResponse
-	6, // [6:7] is the sub-list for method output_type
-	5, // [5:6] is the sub-list for method input_type
-	5, // [5:5] is the sub-list for extension type_name
-	5, // [5:5] is the sub-list for extension extendee
-	0, // [0:5] is the sub-list for field type_name
+	4, // 3: solver.Route.stops:type_name -> solver.RouteStop
+	5, // 4: solver.SolveResponse.routes:type_name -> solver.Route
+	3, // 5: solver.SolveResponse.drop_reasons:type_name -> solver.DropReason
+	2, // 6: solver.SolverService.Solve:input_type -> solver.SolveRequest
+	6, // 7: solver.SolverService.Solve:output_type -> solver.SolveResponse
+	7, // [7:8] is the sub-list for method output_type
+	6, // [6:7] is the sub-list for method input_type
+	6, // [6:6] is the sub-list for extension type_name
+	6, // [6:6] is the sub-list for extension extendee
+	0, // [0:6] is the sub-list for field type_name
 }
 
 func init() { file_solver_proto_init() }
@@ -658,7 +811,7 @@ func file_solver_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_solver_proto_rawDesc), len(file_solver_proto_rawDesc)),
 			NumEnums:      0,
-			NumMessages:   6,
+			NumMessages:   7,
 			NumExtensions: 0,
 			NumServices:   1,
 		},

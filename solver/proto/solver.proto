@@ -15,6 +15,9 @@ message Node {
   string          pair_id      = 10; // links pickup↔delivery; empty if not a PD pair
   int32           priority     = 11; // 1=low 2=medium 3=high 4=critical 0=unset
   int32           deadline_min = 12; // minutes from planning midnight; 0=no deadline
+  int32           linehaul_demand = 13; // delivery load consumed from depot; 0 = derive from demand/type
+  int32           backhaul_demand = 14; // pickup load added on route; 0 = derive from demand/type
+  bool            must_serve      = 15; // true = should not be dropped unless infeasible
 }
 
 message Vehicle {
@@ -27,6 +30,9 @@ message Vehicle {
   int32           max_tasks    = 7;  // 0 = unlimited
   double          max_distance = 8;  // meters; 0 = unlimited
   repeated string tags         = 9;
+  double          fixed_cost   = 10;
+  double          cost_per_km  = 11;
+  string          type         = 12;
 }
 
 message SolveRequest {
@@ -37,6 +43,12 @@ message SolveRequest {
   repeated double  distances     = 5; // flattened n×n, row-major (meters)
   int32            matrix_size   = 6; // n (depot + nodes)
   int32            time_limit_ms = 7;
+}
+
+message DropReason {
+  string node_id = 1;
+  string code    = 2;
+  string detail  = 3;
 }
 
 message RouteStop {
@@ -51,6 +63,7 @@ message Route {
   double             total_distance = 3; // meters
   int32              total_duration = 4; // minutes
   repeated int32     trip_sizes     = 5; // number of stops per trip (multi-trip vehicles)
+  double             total_cost     = 6;
 }
 
 message SolveResponse {
@@ -58,6 +71,7 @@ message SolveResponse {
   repeated string unassigned = 2;
   double          objective  = 3;
   string          status     = 4; // OK | INFEASIBLE | TIMEOUT
+  repeated DropReason drop_reasons = 5;
 }
 
 service SolverService {

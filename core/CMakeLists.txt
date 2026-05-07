@@ -33,6 +33,7 @@ set(FEASIBILITY_SRCS
     feasibility/precedence.cpp
     feasibility/shift.cpp
     feasibility/break.cpp
+    validator/route_validator.cpp
 )
 
 # gRPC solver binary — started by Go's solver/process package

@@ -2,11 +2,12 @@ package model
 
 // Problem is the complete input to a solver.
 type Problem struct {
-	Depot     Node
-	Nodes     []Node      // delivery/pickup only (no depot)
-	Vehicles  []Vehicle
-	Durations [][]float64 // (1+N)×(1+N) travel-time matrix, minutes; row/col 0 = depot
-	Distances [][]float64 // (1+N)×(1+N) distance matrix, meters
+	Depot       Node
+	Nodes       []Node // delivery/pickup only (no depot)
+	Vehicles    []Vehicle
+	Durations   [][]float64 // (1+N)×(1+N) travel-time matrix, minutes; row/col 0 = depot
+	Distances   [][]float64 // (1+N)×(1+N) distance matrix, meters
+	TimeLimitMS int
 }
 
 // TimeWindow is an HH:mm time interval.

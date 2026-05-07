@@ -5,6 +5,7 @@
 #include "priority/sorter.h"
 #include "priority_shape_clustering/slender_utils.h"
 #include "feasibility/capacity.h"
+#include "validator/route_validator.h"
 #include <numeric>
 #include <unordered_set>
 #include <climits>
@@ -272,55 +273,55 @@ static BestPlan findBestPlan(const SolveContext& ctx,
 static bool buildResponse(const BestPlan& plan,
                           const SolveContext& ctx,
                           const solver::SolveRequest* req,
+                          const SolveConfig& cfg,
                           solver::SolveResponse* resp)
 {
-    double total_dist = 0.0;
+    double objective = 0.0;
 
     for (int i = 0; i < plan.K; ++i) {
         int global_idx = plan.subset[i];
         const auto& veh_info = req->vehicles(global_idx);
         if (plan.trips[i].empty()) continue;
 
+        std::vector<std::vector<int>> trip_ids;
+        trip_ids.reserve(plan.trips[i].size());
+        for (const auto& trip : plan.trips[i]) {
+            trip_ids.push_back(trip.route);
+        }
+
+        auto validation = hfvrptwb::validateTrips(
+            *req, veh_info, trip_ids, cfg.fixedCostPerVehicle, cfg.costPerKm);
+        if (!validation.feasible) {
+            auto* dr = resp->add_drop_reasons();
+            dr->set_node_id(veh_info.id());
+            dr->set_code(validation.code);
+            dr->set_detail(validation.detail);
+            return false;
+        }
+
         auto* route = resp->add_routes();
         route->set_vehicle_id(veh_info.id());
+        route->set_total_distance(validation.total_distance_m);
+        route->set_total_duration(validation.total_duration_min);
+        route->set_total_cost(validation.total_cost);
+        objective += validation.total_cost;
 
-        double v_dist = 0.0;
-        int    v_time = veh_info.shift_start();
-        int    cur    = 0;
+        size_t timing_idx = 0;
         for (const auto& trip : plan.trips[i]) {
-            if (cur != 0) {  // return to depot between trips
-                v_dist += ctx.dist[cur][0];
-                v_time += (int)ctx.dur[cur][0];
-                cur     = 0;
-            }
             route->add_trip_sizes((int)trip.route.size());
             for (int node_id : trip.route) {
-                int travel    = (int)ctx.dur[cur][node_id];
-                int arr       = v_time + travel;
-
                 const auto& pn = req->nodes(node_id - 1);
-                if (pn.tw_start() > 0 && arr < pn.tw_start())
-                    arr = pn.tw_start();
-                int depart = arr + pn.service_time();
+                const auto& timing = validation.timings[timing_idx++];
 
                 auto* stop = route->add_stops();
                 stop->set_node_id(pn.id());
-                stop->set_arrival_min(arr);
-                stop->set_depart_min(depart);
-
-                v_dist += ctx.dist[cur][node_id];
-                v_time  = depart;
-                cur     = node_id;
+                stop->set_arrival_min(timing.arrival_min);
+                stop->set_depart_min(timing.depart_min);
             }
         }
-
-        v_dist += ctx.dist[cur][0];
-        route->set_total_distance(v_dist);
-        route->set_total_duration(v_time - veh_info.shift_start());
-        total_dist += v_dist;
     }
 
-    resp->set_objective(total_dist);
+    resp->set_objective(objective);
     resp->set_status("OK");
     return true;
 }
@@ -349,7 +350,7 @@ grpc::Status SolverServiceImpl::Solve(grpc::ServerContext*,
         return grpc::Status::OK;
     }
 
-    if (!buildResponse(best, ctx, req, resp)) {
+    if (!buildResponse(best, ctx, req, cfg_, resp)) {
         resp->clear_routes();
         resp->set_status("INFEASIBLE");
         return grpc::Status::OK;
@@ -360,7 +361,7 @@ grpc::Status SolverServiceImpl::Solve(grpc::ServerContext*,
               << std::chrono::duration_cast<std::chrono::milliseconds>(t1 - t0).count()
               << " ms, best K=" << best.K
               << ", vehicles used=" << best.subset.size()
-              << ", total distance=" << resp->objective() << " m"
+              << ", objective=" << resp->objective()
               << ", total cost=" << best.cost << " Baht\n";
 
     return grpc::Status::OK;
@@ -428,7 +429,7 @@ solver::SolveResponse SolverV2::Solve(const solver::SolveRequest& req) {
         return resp;
     }
 
-    if (!buildResponse(best, ctx, &req, &resp)) {
+    if (!buildResponse(best, ctx, &req, cfg_, &resp)) {
         resp.clear_routes();
         resp.set_status("INFEASIBLE");
     }
