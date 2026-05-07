@@ -217,7 +217,7 @@ int main() {
         }
 
     // Solve
-    SolverServiceImpl service;
+    SolverServiceImpl service(SolveConfig{.enableMultiTrip = true});
     solver::SolveResponse resp;
     service.Solve(nullptr, &req, &resp);
 
