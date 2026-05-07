@@ -33,6 +33,7 @@ set(FEASIBILITY_SRCS
     feasibility/precedence.cpp
     feasibility/shift.cpp
     feasibility/break.cpp
+    construction/adaptive_constructor.cpp
     validator/route_validator.cpp
 )
 
@@ -40,8 +41,6 @@ set(FEASIBILITY_SRCS
 add_executable(solver
     main.cpp
     solver_service.cpp
-    priority_shape_clustering/slender_utils.cpp
-    priority_shape_clustering/slender_solver.cpp
     ${FEASIBILITY_SRCS}
     ${PROTO_SRCS}
     ${GRPC_SRCS}
@@ -56,8 +55,6 @@ target_include_directories(solver PRIVATE
 add_executable(demo_solve
     demo_solve.cpp
     solver_service.cpp
-    priority_shape_clustering/slender_utils.cpp
-    priority_shape_clustering/slender_solver.cpp
     ${FEASIBILITY_SRCS}
     ${PROTO_SRCS}
     ${GRPC_SRCS}
@@ -73,8 +70,6 @@ add_executable(bench_solve
     bench_solve.cpp
     bench_gen.cpp
     solver_service.cpp
-    priority_shape_clustering/slender_utils.cpp
-    priority_shape_clustering/slender_solver.cpp
     ${FEASIBILITY_SRCS}
     ${PROTO_SRCS}
     ${GRPC_SRCS}
@@ -90,8 +85,6 @@ add_executable(bench_compare
     bench_compare.cpp
     bench_gen.cpp
     solver_service.cpp
-    priority_shape_clustering/slender_utils.cpp
-    priority_shape_clustering/slender_solver.cpp
     ${FEASIBILITY_SRCS}
     ${PROTO_SRCS}
     ${GRPC_SRCS}
