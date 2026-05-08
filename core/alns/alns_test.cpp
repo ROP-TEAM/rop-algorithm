@@ -116,13 +116,13 @@ int main() {
         penalty.update(0.50); // well above 0.20 target, factor=0.85 => 1200*0.85=1020
         if (!expect(penalty.capacity() < 1200.0, "high feasible ratio should decrease penalties")) return 1;
 
-        // Penalties should be clamped: capacity/TW [100, 1e6], overtime [50, 1e6]
+        // Penalties clamped to [min_clamp, 1e6]; min_clamp decays to floor
         hfvrptwb::alns::AdaptivePenalty p2;
         for (int i = 0; i < 200; ++i) p2.update(0.0); // drive up
         if (!expect(p2.capacity() <= 1e6, "capacity penalty should be clamped to 1e6")) return 1;
 
-        for (int i = 0; i < 200; ++i) p2.update(1.0); // drive down
-        if (!expect(p2.capacity() >= 50.0, "capacity penalty should be clamped to 50")) return 1;
+        for (int i = 0; i < 200; ++i) p2.update(1.0); // drive down; clamp has decayed
+        if (!expect(p2.capacity() >= 10.0, "capacity penalty should be clamped to floor")) return 1;
     }
 
     // Destroy operator tests
