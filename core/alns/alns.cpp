@@ -7,6 +7,7 @@
 #include "validator/route_validator.h"
 #include <functional>
 #include <iostream>
+#include <limits>
 #include <random>
 
 namespace hfvrptwb {
@@ -55,6 +56,13 @@ ConstructionResult ALNSSolver::solve(
     auto current = fromConstruction(initial, req, fixed, km);
     auto best = current;
     double best_obj = best.objective;
+    ALNSSolution best_feasible;
+    double best_feasible_obj = std::numeric_limits<double>::infinity();
+    bool has_feasible = current.unrouted.empty();
+    if (has_feasible) {
+        best_feasible = current;
+        best_feasible_obj = current.objective;
+    }
 
     std::mt19937 rng(seed);
 
@@ -90,6 +98,10 @@ ConstructionResult ALNSSolver::solve(
 
     std::vector<double> destroy_weights(ND, 1.0);
     std::vector<double> repair_weights(NR, 1.0);
+    std::vector<double> destroy_score_sum(ND, 0.0);
+    std::vector<double> repair_score_sum(NR, 0.0);
+    std::vector<int>    destroy_use(ND, 0);
+    std::vector<int>    repair_use(NR, 0);
 
     double T = cfg_.initial_temp;
     int seg_feasible = 0;
@@ -116,7 +128,10 @@ ConstructionResult ALNSSolver::solve(
         int q = std::max(1, std::min(8, (int)candidate.vehicles.size()));
         destroyers[d](candidate, rng, req, fixed, km, q);
         repairers[r](candidate, req, fixed, km, reload_min);
-        applyTwoOptToSolution(candidate, req, fixed, km);
+
+        // Recompute objective with adaptive penalty to pressure toward feasibility
+        candidate.objective = computeObjective(candidate.vehicles,
+            (int)candidate.unrouted.size(), penalty.coefficient());
 
         // Acceptance
         double delta = candidate.objective - current.objective;
@@ -137,14 +152,39 @@ ConstructionResult ALNSSolver::solve(
             } else {
                 score = cfg_.score_accepted;
             }
+
+            if (current.unrouted.empty() && current.objective < best_feasible_obj) {
+                best_feasible = current;
+                best_feasible_obj = current.objective;
+                has_feasible = true;
+            }
+
+            destroy_score_sum[d] += score;
+            repair_score_sum[r]  += score;
+            ++destroy_use[d];
+            ++repair_use[r];
         }
 
         // Update weights per segment
         ++iter;
         if (iter % cfg_.segment_size == 0) {
             double r_factor = cfg_.reaction_factor;
-            destroy_weights[d] = (1.0 - r_factor) * destroy_weights[d] + r_factor * score;
-            repair_weights[r]  = (1.0 - r_factor) * repair_weights[r]  + r_factor * score;
+            for (int i = 0; i < ND; ++i) {
+                if (destroy_use[i] > 0) {
+                    double avg = destroy_score_sum[i] / destroy_use[i];
+                    destroy_weights[i] = (1.0 - r_factor) * destroy_weights[i] + r_factor * avg;
+                }
+            }
+            for (int i = 0; i < NR; ++i) {
+                if (repair_use[i] > 0) {
+                    double avg = repair_score_sum[i] / repair_use[i];
+                    repair_weights[i] = (1.0 - r_factor) * repair_weights[i] + r_factor * avg;
+                }
+            }
+            std::fill(destroy_score_sum.begin(), destroy_score_sum.end(), 0.0);
+            std::fill(repair_score_sum.begin(),  repair_score_sum.end(),  0.0);
+            std::fill(destroy_use.begin(),       destroy_use.end(),       0);
+            std::fill(repair_use.begin(),        repair_use.end(),        0);
 
             if (seg_total > 0) {
                 penalty.update((double)seg_feasible / (double)seg_total);
@@ -154,12 +194,18 @@ ConstructionResult ALNSSolver::solve(
         }
 
         T *= cfg_.cooling_rate;
-        if (T < 0.01) T = cfg_.initial_temp; // restart if too cold
+        if (T < cfg_.min_temp) T = cfg_.reheat_temp;
     }
 
-    applyTwoOptToSolution(best, req, fixed, km);
+    // Prefer best feasible solution; fall back to overall best
+    ALNSSolution& returned = has_feasible ? best_feasible : best;
 
-    return toConstruction(best);
+    // Reset to fixed penalty so returned objective is comparable to non-ALNS path
+    returned.objective = computeObjective(returned.vehicles, (int)returned.unrouted.size());
+
+    applyTwoOptToSolution(returned, req, fixed, km);
+
+    return toConstruction(returned);
 }
 
 } // namespace alns

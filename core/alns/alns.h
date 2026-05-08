@@ -13,6 +13,8 @@ struct ALNSConfig {
     double reaction_factor = 0.1;
     double initial_temp    = 100.0;
     double cooling_rate    = 0.9995;
+    double min_temp         = 1.0;
+    double reheat_temp      = 10.0;
     int    score_best      = 33;
     int    score_better    = 9;
     int    score_accepted  = 13;

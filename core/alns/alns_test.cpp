@@ -103,26 +103,26 @@ int main() {
     // Test 4: AdaptivePenalty
     {
         hfvrptwb::alns::AdaptivePenalty penalty;
-        if (!expect(penalty.capacity() == 10.0, "default capacity penalty should be 10")) return 1;
-        if (!expect(penalty.timeWindow() == 10.0, "default TW penalty should be 10")) return 1;
-        if (!expect(penalty.overtime() == 5.0, "default overtime penalty should be 5")) return 1;
+        if (!expect(penalty.capacity() == 1000.0, "default capacity penalty should be 1000")) return 1;
+        if (!expect(penalty.timeWindow() == 1000.0, "default TW penalty should be 1000")) return 1;
+        if (!expect(penalty.overtime() == 500.0, "default overtime penalty should be 500")) return 1;
 
         // Low feasible ratio should increase penalties
-        penalty.update(0.05); // well below 0.20 target
-        if (!expect(penalty.capacity() > 10.0, "low feasible ratio should increase capacity penalty")) return 1;
-        if (!expect(penalty.timeWindow() > 10.0, "low feasible ratio should increase TW penalty")) return 1;
+        penalty.update(0.05); // well below 0.20 target, factor=1.2 => 1000*1.2=1200
+        if (!expect(penalty.capacity() > 1000.0, "low feasible ratio should increase capacity penalty")) return 1;
+        if (!expect(penalty.timeWindow() > 1000.0, "low feasible ratio should increase TW penalty")) return 1;
 
         // High feasible ratio should decrease penalties
-        penalty.update(0.50); // well above 0.20 target
-        if (!expect(penalty.capacity() < 12.0, "high feasible ratio should decrease penalties")) return 1;
+        penalty.update(0.50); // well above 0.20 target, factor=0.85 => 1200*0.85=1020
+        if (!expect(penalty.capacity() < 1200.0, "high feasible ratio should decrease penalties")) return 1;
 
-        // Penalties should be clamped to [1.0, 1e6]
+        // Penalties should be clamped: capacity/TW [100, 1e6], overtime [50, 1e6]
         hfvrptwb::alns::AdaptivePenalty p2;
         for (int i = 0; i < 200; ++i) p2.update(0.0); // drive up
         if (!expect(p2.capacity() <= 1e6, "capacity penalty should be clamped to 1e6")) return 1;
 
         for (int i = 0; i < 200; ++i) p2.update(1.0); // drive down
-        if (!expect(p2.capacity() >= 1.0, "capacity penalty should be clamped to 1.0")) return 1;
+        if (!expect(p2.capacity() >= 50.0, "capacity penalty should be clamped to 50")) return 1;
     }
 
     // Destroy operator tests

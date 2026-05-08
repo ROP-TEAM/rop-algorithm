@@ -208,6 +208,7 @@ grpc::Status solveRequest(const solver::SolveRequest* req,
             cfg.fixedCostPerVehicle, cfg.costPerKm,
             std::chrono::milliseconds(alns_budget_ms),
             0, cfg.seed);  // reload_min=0: cost is distance-based, reload doesn't affect it
+        hfvrptwb::orOptRelocate(plan, *req, cfg);
     } else {
         applyTwoOpt(plan, *req, cfg);
         hfvrptwb::orOptRelocate(plan, *req, cfg);
