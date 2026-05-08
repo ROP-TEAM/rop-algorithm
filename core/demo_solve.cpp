@@ -226,7 +226,7 @@ int main() {
     auto t1 = std::chrono::steady_clock::now();
 
     // Phase 2: solve
-    SolverServiceImpl service(SolveConfig{.enableMultiTrip = true});
+    SolverServiceImpl service(SolveConfig{.enableALNS = true, .enableMultiTrip = false});
     solver::SolveResponse resp;
     service.Solve(nullptr, &req, &resp);
 

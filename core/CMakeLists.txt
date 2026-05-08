@@ -41,6 +41,10 @@ set(FEASIBILITY_SRCS
     validator/labels.cpp
     validator/route_state.cpp
     validator/route_validator.cpp
+    alns/destroy.cpp
+    alns/repair.cpp
+    alns/local_search.cpp
+    alns/alns.cpp
 )
 
 # gRPC solver binary — started by Go's solver/process package
@@ -145,6 +149,19 @@ add_executable(or_opt_direct_test
 )
 target_link_libraries(or_opt_direct_test PRIVATE gRPC::grpc++ protobuf::libprotobuf)
 target_include_directories(or_opt_direct_test PRIVATE
+    ${CMAKE_CURRENT_BINARY_DIR}
+    ${CMAKE_CURRENT_SOURCE_DIR}
+)
+
+add_executable(alns_test
+    alns/alns_test.cpp
+    solver_service.cpp
+    ${FEASIBILITY_SRCS}
+    ${PROTO_SRCS}
+    ${GRPC_SRCS}
+)
+target_link_libraries(alns_test PRIVATE gRPC::grpc++ protobuf::libprotobuf)
+target_include_directories(alns_test PRIVATE
     ${CMAKE_CURRENT_BINARY_DIR}
     ${CMAKE_CURRENT_SOURCE_DIR}
 )

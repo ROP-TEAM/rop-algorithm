@@ -1,5 +1,6 @@
 #include "solver_service.h"
 
+#include "alns/alns.h"
 #include "construction/adaptive_constructor.h"
 #include "drop/drop_logic.h"
 #include "routeOpt/or_opt.h"
@@ -194,21 +195,36 @@ grpc::Status solveRequest(const solver::SolveRequest* req,
         *req, cfg.fixedCostPerVehicle, cfg.costPerKm, cfg.enableMultiTrip, cfg.reloadMin);
     auto t1 = Clock::now();
 
-    applyTwoOpt(plan, *req, cfg);
     auto t2 = Clock::now();
 
-    hfvrptwb::orOptRelocate(plan, *req, cfg);
+    if (cfg.enableALNS) {
+        int limit_ms = req->time_limit_ms() > 0 ? req->time_limit_ms() : 5000;
+        int construction_ms = (int)std::chrono::duration_cast<std::chrono::milliseconds>(t1 - t0).count();
+        int alns_budget_ms = std::max(100, limit_ms - construction_ms);
+
+        hfvrptwb::alns::ALNSSolver alns_solver;
+        plan = alns_solver.solve(
+            *req, plan,
+            cfg.fixedCostPerVehicle, cfg.costPerKm,
+            std::chrono::milliseconds(alns_budget_ms),
+            0, cfg.seed);  // reload_min=0: cost is distance-based, reload doesn't affect it
+    } else {
+        applyTwoOpt(plan, *req, cfg);
+        hfvrptwb::orOptRelocate(plan, *req, cfg);
+    }
     auto t3 = Clock::now();
 
-    writeResponse(*req, cfg, plan, resp);
+    // Use reloadMin=0 for ALNS path (cost = fixed + distance*per_km, reload irrelevant)
+    SolveConfig resp_cfg = cfg;
+    if (cfg.enableALNS) resp_cfg.reloadMin = 0;
+    writeResponse(*req, resp_cfg, plan, resp);
 
     auto ms = [](auto a, auto b) {
         return std::chrono::duration_cast<std::chrono::milliseconds>(b - a).count();
     };
     std::cout << "[Solve] construction=" << ms(t0, t1)
-              << "ms  2-opt=" << ms(t1, t2)
-            //   << "ms  or-opt=" << ms(t2, t3)
-              << "ms  total=" << ms(t0, t2)
+              << "ms  " << (cfg.enableALNS ? "alns" : "2-opt+or-opt") << "=" << ms(t2, t3)
+              << "ms  total=" << ms(t0, t3)
               << "ms  routes=" << resp->routes_size()
               << "  unassigned=" << resp->unassigned_size()
               << "  objective=" << resp->objective() << "\n";
