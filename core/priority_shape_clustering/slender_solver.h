@@ -4,25 +4,31 @@
 #include <vector>
 #include "types.h"
 
+// Per-vehicle multi-trip result from SlenderSolver::plan().
+struct SlenderPlan {
+    // trips_per_vehicle[v][trip] = Cluster for vehicle v on trip index.
+    std::vector<std::vector<Cluster>> trips_per_vehicle;
+    // Order node indices (1-based) that could not be assigned.
+    std::vector<int> unassigned;
+};
+
 // Time-aware cluster-first VRP solver using Macro Node theory.
-//
-// Each call to runOneRound performs one K-medoids pass over the unassigned
-// order nodes.  It respects hard time windows via incremental Macro Node
-// merge rules and vehicle capacity per trip.  Multiple trips per vehicle are
-// obtained by calling runOneRound repeatedly until all orders are assigned.
 class SlenderSolver {
 public:
-    // Assigns unassigned_nodes to K clusters (one per vehicle in the subset)
-    // using time-aware K-medoids with multi-restart.
+    // High-level entry point: build slender matrix then run multi-trip
+    // K-medoids until all orders are assigned or no progress is made.
     //
-    // all_nodes  : full node array; index 0 = depot, 1..N-1 = orders.
-    // delta      : N×N slender similarity matrix (from computeSlenderMatrix).
-    // dur        : N×N travel-duration matrix in minutes.
-    // active_capacities : per-vehicle weight capacity for this trip (size K).
-    // unassigned_nodes  : order indices to cluster; assigned ones are removed.
-    //
-    // Returns K Cluster objects (one per vehicle).  Empty cluster = vehicle
-    // received no orders this round.  node_ids is in time-feasible visit order.
+    // nodes   : full node array; index 0 = depot, 1..N-1 = orders.
+    // vehicles: fleet to assign — all vehicles are used (K = vehicles.size()).
+    // dur     : N×N travel-duration matrix in minutes (row-major, depot=0).
+    static SlenderPlan plan(
+        const std::vector<Node>&                nodes,
+        const std::vector<Vehicle>&             vehicles,
+        const std::vector<std::vector<double>>& dur
+    );
+
+    // Low-level: one K-medoids pass over unassigned_nodes using a
+    // pre-built delta matrix. Removes assigned indices from unassigned_nodes.
     static std::vector<Cluster> runOneRound(
         const std::vector<Node>&                all_nodes,
         const std::vector<std::vector<double>>& delta,

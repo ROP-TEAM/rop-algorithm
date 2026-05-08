@@ -1,7 +1,9 @@
 #include "slender_solver.h"
+#include "slender_utils.h"
 #include <algorithm>
 #include <cmath>
 #include <limits>
+#include <numeric>
 #include <random>
 #include <unordered_set>
 
@@ -320,4 +322,87 @@ std::vector<Cluster> SlenderSolver::runOneRound(
     unassigned_nodes = std::move(still_unassigned);
 
     return best_clusters;
+}
+
+// ---------------------------------------------------------------------------
+// Public: plan() — full pipeline: slender matrix → multi-trip K-medoids
+// ---------------------------------------------------------------------------
+
+SlenderPlan SlenderSolver::plan(
+    const std::vector<Node>&                nodes,
+    const std::vector<Vehicle>&             vehicles,
+    const std::vector<std::vector<double>>& dur)
+{
+    const int N = static_cast<int>(nodes.size());
+    const int K = static_cast<int>(vehicles.size());
+
+    // 1. Compute theta (bearing from depot) and rho (distance from depot)
+    std::vector<double> theta(N, 0.0);
+    std::vector<double> rho(N, 0.0);
+    double max_rho = 0.0;
+    for (int i = 1; i < N; ++i) {
+        theta[i] = calculateAngle(nodes[0].lat, nodes[0].lon,
+                                  nodes[i].lat, nodes[i].lon);
+        rho[i]   = dur[0][i];  // use travel time as radial proxy
+        if (rho[i] > max_rho) max_rho = rho[i];
+    }
+
+    // 2. Build N×N slender similarity matrix
+    std::vector<std::vector<double>> delta(N, std::vector<double>(N, 0.0));
+    computeSlenderMatrix(N, theta, rho, delta, max_rho);
+
+    // 3. Initial state: all order indices unassigned, sorted deadline ASC → priority DESC
+    std::vector<int> unassigned(N - 1);
+    std::iota(unassigned.begin(), unassigned.end(), 1);
+    std::stable_sort(unassigned.begin(), unassigned.end(), [&](int a, int b) {
+        int da = nodes[a].deadline_min == 0 ? 999999 : nodes[a].deadline_min;
+        int db = nodes[b].deadline_min == 0 ? 999999 : nodes[b].deadline_min;
+        if (da != db) return da < db;
+        return nodes[a].priority > nodes[b].priority;
+    });
+
+    // 4. Per-vehicle state
+    std::vector<double> caps(K);
+    std::vector<double> ready_times(K);
+    for (int v = 0; v < K; ++v) {
+        caps[v]        = vehicles[v].capacity;
+        ready_times[v] = static_cast<double>(vehicles[v].shift_start);
+    }
+
+    SlenderPlan result;
+    result.trips_per_vehicle.resize(K);
+
+    // 5. Multi-trip loop: repeat until all assigned or no progress
+    while (!unassigned.empty()) {
+        const size_t before = unassigned.size();
+
+        std::vector<Cluster> round = runOneRound(
+            nodes, delta, dur, caps, unassigned, ready_times);
+
+        if (unassigned.size() == before) break;  // no progress — remaining unassignable
+
+        for (int v = 0; v < K && v < static_cast<int>(round.size()); ++v) {
+            if (round[v].node_ids.empty()) continue;
+
+            result.trips_per_vehicle[v].push_back(round[v]);
+
+            // Advance vehicle clock past this trip's return to depot
+            double t   = ready_times[v];
+            int    cur = 0;
+            for (int id : round[v].node_ids) {
+                double arr = t + dur[cur][id];
+                if (arr < nodes[id].tw_start) arr = nodes[id].tw_start;
+                t   = arr + nodes[id].service_time;
+                cur = id;
+            }
+            ready_times[v] = t + dur[cur][0];
+
+            // Block vehicle if shift is exhausted
+            if (ready_times[v] > vehicles[v].shift_end)
+                caps[v] = 0.0;
+        }
+    }
+
+    result.unassigned = std::move(unassigned);
+    return result;
 }
