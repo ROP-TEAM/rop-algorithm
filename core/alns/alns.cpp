@@ -66,8 +66,8 @@ ConstructionResult ALNSSolver::solve(
 
     std::mt19937 rng(seed);
 
-    // Operator function tables
-    DestroyFn destroyers[] = {
+    // Operator function tables — built dynamically so sectorRemoval can be toggled
+    std::vector<DestroyFn> destroyers = {
         [](ALNSSolution& s, std::mt19937& r, const solver::SolveRequest& q,
            double f, double k, int n) { randomRemoval(s, r, q, f, k, n); },
         [](ALNSSolution& s, std::mt19937& r, const solver::SolveRequest& q,
@@ -85,6 +85,11 @@ ConstructionResult ALNSSolver::solve(
         [](ALNSSolution& s, std::mt19937& r, const solver::SolveRequest& q,
            double f, double k, int n) { lateCustomerRemoval(s, r, q, f, k, n); },
     };
+    if (cfg_.enable_sector_removal) {
+        destroyers.push_back(
+            [](ALNSSolution& s, std::mt19937& r, const solver::SolveRequest& q,
+               double f, double k, int n) { sectorRemoval(s, r, q, f, k, n); });
+    }
 
     RepairFn repairers[] = {
         greedyRepair,
@@ -93,8 +98,8 @@ ConstructionResult ALNSSolver::solve(
         proactiveBreakInsertion,
     };
 
-    constexpr int ND = 8;
-    constexpr int NR = 4;
+    const int ND = (int)destroyers.size();
+    const int NR = 4;
 
     std::vector<double> destroy_weights(ND, 1.0);
     std::vector<double> repair_weights(NR, 1.0);
@@ -102,6 +107,10 @@ ConstructionResult ALNSSolver::solve(
     std::vector<double> repair_score_sum(NR, 0.0);
     std::vector<int>    destroy_use(ND, 0);
     std::vector<int>    repair_use(NR, 0);
+
+    std::vector<int> destroy_selections(ND, 0);
+    std::vector<int> destroy_improvements(ND, 0);
+    std::vector<int> destroy_bests(ND, 0);
 
     double T = cfg_.initial_temp;
     int seg_feasible = 0;
@@ -122,6 +131,7 @@ ConstructionResult ALNSSolver::solve(
         std::discrete_distribution<int> r_dist(repair_weights.begin(), repair_weights.end());
         int d = d_dist(rng);
         int r = r_dist(rng);
+        ++destroy_selections[d];
 
         // Destroy + repair
         ALNSSolution candidate = current;
@@ -163,6 +173,9 @@ ConstructionResult ALNSSolver::solve(
             repair_score_sum[r]  += score;
             ++destroy_use[d];
             ++repair_use[r];
+
+            if (delta < 0) ++destroy_improvements[d];
+            if (score == cfg_.score_best) ++destroy_bests[d];
         }
 
         // Update weights per segment
@@ -200,12 +213,25 @@ ConstructionResult ALNSSolver::solve(
     // Prefer best feasible solution; fall back to overall best
     ALNSSolution& returned = has_feasible ? best_feasible : best;
 
+    // Save operator stats
+    stats_ = {destroy_weights, destroy_selections, destroy_improvements, destroy_bests};
+
     // Reset to fixed penalty so returned objective is comparable to non-ALNS path
     returned.objective = computeObjective(returned.vehicles, (int)returned.unrouted.size());
 
     applyTwoOptToSolution(returned, req, fixed, km);
 
     return toConstruction(returned);
+}
+
+const char* destroyOperatorName(int index) {
+    static const char* names[] = {
+        "random", "worst", "shaw", "prioAware",
+        "routeConsolidate", "tripRemove", "tagViolation",
+        "lateCustomer", "sector",
+    };
+    if (index < 0 || index >= 9) return "???";
+    return names[index];
 }
 
 } // namespace alns

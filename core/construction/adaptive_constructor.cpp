@@ -69,7 +69,6 @@ Candidate bestSingleInsertion(
     double default_cost_per_km)
 {
     Candidate best;
-    const auto& node = req.nodes(node_index - 1);
 
     for (int vi = 0; vi < req.vehicles_size(); ++vi) {
         const auto& current = routes[vi];
@@ -83,7 +82,7 @@ Candidate bestSingleInsertion(
                 continue;
             }
 
-            double score = eval.delta_cost - priorityBonus(node);
+            double score = eval.delta_cost - priorityBonus(req.nodes(node_index - 1));
             if (score < best.score) {
                 best.vehicle_index = vi;
                 best.insert_pos = pos;
@@ -132,7 +131,6 @@ Candidate bestMultiTripInsertion(
     int reload_min)
 {
     Candidate best;
-    const auto& node = req.nodes(node_index - 1);
 
     for (int vi = 0; vi < req.vehicles_size(); ++vi) {
         const auto& schedule = schedules[vi];
@@ -158,7 +156,7 @@ Candidate bestMultiTripInsertion(
                     continue;
                 }
                 double delta = eval.next.cost - trip.cost;
-                double score = delta - priorityBonus(node);
+                double score = delta - priorityBonus(req.nodes(node_index - 1));
                 if (score < best.score) {
                     best.vehicle_index = vi;
                     best.trip_index = ti;
@@ -185,7 +183,7 @@ Candidate bestMultiTripInsertion(
                 best.fail_detail = validation.detail;
                 continue;
             }
-            double score = eval.next.cost - priorityBonus(node);
+            double score = eval.next.cost - priorityBonus(req.nodes(node_index - 1));
             if (score < best.score) {
                 best.vehicle_index = vi;
                 best.trip_index = (int)schedule.trips.size();
@@ -321,6 +319,7 @@ ConstructionResult adaptiveConstruct(
     int reload_min)
 {
     ConstructionResult result;
+
     if (enable_multi_trip) {
         std::vector<ScheduleState> schedules(req.vehicles_size());
         for (int vi = 0; vi < req.vehicles_size(); ++vi) schedules[vi].vehicle_index = vi;

@@ -1,5 +1,6 @@
 #include "alns/destroy.h"
 #include "feasibility/tags.h"
+#include "priority_shape_clustering/slender_utils.h"
 #include "validator/route_state.h"
 #include <algorithm>
 #include <cmath>
@@ -275,6 +276,49 @@ void lateCustomerRemoval(ALNSSolution& sol, std::mt19937&, const solver::SolveRe
     int count = std::min(q, (int)late.size());
     for (int i = 0; i < count; ++i) {
         removeNode(sol, late[i].vi, late[i].ti, late[i].node_index, req, fixed, km);
+    }
+}
+
+void sectorRemoval(ALNSSolution& sol, std::mt19937& rng, const solver::SolveRequest& req,
+                   double fixed, double km, int q)
+{
+    struct Slot { int vi; int ti; int node_index; double theta; };
+    std::vector<Slot> all;
+    for (int vi = 0; vi < (int)sol.vehicles.size(); ++vi) {
+        for (int ti = 0; ti < (int)sol.vehicles[vi].trips.size(); ++ti) {
+            for (int ni : sol.vehicles[vi].trips[ti].nodes) {
+                const auto& node = req.nodes(ni - 1);
+                double theta = calculateAngle(
+                    req.depot().lat(), req.depot().lng(),
+                    node.lat(), node.lng());
+                all.push_back({vi, ti, ni, theta});
+            }
+        }
+    }
+    if (all.empty()) return;
+
+    // Pick a random seed and destroy q nodes closest in angular distance
+    std::uniform_int_distribution<int> dist(0, (int)all.size() - 1);
+    double seed_theta = all[dist(rng)].theta;
+
+    struct Scored { int vi; int ti; int node_index; double dist; };
+    std::vector<Scored> scored;
+    for (const auto& s : all) {
+        // Normalized angular distance from SC3: 0 = same bearing, 1 = opposite
+        double diff = std::abs(seed_theta - s.theta);
+        double ang_dist = (M_PI - std::abs(M_PI - diff)) / M_PI;
+        scored.push_back({s.vi, s.ti, s.node_index, ang_dist});
+    }
+
+    if (scored.empty()) return;
+
+    // Keep the seed node too — include all
+    std::sort(scored.begin(), scored.end(),
+              [](const Scored& a, const Scored& b) { return a.dist < b.dist; });
+
+    int count = std::min(q, (int)scored.size());
+    for (int i = 0; i < count; ++i) {
+        removeNode(sol, scored[i].vi, scored[i].ti, scored[i].node_index, req, fixed, km);
     }
 }
 

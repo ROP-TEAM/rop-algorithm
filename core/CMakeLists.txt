@@ -45,6 +45,8 @@ set(FEASIBILITY_SRCS
     alns/repair.cpp
     alns/local_search.cpp
     alns/alns.cpp
+    priority_shape_clustering/slender_solver.cpp
+    priority_shape_clustering/slender_utils.cpp
 )
 
 # gRPC solver binary — started by Go's solver/process package
@@ -105,6 +107,20 @@ target_include_directories(bench_compare PRIVATE
     ${CMAKE_CURRENT_SOURCE_DIR}
 )
 
+add_executable(bench_sector
+    sector_bench.cpp
+    bench_gen.cpp
+    solver_service.cpp
+    ${FEASIBILITY_SRCS}
+    ${PROTO_SRCS}
+    ${GRPC_SRCS}
+)
+target_link_libraries(bench_sector PRIVATE gRPC::grpc++ protobuf::libprotobuf)
+target_include_directories(bench_sector PRIVATE
+    ${CMAKE_CURRENT_BINARY_DIR}
+    ${CMAKE_CURRENT_SOURCE_DIR}
+)
+
 add_executable(route_state_test
     validator/route_state_test.cpp
     validator/labels.cpp
@@ -137,19 +153,6 @@ add_executable(labels_test
     validator/labels.cpp
 )
 target_include_directories(labels_test PRIVATE
-    ${CMAKE_CURRENT_SOURCE_DIR}
-)
-
-add_executable(or_opt_direct_test
-    or_opt_direct_test.cpp
-    solver_service.cpp
-    ${FEASIBILITY_SRCS}
-    ${PROTO_SRCS}
-    ${GRPC_SRCS}
-)
-target_link_libraries(or_opt_direct_test PRIVATE gRPC::grpc++ protobuf::libprotobuf)
-target_include_directories(or_opt_direct_test PRIVATE
-    ${CMAKE_CURRENT_BINARY_DIR}
     ${CMAKE_CURRENT_SOURCE_DIR}
 )
 

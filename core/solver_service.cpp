@@ -173,7 +173,8 @@ void applyTwoOpt(hfvrptwb::ConstructionResult& plan,
 
 grpc::Status solveRequest(const solver::SolveRequest* req,
                           const SolveConfig& cfg,
-                          solver::SolveResponse* resp)
+                          solver::SolveResponse* resp,
+                          hfvrptwb::alns::OperatorStats* out_stats = nullptr)
 {
     using Clock = std::chrono::high_resolution_clock;
     auto t0 = Clock::now();
@@ -212,12 +213,15 @@ grpc::Status solveRequest(const solver::SolveRequest* req,
         int construction_ms = (int)std::chrono::duration_cast<std::chrono::milliseconds>(t1 - t0).count();
         int alns_budget_ms = std::max(100, limit_ms - construction_ms);
 
-        hfvrptwb::alns::ALNSSolver alns_solver;
+        hfvrptwb::alns::ALNSConfig alns_cfg;
+        alns_cfg.enable_sector_removal = cfg.enableSectorRemoval;
+        hfvrptwb::alns::ALNSSolver alns_solver(alns_cfg);
         plan = alns_solver.solve(
             *req, plan,
             cfg.fixedCostPerVehicle, cfg.costPerKm,
             std::chrono::milliseconds(alns_budget_ms),
             0, cfg.seed);  // reload_min=0: cost is distance-based, reload doesn't affect it
+        if (out_stats) *out_stats = alns_solver.stats();
     } else {
         applyTwoOpt(plan, *req, cfg);
     }
@@ -266,6 +270,6 @@ grpc::Status SolverServiceImpl::Solve(grpc::ServerContext*,
 
 solver::SolveResponse SolverV2::Solve(const solver::SolveRequest& req) {
     solver::SolveResponse resp;
-    solveRequest(&req, cfg_, &resp);
+    solveRequest(&req, cfg_, &resp, &last_alns_stats_);
     return resp;
 }

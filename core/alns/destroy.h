@@ -33,5 +33,8 @@ void tagViolationRemoval(ALNSSolution&, std::mt19937&, const solver::SolveReques
 void lateCustomerRemoval(ALNSSolution&, std::mt19937&, const solver::SolveRequest&,
                           double fixed, double km, int q = 4);
 
+void sectorRemoval(ALNSSolution&, std::mt19937&, const solver::SolveRequest&,
+                   double fixed, double km, int q = 4);
+
 } // namespace alns
 } // namespace hfvrptwb
