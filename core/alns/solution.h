@@ -4,6 +4,7 @@
 #include "validator/route_state.h"
 #include <unordered_set>
 #include <vector>
+#include <cmath>
 
 namespace hfvrptwb {
 namespace alns {

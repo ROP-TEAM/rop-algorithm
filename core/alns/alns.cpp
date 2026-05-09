@@ -10,6 +10,7 @@
 #include <iostream>
 #include <limits>
 #include <random>
+#include <cmath>
 
 namespace hfvrptwb {
 namespace alns {

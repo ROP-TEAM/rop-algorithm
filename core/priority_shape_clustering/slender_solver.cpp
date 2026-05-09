@@ -14,6 +14,9 @@
 static constexpr double BETA         = 0.01;   // waiting-time penalty coefficient
 static constexpr double ALPHA        = 0.10;   // flexibility-loss penalty coefficient
 static constexpr double LAMBDA       = 0.02;   // priority penalty coefficient
+// static constexpr double BETA         = 0.80;   // waiting-time penalty coefficient
+// static constexpr double ALPHA        = 0.10;   // flexibility-loss penalty coefficient
+// static constexpr double LAMBDA       = 0.02;   // priority penalty coefficient
 static constexpr double TIME_SCALE   = 480.0;  // normalise minutes to [0,1] over 8-hour day
 static constexpr int    MAX_ITER     = 50;     // k-medoids convergence limit per restart
 static constexpr int    NUM_RESTARTS = 10;     // independent random restarts
