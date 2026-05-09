@@ -13,6 +13,7 @@ struct SolveConfig {
     bool     enableMultiTrip       = false;
     bool     enableSectorRemoval   = true;
     int      reloadMin             = 30;
+    int      multiStartCount       = 2;    // number of ALNS restarts with different seeds
 };
 
 class SolverServiceImpl final : public solver::SolverService::Service {

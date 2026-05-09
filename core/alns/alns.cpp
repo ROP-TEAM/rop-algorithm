@@ -96,11 +96,12 @@ ConstructionResult ALNSSolver::solve(
         greedyRepair,
         priorityFirstRepair,
         regret2Repair,
+        regret3Repair,
         proactiveBreakInsertion,
     };
 
     const int ND = (int)destroyers.size();
-    const int NR = 4;
+    const int NR = 5;
 
     std::vector<double> destroy_weights(ND, 1.0);
     std::vector<double> repair_weights(NR, 1.0);

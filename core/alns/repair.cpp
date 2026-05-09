@@ -323,6 +323,139 @@ void regret2Repair(ALNSSolution& sol, const solver::SolveRequest& req,
     }
 }
 
+void regret3Repair(ALNSSolution& sol, const solver::SolveRequest& req,
+                    double fixed, double km, int /*reload_min*/)
+{
+    std::vector<int> remaining = sol.unrouted;
+
+    while (!remaining.empty()) {
+        struct RegretCandidate {
+            int node_index;
+            double regret;
+            InsertionOption best_opt;
+        };
+
+        // Map vehicle_index -> position in sol.vehicles
+        std::unordered_map<int, int> used;
+        for (int i = 0; i < (int)sol.vehicles.size(); ++i) {
+            used[sol.vehicles[i].vehicle_index] = i;
+        }
+
+        std::vector<RegretCandidate> regrets;
+        for (int ni : remaining) {
+            // Find top 3 insertion options
+            double best1 = std::numeric_limits<double>::infinity();
+            double best2 = std::numeric_limits<double>::infinity();
+            double best3 = std::numeric_limits<double>::infinity();
+            InsertionOption best_opt;
+
+            auto updateBest = [&](double score, InsertionOption opt) {
+                if (score < best1) {
+                    best3 = best2;
+                    best2 = best1;
+                    best1 = score;
+                    best_opt = std::move(opt);
+                } else if (score < best2) {
+                    best3 = best2;
+                    best2 = score;
+                } else if (score < best3) {
+                    best3 = score;
+                }
+            };
+
+            for (int vi_req = 0; vi_req < req.vehicles_size(); ++vi_req) {
+                const auto& vehicle = req.vehicles(vi_req);
+                auto it = used.find(vi_req);
+                bool in_solution = (it != used.end());
+                int vi_sol = in_solution ? it->second : -1;
+
+                // Try existing trips (only for vehicles in solution)
+                if (in_solution) {
+                    const auto& vt = sol.vehicles[vi_sol];
+                    for (int ti = 0; ti < (int)vt.trips.size(); ++ti) {
+                        const auto& trip = vt.trips[ti];
+                        for (int pos = 0; pos <= (int)trip.nodes.size(); ++pos) {
+                            auto eval = evaluateInsertion(req, vehicle, trip, ni, pos, fixed, km);
+                            if (eval.feasible && std::isfinite(eval.delta_cost)) {
+                                double score = eval.delta_cost - priorityBonus(req.nodes(ni - 1));
+                                InsertionOption opt;
+                                opt.vi = vi_sol;
+                                opt.ti = ti;
+                                opt.pos = pos;
+                                opt.cost = score;
+                                opt.new_vehicle = false;
+                                opt.eval = std::move(eval);
+                                updateBest(score, std::move(opt));
+                            }
+                        }
+                    }
+                }
+
+                // Try new trip in this vehicle
+                RouteState empty_route;
+                empty_route.vehicle_index = vi_req;
+                auto eval = evaluateInsertion(req, vehicle, empty_route, ni, 0, fixed, km);
+                if (eval.feasible && std::isfinite(eval.next.cost)) {
+                    double score;
+                    InsertionOption opt;
+                    opt.pos = 0;
+
+                    if (in_solution) {
+                        const auto& vt = sol.vehicles[vi_sol];
+                        std::vector<std::vector<int>> all_trips;
+                        double existing_cost = 0.0;
+                        for (const auto& t : vt.trips) {
+                            all_trips.push_back(t.nodes);
+                            existing_cost += t.cost;
+                        }
+                        all_trips.push_back(eval.next.nodes);
+
+                        auto full_val = validateTrips(req, vehicle, all_trips, fixed, km, 0);
+                        if (!full_val.feasible || !std::isfinite(full_val.total_cost)) continue;
+                        score = full_val.total_cost - existing_cost
+                              - priorityBonus(req.nodes(ni - 1));
+                        opt.vi = vi_sol;
+                        opt.ti = -1;
+                        opt.new_vehicle = false;
+                    } else if (!sol.forbid_new_vehicle) {
+                        score = eval.next.cost - priorityBonus(req.nodes(ni - 1));
+                        opt.vehicle_index = vi_req;
+                        opt.ti = -1;
+                        opt.new_vehicle = true;
+                    } else {
+                        continue;
+                    }
+                    opt.cost = score;
+                    opt.eval = std::move(eval);
+                    updateBest(score, std::move(opt));
+                }
+            }
+
+            if (best_opt.vi >= 0 || best_opt.new_vehicle) {
+                double regret = best1;
+                if (best2 < std::numeric_limits<double>::infinity())
+                    regret = (best2 - best1);
+                if (best3 < std::numeric_limits<double>::infinity())
+                    regret += (best3 - best1);
+                regrets.push_back({ni, regret, std::move(best_opt)});
+            }
+        }
+
+        if (regrets.empty()) break;
+
+        // Pick highest regret
+        auto& best = *std::max_element(regrets.begin(), regrets.end(),
+            [](const RegretCandidate& a, const RegretCandidate& b) {
+                return a.regret < b.regret;
+            });
+
+        insertNode(sol, best.node_index, best.best_opt, req, fixed, km, 0);
+
+        auto it = std::find(remaining.begin(), remaining.end(), best.node_index);
+        if (it != remaining.end()) remaining.erase(it);
+    }
+}
+
 void proactiveBreakInsertion(ALNSSolution& sol, const solver::SolveRequest& req,
                               double fixed, double km, int reload_min)
 {

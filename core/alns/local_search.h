@@ -17,6 +17,9 @@ void twoOptStar(ALNSSolution&, const solver::SolveRequest&,
 void relocateAcrossVehicles(ALNSSolution&, const solver::SolveRequest&,
                              double fixed, double km);
 
+void consolidateVehicles(ALNSSolution&, const solver::SolveRequest&,
+                          double fixed, double km);
+
 void applyLocalSearch(ALNSSolution&, const solver::SolveRequest&,
                       double fixed, double km);
 

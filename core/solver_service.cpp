@@ -220,13 +220,30 @@ grpc::Status solveRequest(const solver::SolveRequest* req,
 
         hfvrptwb::alns::ALNSConfig alns_cfg;
         alns_cfg.enable_sector_removal = cfg.enableSectorRemoval;
-        hfvrptwb::alns::ALNSSolver alns_solver(alns_cfg);
-        plan = alns_solver.solve(
-            *req, plan,
-            post_cfg.fixedCostPerVehicle, post_cfg.costPerKm,
-            std::chrono::milliseconds(alns_budget_ms),
-            post_cfg.reloadMin, cfg.seed);
-        if (out_stats) *out_stats = alns_solver.stats();
+
+        int n_starts = std::max(1, cfg.multiStartCount);
+        auto budget_per_start = std::chrono::milliseconds(alns_budget_ms / n_starts);
+
+        auto best_plan = plan;
+        double best_obj = planObj(plan);
+
+        for (int s = 0; s < n_starts; ++s) {
+            uint32_t run_seed = cfg.seed + s * 31337;
+            hfvrptwb::alns::ALNSSolver alns_solver(alns_cfg);
+            auto trial = alns_solver.solve(
+                *req, plan,
+                post_cfg.fixedCostPerVehicle, post_cfg.costPerKm,
+                budget_per_start,
+                post_cfg.reloadMin, run_seed);
+            if (out_stats && s == 0) *out_stats = alns_solver.stats();
+
+            double trial_obj = planObj(trial);
+            if (trial_obj < best_obj) {
+                best_obj = trial_obj;
+                best_plan = std::move(trial);
+            }
+        }
+        plan = std::move(best_plan);
     } else {
         applyTwoOpt(plan, *req, post_cfg);
     }
