@@ -282,43 +282,77 @@ void lateCustomerRemoval(ALNSSolution& sol, std::mt19937&, const solver::SolveRe
 void sectorRemoval(ALNSSolution& sol, std::mt19937& rng, const solver::SolveRequest& req,
                    double fixed, double km, int q)
 {
-    struct Slot { int vi; int ti; int node_index; double theta; };
-    std::vector<Slot> all;
-    for (int vi = 0; vi < (int)sol.vehicles.size(); ++vi) {
-        for (int ti = 0; ti < (int)sol.vehicles[vi].trips.size(); ++ti) {
-            for (int ni : sol.vehicles[vi].trips[ti].nodes) {
-                const auto& node = req.nodes(ni - 1);
-                double theta = calculateAngle(
-                    req.depot().lat(), req.depot().lng(),
-                    node.lat(), node.lng());
-                all.push_back({vi, ti, ni, theta});
-            }
-        }
-    }
+    if (q < 2) return;
+
+    auto angDist = [](double a, double b) {
+        double diff = std::abs(a - b);
+        return (M_PI - std::abs(M_PI - diff)) / M_PI;
+    };
+
+    auto collect = [&](const std::unordered_set<int>& skip) {
+        struct Slot { int vi; int ti; int node_index; double theta; };
+        std::vector<Slot> out;
+        for (int vi = 0; vi < (int)sol.vehicles.size(); ++vi)
+            for (int ti = 0; ti < (int)sol.vehicles[vi].trips.size(); ++ti)
+                for (int ni : sol.vehicles[vi].trips[ti].nodes) {
+                    if (skip.count(ni)) continue;
+                    const auto& node = req.nodes(ni - 1);
+                    out.push_back({vi, ti, ni, calculateAngle(
+                        req.depot().lat(), req.depot().lng(), node.lat(), node.lng())});
+                }
+        return out;
+    };
+
+    auto all = collect({});
     if (all.empty()) return;
 
-    // Pick a random seed and destroy q nodes closest in angular distance
-    std::uniform_int_distribution<int> dist(0, (int)all.size() - 1);
-    double seed_theta = all[dist(rng)].theta;
+    std::uniform_int_distribution<int> pick(0, (int)all.size() - 1);
+    double seed1 = all[pick(rng)].theta;
 
-    struct Scored { int vi; int ti; int node_index; double dist; };
-    std::vector<Scored> scored;
-    for (const auto& s : all) {
-        // Normalized angular distance from SC3: 0 = same bearing, 1 = opposite
-        double diff = std::abs(seed_theta - s.theta);
-        double ang_dist = (M_PI - std::abs(M_PI - diff)) / M_PI;
-        scored.push_back({s.vi, s.ti, s.node_index, ang_dist});
+    // Sector 1: remove q/2 nodes closest to seed1
+    int k1 = q / 2;
+    {
+        struct Scored { int idx; double dist; };
+        std::vector<Scored> scored;
+        for (int i = 0; i < (int)all.size(); ++i)
+            scored.push_back({i, angDist(seed1, all[i].theta)});
+        std::sort(scored.begin(), scored.end(),
+                  [](const Scored& a, const Scored& b) { return a.dist < b.dist; });
+
+        for (int i = 0; i < std::min(k1, (int)scored.size()); ++i) {
+            const auto& s = all[scored[i].idx];
+            removeNode(sol, s.vi, s.ti, s.node_index, req, fixed, km);
+        }
     }
 
-    if (scored.empty()) return;
+    // Sector 2: re-collect remaining, pick seed furthest from seed1
+    std::unordered_set<int> removed_hint; // empty — collect all remaining
+    auto remaining = collect(removed_hint);
+    if (remaining.empty()) return;
 
-    // Keep the seed node too — include all
-    std::sort(scored.begin(), scored.end(),
-              [](const Scored& a, const Scored& b) { return a.dist < b.dist; });
+    double max_dist = -1;
+    int seed2_idx = -1;
+    for (int i = 0; i < (int)remaining.size(); ++i) {
+        double d = angDist(seed1, remaining[i].theta);
+        if (d > max_dist) { max_dist = d; seed2_idx = i; }
+    }
+    if (seed2_idx < 0) return;
+    double seed2 = remaining[seed2_idx].theta;
 
-    int count = std::min(q, (int)scored.size());
-    for (int i = 0; i < count; ++i) {
-        removeNode(sol, scored[i].vi, scored[i].ti, scored[i].node_index, req, fixed, km);
+    // Remove remaining q-k1 nodes closest to seed2
+    int k2 = q - k1;
+    {
+        struct Scored { int idx; double dist; };
+        std::vector<Scored> scored;
+        for (int i = 0; i < (int)remaining.size(); ++i)
+            scored.push_back({i, angDist(seed2, remaining[i].theta)});
+        std::sort(scored.begin(), scored.end(),
+                  [](const Scored& a, const Scored& b) { return a.dist < b.dist; });
+
+        for (int i = 0; i < std::min(k2, (int)scored.size()); ++i) {
+            const auto& s = remaining[scored[i].idx];
+            removeNode(sol, s.vi, s.ti, s.node_index, req, fixed, km);
+        }
     }
 }
 

@@ -17,6 +17,7 @@ struct ALNSSolution {
     std::vector<VehicleTrips> vehicles;
     std::vector<int> unrouted;
     double objective = 0.0;
+    bool forbid_new_vehicle = false;
 };
 
 inline double computeObjective(const std::vector<VehicleTrips>& vehicles, int unrouted_count,

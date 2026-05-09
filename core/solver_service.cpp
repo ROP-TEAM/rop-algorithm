@@ -208,6 +208,11 @@ grpc::Status solveRequest(const solver::SolveRequest* req,
               << "  unassigned=" << plan.drops.size()
               << "  ms=" << std::chrono::duration_cast<std::chrono::milliseconds>(t1 - t0).count() << "\n";
 
+    // Post-construction config: ALNS doesn't account for reload breaks between trips,
+    // so all downstream phases use reloadMin=0 when ALNS is active.
+    SolveConfig post_cfg = cfg;
+    if (cfg.enableALNS) post_cfg.reloadMin = 0;
+
     if (cfg.enableALNS) {
         int limit_ms = req->time_limit_ms() > 0 ? req->time_limit_ms() : 5000;
         int construction_ms = (int)std::chrono::duration_cast<std::chrono::milliseconds>(t1 - t0).count();
@@ -218,12 +223,12 @@ grpc::Status solveRequest(const solver::SolveRequest* req,
         hfvrptwb::alns::ALNSSolver alns_solver(alns_cfg);
         plan = alns_solver.solve(
             *req, plan,
-            cfg.fixedCostPerVehicle, cfg.costPerKm,
+            post_cfg.fixedCostPerVehicle, post_cfg.costPerKm,
             std::chrono::milliseconds(alns_budget_ms),
-            0, cfg.seed);  // reload_min=0: cost is distance-based, reload doesn't affect it
+            post_cfg.reloadMin, cfg.seed);
         if (out_stats) *out_stats = alns_solver.stats();
     } else {
-        applyTwoOpt(plan, *req, cfg);
+        applyTwoOpt(plan, *req, post_cfg);
     }
     auto t2 = Clock::now();
     std::cout << "[Phase] " << (cfg.enableALNS ? "alns" : "2-opt")
@@ -232,7 +237,7 @@ grpc::Status solveRequest(const solver::SolveRequest* req,
               << "  unassigned=" << plan.drops.size()
               << "  ms=" << std::chrono::duration_cast<std::chrono::milliseconds>(t2 - t1).count() << "\n";
 
-    hfvrptwb::orOptRelocate(plan, *req, cfg);
+    hfvrptwb::orOptRelocate(plan, *req, post_cfg);
     auto t3 = Clock::now();
     std::cout << "[Phase] or-opt"
               << "  obj=" << planObj(plan)
@@ -240,10 +245,7 @@ grpc::Status solveRequest(const solver::SolveRequest* req,
               << "  unassigned=" << plan.drops.size()
               << "  ms=" << std::chrono::duration_cast<std::chrono::milliseconds>(t3 - t2).count() << "\n";
 
-    // Use reloadMin=0 for ALNS path (cost = fixed + distance*per_km, reload irrelevant)
-    SolveConfig resp_cfg = cfg;
-    if (cfg.enableALNS) resp_cfg.reloadMin = 0;
-    writeResponse(*req, resp_cfg, plan, resp);
+    writeResponse(*req, post_cfg, plan, resp);
 
     auto ms = [](auto a, auto b) {
         return std::chrono::duration_cast<std::chrono::milliseconds>(b - a).count();

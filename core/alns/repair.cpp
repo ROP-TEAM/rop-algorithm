@@ -111,7 +111,7 @@ InsertionOption findBestInsertion(
                     best.new_vehicle = false;
                     best.eval = std::move(eval);
                 }
-            } else {
+            } else if (!sol.forbid_new_vehicle) {
                 // Unused vehicle — single trip, no multi-trip validation needed
                 score = eval.next.cost - priorityBonus(req.nodes(node_index - 1));
                 if (score < best.cost) {
@@ -286,11 +286,13 @@ void regret2Repair(ALNSSolution& sol, const solver::SolveRequest& req,
                         opt.vi = vi_sol;
                         opt.ti = -1;
                         opt.new_vehicle = false;
-                    } else {
+                    } else if (!sol.forbid_new_vehicle) {
                         score = eval.next.cost - priorityBonus(req.nodes(ni - 1));
                         opt.vehicle_index = vi_req;
                         opt.ti = -1;
                         opt.new_vehicle = true;
+                    } else {
+                        continue;
                     }
                     opt.cost = score;
                     opt.eval = std::move(eval);

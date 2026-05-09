@@ -5,6 +5,7 @@
 #include "construction/adaptive_constructor.h"
 #include "routeOpt/two_opt.h"
 #include "validator/route_validator.h"
+#include <algorithm>
 #include <functional>
 #include <iostream>
 #include <limits>
@@ -135,8 +136,15 @@ ConstructionResult ALNSSolver::solve(
 
         // Destroy + repair
         ALNSSolution candidate = current;
-        int q = std::max(1, std::min(8, (int)candidate.vehicles.size()));
+        int total_routed = 0;
+        for (const auto& vt : candidate.vehicles)
+            for (const auto& t : vt.trips)
+                total_routed += (int)t.nodes.size();
+        int q = std::clamp(total_routed / 4, 4, 15);
         destroyers[d](candidate, rng, req, fixed, km, q);
+        // Force consolidation: when routeConsolidationDestroy (index 4) empties vehicles,
+        // forbid repair from creating new ones so nodes must fit into surviving routes.
+        candidate.forbid_new_vehicle = (d == 4) || (uni(rng) < cfg_.forbid_new_vehicle_prob);
         repairers[r](candidate, req, fixed, km, reload_min);
 
         // Recompute objective with adaptive penalty to pressure toward feasibility
