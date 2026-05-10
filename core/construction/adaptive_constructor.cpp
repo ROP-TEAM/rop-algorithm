@@ -8,6 +8,7 @@
 #include <cmath>
 #include <limits>
 #include <unordered_set>
+#include <numeric>
 
 namespace hfvrptwb {
 namespace {
@@ -20,6 +21,12 @@ struct Candidate {
     double route_cost = 0.0;
     std::string fail_code;
     std::string fail_detail;
+};
+
+struct ScheduleState {
+    int vehicle_index = -1;
+    std::vector<RouteState> trips;
+    double cost = 0.0;
 };
 
 int sortDeadline(const solver::Node& n) {
@@ -37,6 +44,67 @@ std::vector<int> priorityOrder(const solver::SolveRequest& req) {
         if (da != db) return da < db;
         if (na.priority() != nb.priority()) return na.priority() > nb.priority();
         return na.id() < nb.id();
+    });
+    return order;
+}
+
+// for single-trip vehicles, sort by fixed_cost, capacity, and index
+std::vector<int> getSmartVehicleOrder(
+    const solver::SolveRequest& req, 
+    const std::vector<RouteState>& routes,
+    double default_fixed_cost) 
+{
+    std::vector<int> order(req.vehicles_size());
+    std::iota(order.begin(), order.end(), 0);
+
+    std::stable_sort(order.begin(), order.end(), [&](int a, int b) {
+        const auto& va = req.vehicles(a);
+        const auto& vb = req.vehicles(b);
+        
+        bool active_a = !routes[a].nodes.empty();
+        bool active_b = !routes[b].nodes.empty();
+
+        // rule 1: select active vehicles first
+        if (active_a != active_b) return active_a > active_b;
+
+        // rule 2: select vehicles with lower fixed_cost first
+        double cost_a = va.fixed_cost() > 0 ? va.fixed_cost() : default_fixed_cost;
+        double cost_b = vb.fixed_cost() > 0 ? vb.fixed_cost() : default_fixed_cost;
+        if (cost_a != cost_b) return cost_a < cost_b;
+
+        // rule 3: select vehicles with greater capacity first
+        if (va.capacity() != vb.capacity()) return va.capacity() > vb.capacity();
+
+        return a < b; // tie-breaker (index)
+    });
+    return order;
+}
+
+// for multi-trip vehicles, sort by fixed_cost, capacity, and index
+// rules are the same as for single-trip vehicles
+std::vector<int> getSmartVehicleOrderMultiTrip(
+    const solver::SolveRequest& req, 
+    const std::vector<ScheduleState>& schedules,
+    double default_fixed_cost) 
+{
+    std::vector<int> order(req.vehicles_size());
+    std::iota(order.begin(), order.end(), 0);
+
+    std::stable_sort(order.begin(), order.end(), [&](int a, int b) {
+        const auto& va = req.vehicles(a);
+        const auto& vb = req.vehicles(b);
+        bool active_a = !schedules[a].trips.empty();
+        bool active_b = !schedules[b].trips.empty();
+
+        if (active_a != active_b) return active_a > active_b;
+
+        double cost_a = va.fixed_cost() > 0 ? va.fixed_cost() : default_fixed_cost;
+        double cost_b = vb.fixed_cost() > 0 ? vb.fixed_cost() : default_fixed_cost;
+        if (cost_a != cost_b) return cost_a < cost_b;
+
+        if (va.capacity() != vb.capacity()) return va.capacity() > vb.capacity();
+
+        return a < b;
     });
     return order;
 }
@@ -70,7 +138,8 @@ Candidate bestSingleInsertion(
 {
     Candidate best;
 
-    for (int vi = 0; vi < req.vehicles_size(); ++vi) {
+    std::vector<int> smart_order = getSmartVehicleOrder(req, routes, default_fixed_cost);
+    for (int vi : smart_order) {
         const auto& current = routes[vi];
         for (int pos = 0; pos <= (int)current.nodes.size(); ++pos) {
             auto eval = evaluateInsertion(
@@ -95,11 +164,6 @@ Candidate bestSingleInsertion(
     return best;
 }
 
-struct ScheduleState {
-    int vehicle_index = -1;
-    std::vector<RouteState> trips;
-    double cost = 0.0;
-};
 
 double scheduleCost(const std::vector<RouteState>& trips) {
     double cost = 0.0;
@@ -131,8 +195,8 @@ Candidate bestMultiTripInsertion(
     int reload_min)
 {
     Candidate best;
-
-    for (int vi = 0; vi < req.vehicles_size(); ++vi) {
+    std::vector<int> smart_order = getSmartVehicleOrderMultiTrip(req, schedules, default_fixed_cost);
+    for (int vi : smart_order) {
         const auto& schedule = schedules[vi];
         for (int ti = 0; ti < (int)schedule.trips.size(); ++ti) {
             const auto& trip = schedule.trips[ti];

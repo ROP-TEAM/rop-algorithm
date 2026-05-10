@@ -145,6 +145,10 @@ struct VehicleDef {
 };
 
 static const VehicleDef VEHICLES[12] = {
+    {"V-01",  50,  420, 1020, 4, "refrigerated", "fragile"},
+    {"V-02",  80,  360, 1080, 5, "heavy", "bulk"},
+    {"V-03",  10,  480, 1260, 6, "small", "express"},
+    {"V-04",  16,  420, 1020, 4, "refrigerated", "fragile"},
     {"V-05",  12,  540,  900, 5, "heavy", "bulk"},
     {"V-06",  47,  480, 1080, 6, "small", "express"},
     {"V-07",  40,  480, 1020, 7, "fragile", "small"},
@@ -152,11 +156,7 @@ static const VehicleDef VEHICLES[12] = {
     {"V-09",  60,  540, 1140, 9, "fragile", ""},
     {"V-10",  10,  600, 1200, 0, "small", "express"},
     {"V-11", 100,  240,  840, 0, "refrigerated", ""},
-    {"V-12",  20,  480, 1020, 0, "small", "express"},
-    {"V-01",  50,  420, 1020, 4, "refrigerated", "fragile"},
-    {"V-02",  80,  360, 1080, 5, "heavy", "bulk"},
-    {"V-03",  10,  480, 1260, 6, "small", "express"},
-    {"V-04",  16,  420, 1020, 4, "refrigerated", "fragile"}
+    {"V-12",  20,  480, 1020, 0, "small", "express"}
 };
 
 static int nodeIndex(const std::string& id) {
