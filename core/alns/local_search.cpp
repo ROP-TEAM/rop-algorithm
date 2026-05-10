@@ -334,6 +334,187 @@ void consolidateVehicles(ALNSSolution& sol, const solver::SolveRequest& req,
     }
 }
 
+void swapStar(ALNSSolution& sol, const solver::SolveRequest& req,
+              double fixed, double km)
+{
+    if (sol.vehicles.size() < 2) return;
+
+    bool improved = true;
+    while (improved) {
+        improved = false;
+
+        for (int va = 0; va < (int)sol.vehicles.size() && !improved; ++va) {
+            for (int vb = va + 1; vb < (int)sol.vehicles.size() && !improved; ++vb) {
+                const auto& vehicle_a = req.vehicles(sol.vehicles[va].vehicle_index);
+                const auto& vehicle_b = req.vehicles(sol.vehicles[vb].vehicle_index);
+
+                for (int ta = 0; ta < (int)sol.vehicles[va].trips.size() && !improved; ++ta) {
+                    for (int pa = 0; pa < (int)sol.vehicles[va].trips[ta].nodes.size() && !improved; ++pa) {
+                        int node_a = sol.vehicles[va].trips[ta].nodes[pa];
+
+                        for (int tb = 0; tb < (int)sol.vehicles[vb].trips.size() && !improved; ++tb) {
+                            for (int pb = 0; pb < (int)sol.vehicles[vb].trips[tb].nodes.size() && !improved; ++pb) {
+                                int node_b = sol.vehicles[vb].trips[tb].nodes[pb];
+
+                                // --- Build trip A without node_a ---
+                                std::vector<int> nodes_a_minus;
+                                for (int n : sol.vehicles[va].trips[ta].nodes)
+                                    if (n != node_a) nodes_a_minus.push_back(n);
+
+                                RouteState init_a;
+                                init_a.vehicle_index = sol.vehicles[va].vehicle_index;
+
+                                // Find best trip & position in vehicle A for node_b
+                                // (search ALL existing trips, not just ta)
+                                double best_cost_a = std::numeric_limits<double>::infinity();
+                                int best_trip_a = -1;
+                                InsertionEval best_eval_a;
+
+                                auto tryInsertIntoA = [&](const RouteState& trip_state,
+                                                          int trip_idx) {
+                                    for (int pos = 0; pos <= (int)trip_state.nodes.size(); ++pos) {
+                                        auto eval = evaluateInsertion(
+                                            req, vehicle_a, trip_state, node_b, pos, fixed, km);
+                                        if (eval.feasible && std::isfinite(eval.delta_cost)
+                                            && eval.next.cost < best_cost_a) {
+                                            best_cost_a = eval.next.cost;
+                                            best_trip_a = trip_idx;
+                                            best_eval_a = std::move(eval);
+                                        }
+                                    }
+                                };
+
+                                // Try modified trip ta (if not empty)
+                                if (!nodes_a_minus.empty()) {
+                                    auto base_a = evaluateRouteState(
+                                        req, vehicle_a, init_a, nodes_a_minus, fixed, km);
+                                    if (base_a.feasible && std::isfinite(base_a.next.cost))
+                                        tryInsertIntoA(base_a.next, ta);
+                                }
+                                // Try other trips in vehicle A
+                                for (int t2 = 0; t2 < (int)sol.vehicles[va].trips.size(); ++t2) {
+                                    if (t2 == ta) continue;
+                                    tryInsertIntoA(sol.vehicles[va].trips[t2], t2);
+                                }
+
+                                if (best_trip_a < 0) continue;
+
+                                // --- Build trip B without node_b ---
+                                std::vector<int> nodes_b_minus;
+                                for (int n : sol.vehicles[vb].trips[tb].nodes)
+                                    if (n != node_b) nodes_b_minus.push_back(n);
+
+                                RouteState init_b;
+                                init_b.vehicle_index = sol.vehicles[vb].vehicle_index;
+
+                                // Find best trip & position in vehicle B for node_a
+                                double best_cost_b = std::numeric_limits<double>::infinity();
+                                int best_trip_b = -1;
+                                InsertionEval best_eval_b;
+
+                                auto tryInsertIntoB = [&](const RouteState& trip_state,
+                                                          int trip_idx) {
+                                    for (int pos = 0; pos <= (int)trip_state.nodes.size(); ++pos) {
+                                        auto eval = evaluateInsertion(
+                                            req, vehicle_b, trip_state, node_a, pos, fixed, km);
+                                        if (eval.feasible && std::isfinite(eval.delta_cost)
+                                            && eval.next.cost < best_cost_b) {
+                                            best_cost_b = eval.next.cost;
+                                            best_trip_b = trip_idx;
+                                            best_eval_b = std::move(eval);
+                                        }
+                                    }
+                                };
+
+                                if (!nodes_b_minus.empty()) {
+                                    auto base_b = evaluateRouteState(
+                                        req, vehicle_b, init_b, nodes_b_minus, fixed, km);
+                                    if (base_b.feasible && std::isfinite(base_b.next.cost))
+                                        tryInsertIntoB(base_b.next, tb);
+                                }
+                                for (int t2 = 0; t2 < (int)sol.vehicles[vb].trips.size(); ++t2) {
+                                    if (t2 == tb) continue;
+                                    tryInsertIntoB(sol.vehicles[vb].trips[t2], t2);
+                                }
+
+                                if (best_trip_b < 0) continue;
+
+                                // --- Compute total cost delta ---
+                                double old_cost = 0.0;
+                                for (const auto& t : sol.vehicles[va].trips) old_cost += t.cost;
+                                for (const auto& t : sol.vehicles[vb].trips) old_cost += t.cost;
+
+                                double new_cost = best_cost_a + best_cost_b;
+                                // Add unaffected trips
+                                for (int t2 = 0; t2 < (int)sol.vehicles[va].trips.size(); ++t2)
+                                    if (t2 != ta && t2 != best_trip_a)
+                                        new_cost += sol.vehicles[va].trips[t2].cost;
+                                // Handle ta when it's not the target trip
+                                if (best_trip_a != ta && !nodes_a_minus.empty()) {
+                                    auto base = evaluateRouteState(
+                                        req, vehicle_a, init_a, nodes_a_minus, fixed, km);
+                                    if (base.feasible && std::isfinite(base.next.cost))
+                                        new_cost += base.next.cost;
+                                    else continue;
+                                }
+
+                                for (int t2 = 0; t2 < (int)sol.vehicles[vb].trips.size(); ++t2)
+                                    if (t2 != tb && t2 != best_trip_b)
+                                        new_cost += sol.vehicles[vb].trips[t2].cost;
+                                if (best_trip_b != tb && !nodes_b_minus.empty()) {
+                                    auto base = evaluateRouteState(
+                                        req, vehicle_b, init_b, nodes_b_minus, fixed, km);
+                                    if (base.feasible && std::isfinite(base.next.cost))
+                                        new_cost += base.next.cost;
+                                    else continue;
+                                }
+
+                                if (new_cost < old_cost - 1e-6) {
+                                    // Apply swap
+                                    sol.vehicles[va].trips[best_trip_a]
+                                        = std::move(best_eval_a.next);
+                                    if (best_trip_a != ta) {
+                                        // Update trip ta (node_a removed)
+                                        sol.vehicles[va].trips[ta]
+                                            = std::move(evaluateRouteState(
+                                                req, vehicle_a, init_a, nodes_a_minus,
+                                                fixed, km).next);
+                                    }
+                                    sol.vehicles[vb].trips[best_trip_b]
+                                        = std::move(best_eval_b.next);
+                                    if (best_trip_b != tb) {
+                                        sol.vehicles[vb].trips[tb]
+                                            = std::move(evaluateRouteState(
+                                                req, vehicle_b, init_b, nodes_b_minus,
+                                                fixed, km).next);
+                                    }
+
+                                    // Clean up empty trips (erase in descending index order)
+                                    for (int vi : {vb, va}) {  // vb > va, erase larger first
+                                        if (vi >= (int)sol.vehicles.size()) continue;
+                                        auto& vt = sol.vehicles[vi];
+                                        vt.trips.erase(
+                                            std::remove_if(vt.trips.begin(), vt.trips.end(),
+                                                [](const RouteState& t) {
+                                                    return t.nodes.empty();
+                                                }),
+                                            vt.trips.end());
+                                        if (vt.trips.empty())
+                                            sol.vehicles.erase(
+                                                sol.vehicles.begin() + vi);
+                                    }
+                                    improved = true;
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+    sol.objective = computeObjective(sol.vehicles, (int)sol.unrouted.size());
+}
+
 void applyLocalSearch(ALNSSolution& sol, const solver::SolveRequest& req,
                       double fixed, double km)
 {
@@ -341,6 +522,7 @@ void applyLocalSearch(ALNSSolution& sol, const solver::SolveRequest& req,
     customerMoveAcrossTrips(sol, req, fixed, km);
     twoOptStar(sol, req, fixed, km);
     relocateAcrossVehicles(sol, req, fixed, km);
+    swapStar(sol, req, fixed, km);
 }
 
 } // namespace alns

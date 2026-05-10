@@ -213,6 +213,11 @@ grpc::Status solveRequest(const solver::SolveRequest* req,
     SolveConfig post_cfg = cfg;
     if (cfg.enableALNS) post_cfg.reloadMin = 0;
 
+    // Pre-ALNS consolidation: or-opt eliminates suboptimal vehicles so ALNS
+    // starts from a tighter solution (e.g. 4→3 routes for the 30-order demo).
+    // Without this, ALNS never discovers vehicle elimination on its own.
+    hfvrptwb::orOptRelocate(plan, *req, post_cfg);
+
     if (cfg.enableALNS) {
         int limit_ms = req->time_limit_ms() > 0 ? req->time_limit_ms() : 5000;
         int construction_ms = (int)std::chrono::duration_cast<std::chrono::milliseconds>(t1 - t0).count();

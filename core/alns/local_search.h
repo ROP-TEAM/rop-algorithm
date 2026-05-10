@@ -20,6 +20,9 @@ void relocateAcrossVehicles(ALNSSolution&, const solver::SolveRequest&,
 void consolidateVehicles(ALNSSolution&, const solver::SolveRequest&,
                           double fixed, double km);
 
+void swapStar(ALNSSolution&, const solver::SolveRequest&,
+              double fixed, double km);
+
 void applyLocalSearch(ALNSSolution&, const solver::SolveRequest&,
                       double fixed, double km);
 
