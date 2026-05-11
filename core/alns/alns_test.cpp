@@ -189,6 +189,7 @@ int main() {
         auto constructed = hfvrptwb::adaptiveConstruct(req, 550.0, 4.0003, false, 0);
 
         hfvrptwb::alns::ALNSSolver solver;
+
         auto result = solver.solve(req, constructed, 550.0, 4.0003,
                                     std::chrono::milliseconds(500), 0, 42);
 

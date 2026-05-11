@@ -9,6 +9,7 @@
 #include <limits>
 #include <unordered_set>
 #include <numeric>
+#include <random>
 
 namespace hfvrptwb {
 namespace {
@@ -57,6 +58,9 @@ std::vector<int> getSmartVehicleOrder(
     std::vector<int> order(req.vehicles_size());
     std::iota(order.begin(), order.end(), 0);
 
+    // thread_local std::mt19937 rng(std::random_device{}());
+    // std::shuffle(order.begin(), order.end(), rng);
+
     std::stable_sort(order.begin(), order.end(), [&](int a, int b) {
         const auto& va = req.vehicles(a);
         const auto& vb = req.vehicles(b);
@@ -75,7 +79,7 @@ std::vector<int> getSmartVehicleOrder(
         // rule 3: select vehicles with greater capacity first
         if (va.capacity() != vb.capacity()) return va.capacity() > vb.capacity();
 
-        return a < b; // tie-breaker (index)
+        return false; // tie-breaker 
     });
     return order;
 }
@@ -89,6 +93,9 @@ std::vector<int> getSmartVehicleOrderMultiTrip(
 {
     std::vector<int> order(req.vehicles_size());
     std::iota(order.begin(), order.end(), 0);
+
+    // thread_local std::mt19937 rng(std::random_device{}());
+    // std::shuffle(order.begin(), order.end(), rng);
 
     std::stable_sort(order.begin(), order.end(), [&](int a, int b) {
         const auto& va = req.vehicles(a);
@@ -104,7 +111,7 @@ std::vector<int> getSmartVehicleOrderMultiTrip(
 
         if (va.capacity() != vb.capacity()) return va.capacity() > vb.capacity();
 
-        return a < b;
+        return false;
     });
     return order;
 }
