@@ -120,7 +120,7 @@ static bool loadNodesFromCSV(const std::string& filepath) {
     }
     
     file.close();
-    std::cout << "Successfully loaded! " << DYNAMIC_NODES.size() << " orders from CSV.\n";
+    std::cout << "Successfully loaded! " << DYNAMIC_NODES.size() << " orders from CSV.\n\n";
     return true;
 }
 

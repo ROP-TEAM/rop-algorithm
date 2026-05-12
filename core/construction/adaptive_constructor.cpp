@@ -49,72 +49,51 @@ std::vector<int> priorityOrder(const solver::SolveRequest& req) {
     return order;
 }
 
-// for single-trip vehicles, sort by fixed_cost, capacity, and index
+// Helper functions to test emptiness for each state type
+bool isRouteStateEmpty(const std::vector<RouteState>& states, int idx) {
+    return states[idx].nodes.empty();
+}
+bool isScheduleStateEmpty(const std::vector<ScheduleState>& states, int idx) {
+    return states[idx].trips.empty();
+}
+
+// Template: single smart order function for both single-trip and multi-trip
+template <typename StateVec, typename IsEmptyFunc>
 std::vector<int> getSmartVehicleOrder(
-    const solver::SolveRequest& req, 
-    const std::vector<RouteState>& routes,
-    double default_fixed_cost) 
+    const solver::SolveRequest& req,
+    const StateVec& states,
+    double default_fixed_cost,
+    IsEmptyFunc isEmpty)
 {
     std::vector<int> order(req.vehicles_size());
     std::iota(order.begin(), order.end(), 0);
 
-    // thread_local std::mt19937 rng(std::random_device{}());
-    // std::shuffle(order.begin(), order.end(), rng);
+    thread_local std::mt19937 rng(std::random_device{}());
+    std::shuffle(order.begin(), order.end(), rng);
 
     std::stable_sort(order.begin(), order.end(), [&](int a, int b) {
         const auto& va = req.vehicles(a);
         const auto& vb = req.vehicles(b);
-        
-        bool active_a = !routes[a].nodes.empty();
-        bool active_b = !routes[b].nodes.empty();
 
-        // rule 1: select active vehicles first
+        bool active_a = !isEmpty(states, a);
+        bool active_b = !isEmpty(states, b);
+
+        // rule 1: active vehicles first
         if (active_a != active_b) return active_a > active_b;
 
-        // rule 2: select vehicles with lower fixed_cost first
+        // rule 2: lower fixed cost first
         double cost_a = va.fixed_cost() > 0 ? va.fixed_cost() : default_fixed_cost;
         double cost_b = vb.fixed_cost() > 0 ? vb.fixed_cost() : default_fixed_cost;
         if (cost_a != cost_b) return cost_a < cost_b;
 
-        // rule 3: select vehicles with greater capacity first
+        // rule 3: larger capacity first
         if (va.capacity() != vb.capacity()) return va.capacity() > vb.capacity();
 
-        return false; // tie-breaker 
+        return false; // tie-breaker
     });
     return order;
 }
 
-// for multi-trip vehicles, sort by fixed_cost, capacity, and index
-// rules are the same as for single-trip vehicles
-std::vector<int> getSmartVehicleOrderMultiTrip(
-    const solver::SolveRequest& req, 
-    const std::vector<ScheduleState>& schedules,
-    double default_fixed_cost) 
-{
-    std::vector<int> order(req.vehicles_size());
-    std::iota(order.begin(), order.end(), 0);
-
-    // thread_local std::mt19937 rng(std::random_device{}());
-    // std::shuffle(order.begin(), order.end(), rng);
-
-    std::stable_sort(order.begin(), order.end(), [&](int a, int b) {
-        const auto& va = req.vehicles(a);
-        const auto& vb = req.vehicles(b);
-        bool active_a = !schedules[a].trips.empty();
-        bool active_b = !schedules[b].trips.empty();
-
-        if (active_a != active_b) return active_a > active_b;
-
-        double cost_a = va.fixed_cost() > 0 ? va.fixed_cost() : default_fixed_cost;
-        double cost_b = vb.fixed_cost() > 0 ? vb.fixed_cost() : default_fixed_cost;
-        if (cost_a != cost_b) return cost_a < cost_b;
-
-        if (va.capacity() != vb.capacity()) return va.capacity() > vb.capacity();
-
-        return false;
-    });
-    return order;
-}
 
 bool expired(std::chrono::steady_clock::time_point start, int limit_ms) {
     if (limit_ms <= 0) return false;
@@ -145,7 +124,7 @@ Candidate bestSingleInsertion(
 {
     Candidate best;
 
-    std::vector<int> smart_order = getSmartVehicleOrder(req, routes, default_fixed_cost);
+    auto smart_order = getSmartVehicleOrder(req, routes, default_fixed_cost, isRouteStateEmpty);
     for (int vi : smart_order) {
         const auto& current = routes[vi];
         for (int pos = 0; pos <= (int)current.nodes.size(); ++pos) {
@@ -202,7 +181,7 @@ Candidate bestMultiTripInsertion(
     int reload_min)
 {
     Candidate best;
-    std::vector<int> smart_order = getSmartVehicleOrderMultiTrip(req, schedules, default_fixed_cost);
+    auto smart_order = getSmartVehicleOrder(req, schedules, default_fixed_cost, isScheduleStateEmpty);
     for (int vi : smart_order) {
         const auto& schedule = schedules[vi];
         for (int ti = 0; ti < (int)schedule.trips.size(); ++ti) {
