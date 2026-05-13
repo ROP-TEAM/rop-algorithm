@@ -1,338 +1,299 @@
 #include "solver_service.h"
-#include "priority_shape_clustering/route_optimizer.h"
-#include "priority_shape_clustering/slender_solver.h"
-#include "priority_shape_clustering/types.h"
-#include "priority/sorter.h"
-#include "priority_shape_clustering/slender_utils.h"
-#include <numeric>
-#include <unordered_set>
-#include <climits>
-#include <random>
+
+#include "alns/alns.h"
+#include "construction/adaptive_constructor.h"
+#include "drop/drop_logic.h"
+#include "routeOpt/or_opt.h"
+#include "routeOpt/two_opt.h"
+#include "validator/route_state.h"
+#include "validator/route_validator.h"
 #include <chrono>
-#include <algorithm>
 #include <iostream>
+#include <unordered_set>
 
-static const double INF = 1e18;
+namespace {
 
-// ---------------------------------------------------------------------------
-// Data structures local to the solve pipeline
-// ---------------------------------------------------------------------------
-
-struct SolveContext {
-    std::vector<Node>                    nodes;          // index 0 = depot
-    std::vector<std::vector<double>>     dist;
-    std::vector<std::vector<double>>     dur;
-    std::vector<std::vector<double>>     delta;          // slender matrix
-    std::vector<int>                     sortedIndices;  // priority-sorted node ids (1..N-1)
-};
-
-struct BestPlan {
-    int                               K     = -1;
-    double                            cost  = INF;
-    double                            dist  = 0.0;
-    std::vector<int>                  subset;
-    std::vector<std::vector<Cluster>> trips; // trips[selected_index]
-};
-
-// ---------------------------------------------------------------------------
-// Internal helpers
-// ---------------------------------------------------------------------------
-
-static std::vector<Node> buildAllNodes(const solver::SolveRequest* req) {
-    int N = req->matrix_size();
-    std::vector<Node> nodes(N);
-
-    nodes[0].id           = 0;
-    nodes[0].name         = req->depot().id();
-    nodes[0].lat          = req->depot().lat();
-    nodes[0].lon          = req->depot().lng();
-    nodes[0].weight       = 0.0;
-    nodes[0].priority     = 0;
-    nodes[0].deadline_min = 0;
-
-    for (int i = 1; i < N; ++i) {
-        const auto& pn = req->nodes(i - 1);
-        nodes[i].id           = i;
-        nodes[i].name         = pn.id();
-        nodes[i].lat          = pn.lat();
-        nodes[i].lon          = pn.lng();
-        nodes[i].weight       = pn.demand();
-        nodes[i].priority     = pn.priority();
-        nodes[i].deadline_min = pn.deadline_min();
-    }
-    return nodes;
-}
-
-static std::vector<std::vector<double>> unflatten(
-    const google::protobuf::RepeatedField<double>& flat, int n)
+void addDrop(solver::SolveResponse* resp,
+             const std::string& node_id,
+             const std::string& code,
+             const std::string& detail)
 {
-    std::vector<std::vector<double>> mat(n, std::vector<double>(n, 0.0));
-    for (int i = 0; i < n; ++i)
-        for (int j = 0; j < n; ++j)
-            mat[i][j] = flat[i * n + j];
-    return mat;
+    resp->add_unassigned(node_id);
+    auto* dr = resp->add_drop_reasons();
+    dr->set_node_id(node_id);
+    dr->set_code(hfvrptwb::normalizeDropCode(code));
+    dr->set_detail(detail);
 }
 
-static Adj buildSubAdj(const std::vector<int>& node_ids,
-                       const std::vector<std::vector<double>>& dist)
+bool writeRoute(const solver::SolveRequest& req,
+                const solver::Vehicle& vehicle,
+                const hfvrptwb::ConstructedRoute& constructed,
+                const SolveConfig& cfg,
+                solver::SolveResponse* resp)
 {
-    int k = node_ids.size();
-    Adj sub(k + 1, std::vector<double>(k + 1, 0.0));
-    for (int r = 1; r <= k; ++r) {
-        sub[0][r] = sub[r][0] = dist[0][node_ids[r - 1]];
-        for (int c = 1; c <= k; ++c)
-            sub[r][c] = dist[node_ids[r - 1]][node_ids[c - 1]];
-    }
-    return sub;
-}
-
-// ---------------------------------------------------------------------------
-// Stage 1: build context (nodes, matrices, slender delta, sorted order)
-// ---------------------------------------------------------------------------
-
-static SolveContext buildSolveContext(const solver::SolveRequest* req) {
-    SolveContext ctx;
-    int N = req->matrix_size();
-
-    ctx.nodes = buildAllNodes(req);
-    ctx.dist  = unflatten(req->distances(), N);
-    ctx.dur   = unflatten(req->durations(), N);
-
-    std::vector<double> theta(N), rho(N);
-    double max_rho = 0;
-    for (int i = 1; i < N; ++i) {
-        theta[i] = calculateAngle(ctx.nodes[0].lat, ctx.nodes[0].lon,
-                                  ctx.nodes[i].lat, ctx.nodes[i].lon);
-        rho[i] = ctx.dist[0][i];
-        if (rho[i] > max_rho) max_rho = rho[i];
-    }
-    ctx.delta.assign(N, std::vector<double>(N));
-    computeSlenderMatrix(N, theta, rho, ctx.delta, max_rho);
-
-    std::vector<int> indices(N - 1);
-    std::iota(indices.begin(), indices.end(), 1);
-    ctx.sortedIndices = sortNodeIndices(ctx.nodes, indices);
-
-    return ctx;
-}
-
-// ---------------------------------------------------------------------------
-// Stage 2: evaluate one vehicle subset (unchanged logic, now a named fn)
-// ---------------------------------------------------------------------------
-
-static std::pair<double, std::vector<std::vector<Cluster>>> evaluateSubset(
-    const std::vector<int>&              veh_indices,
-    const SolveContext&                  ctx,
-    const solver::SolveRequest*          req,
-    double                               fixed_cost_per_veh,
-    double                               cost_per_km)
-{
-    int K = veh_indices.size();
-    if (K == 0) return {INF, {}};
-
-    std::vector<double> caps(K);
-    std::vector<int>    max_orders(K);
-    for (int i = 0; i < K; ++i) {
-        const auto& v = req->vehicles(veh_indices[i]);
-        caps[i]       = v.capacity();
-        max_orders[i] = (v.max_tasks() == 0) ? INT_MAX : v.max_tasks();
-    }
-
-    std::vector<int>                     unassigned = ctx.sortedIndices;
-    std::vector<int>                     orders_served(K, 0);
-    std::vector<std::vector<Cluster>>    trips(K);
-
-    bool feasible = true;
-    while (!unassigned.empty()) {
-        std::vector<int>    active_idx;
-        std::vector<double> active_caps;
-        std::vector<int>    active_rem_orders;
-        for (int i = 0; i < K; ++i) {
-            int left = max_orders[i] - orders_served[i];
-            if (left > 0) {
-                active_idx.push_back(i);
-                active_caps.push_back(caps[i]);
-                active_rem_orders.push_back(left);
-            }
+    std::vector<std::vector<int>> trips = constructed.trips.empty()
+        ? std::vector<std::vector<int>>{constructed.nodes}
+        : constructed.trips;
+    auto validation = hfvrptwb::validateTrips(
+        req, vehicle, trips, cfg.fixedCostPerVehicle, cfg.costPerKm, cfg.reloadMin);
+    if (!validation.feasible) {
+        for (int node_index : constructed.nodes) {
+            const auto& node = req.nodes(node_index - 1);
+            addDrop(resp, node.id(), validation.code, validation.detail);
         }
-        if (active_idx.empty()) { feasible = false; break; }
+        return false;
+    }
 
-        size_t size_before = unassigned.size();
-        auto clusters = SlenderSolver::runOneRound(
-            ctx.nodes, ctx.delta, active_caps, active_rem_orders, unassigned);
+    auto* route = resp->add_routes();
+    route->set_vehicle_id(vehicle.id());
+    route->set_total_distance(validation.total_distance_m);
+    route->set_total_duration(validation.total_duration_min);
+    route->set_total_cost(validation.total_cost);
+    for (const auto& trip : trips) {
+        route->add_trip_sizes((int)trip.size());
+    }
 
-        if (unassigned.size() == size_before) { feasible = false; break; }
+    for (const auto& timing : validation.timings) {
+        const auto& node = req.nodes(timing.node_index - 1);
+        auto* stop = route->add_stops();
+        stop->set_node_id(node.id());
+        stop->set_arrival_min(timing.arrival_min);
+        stop->set_depart_min(timing.depart_min);
+    }
 
-        for (size_t ci = 0; ci < clusters.size(); ++ci) {
-            if (clusters[ci].node_ids.empty()) continue;
-            int veh_local = active_idx[ci];
-            if (clusters[ci].total_weight > caps[veh_local] + 1e-9) continue;
-            trips[veh_local].push_back(clusters[ci]);
-            orders_served[veh_local] += (int)clusters[ci].node_ids.size();
+    return true;
+}
+
+void writeResponse(const solver::SolveRequest& req,
+                   const SolveConfig& cfg,
+                   const hfvrptwb::ConstructionResult& plan,
+                   solver::SolveResponse* resp)
+{
+    std::unordered_set<std::string> dropped;
+    for (const auto& drop : plan.drops) {
+        if (dropped.insert(drop.node_id).second) {
+            addDrop(resp, drop.node_id, drop.code, drop.detail);
         }
     }
 
-    if (!unassigned.empty() || !feasible) return {INF, {}};
+    double objective = 0.0;
+    for (const auto& constructed : plan.routes) {
+        if (constructed.vehicle_index < 0 || constructed.vehicle_index >= req.vehicles_size()) {
+            continue;
+        }
+        int before = resp->routes_size();
+        if (writeRoute(req, req.vehicles(constructed.vehicle_index), constructed, cfg, resp)) {
+            objective += resp->routes(before).total_cost();
+        }
+    }
 
-    double                  total_dist = 0.0;
-    std::unordered_set<int> assigned_set;
+    objective += 1000.0 * resp->unassigned_size();
+    resp->set_objective(objective);
 
-    for (int i = 0; i < K; ++i) {
-        for (auto& trip : trips[i]) {
-            Adj sub = buildSubAdj(trip.node_ids, ctx.dist);
-            RouteResult res = optimizeRoute(sub, (int)sub.size());
+    if (plan.timed_out) {
+        resp->set_status("TIMEOUT");
+    } else if (resp->routes_size() == 0 && resp->unassigned_size() > 0) {
+        resp->set_status("INFEASIBLE");
+    } else {
+        resp->set_status("OK");
+    }
+}
 
-            trip.distance = res.distance;
-            trip.route.clear();
-            for (int idx : res.route) {
-                if (idx == 0) continue;
-                trip.route.push_back(trip.node_ids[idx - 1]);
+void applyTwoOpt(hfvrptwb::ConstructionResult& plan,
+                 const solver::SolveRequest& req,
+                 const SolveConfig& cfg)
+{
+    for (auto& route : plan.routes) {
+        const auto& vehicle = req.vehicles(route.vehicle_index);
+
+        // เก็บสำเนาเดิมไว้ใช้ fallback
+        auto original_nodes = route.nodes;
+        auto original_trips = route.trips;
+        double original_total_cost = route.total_cost;
+
+        bool single = route.trips.empty();
+        if (single && !route.nodes.empty()) {
+            // push เฉพาะกรณีมี nodes จริง
+            route.trips.push_back(route.nodes);
+        }
+
+        double new_cost = 0.0;
+        bool any_infeasible = false;
+
+        for (auto& trip_nodes : route.trips) {
+            if (trip_nodes.empty()) continue; // ข้าม trip ว่าง
+
+            hfvrptwb::RouteState init;
+            init.vehicle_index = route.vehicle_index;
+
+            auto seed = hfvrptwb::evaluateRouteState(
+                req, vehicle, init, trip_nodes,
+                cfg.fixedCostPerVehicle, cfg.costPerKm);
+
+            if (!seed.feasible || !std::isfinite(seed.next.cost)) {
+                any_infeasible = true;
+                continue;
             }
 
-            total_dist += trip.distance;
-            for (int nid : trip.node_ids) assigned_set.insert(nid);
+            auto opt = hfvrptwb::twoOptTrip(
+                req, vehicle, std::move(seed.next),
+                cfg.fixedCostPerVehicle, cfg.costPerKm);
+
+            if (!std::isfinite(opt.cost)) {
+                any_infeasible = true;
+                continue;
+            }
+
+            trip_nodes = opt.nodes;
+            new_cost += opt.cost;
+        }
+
+        if (any_infeasible) {
+            // fallback กลับไปใช้ route เดิม
+            route.nodes = std::move(original_nodes);
+            route.trips = std::move(original_trips);
+            route.total_cost = original_total_cost;
+        } else {
+            // rebuild nodes และอัพเดท cost
+            if (single) {
+                if (!route.trips.empty())
+                    route.nodes = route.trips[0];
+                else
+                    route.nodes.clear();
+                route.trips.clear();
+            } else {
+                route.nodes.clear();
+                for (const auto& t : route.trips)
+                    route.nodes.insert(route.nodes.end(), t.begin(), t.end());
+            }
+            route.total_cost = new_cost;
         }
     }
-
-    if (assigned_set.size() != (ctx.nodes.size() - 1)) return {INF, {}};
-
-    double total_cost = K * fixed_cost_per_veh + (total_dist / 1000.0) * cost_per_km;
-    return {total_cost, trips};
 }
 
-// ---------------------------------------------------------------------------
-// Stage 2: search over all K and random subsets to find the best plan
-// ---------------------------------------------------------------------------
-
-static BestPlan findBestPlan(const SolveContext& ctx,
-                             const solver::SolveRequest* req,
-                             const SolveConfig& cfg)
+grpc::Status solveRequest(const solver::SolveRequest* req,
+                          const SolveConfig& cfg,
+                          solver::SolveResponse* resp,
+                          hfvrptwb::alns::OperatorStats* out_stats = nullptr)
 {
-    int V = req->vehicles_size();
-    std::mt19937 rng(std::random_device{}());
-    BestPlan best;
+    using Clock = std::chrono::high_resolution_clock;
+    auto t0 = Clock::now();
 
-    for (int K = 1; K <= V; ++K) {
-        std::cout << "[Solve] trying K=" << K << std::endl;
-        double                            best_K_cost = INF;
-        std::vector<int>                  best_K_subset;
-        std::vector<std::vector<Cluster>> best_K_trips;
-
-        for (int trial = 0; trial < cfg.randomTrials; ++trial) {
-            std::vector<int> veh_indices(V);
-            std::iota(veh_indices.begin(), veh_indices.end(), 0);
-            std::shuffle(veh_indices.begin(), veh_indices.end(), rng);
-            std::vector<int> subset(veh_indices.begin(), veh_indices.begin() + K);
-
-            auto [cost, trips] = evaluateSubset(subset, ctx, req,
-                                                cfg.fixedCostPerVehicle, cfg.costPerKm);
-            if (cost < best_K_cost) {
-                best_K_cost   = cost;
-                best_K_subset = subset;
-                best_K_trips  = trips;
-            }
+    if (req->matrix_size() < 2 || req->nodes_size() == 0) {
+        resp->set_status("OK");
+        return grpc::Status::OK;
+    }
+    if (req->vehicles_size() == 0) {
+        for (const auto& node : req->nodes()) {
+            addDrop(resp, node.id(), "NO_VEHICLE", "no vehicles available");
         }
-
-        if (best_K_cost < INF) {
-            std::cout << "  best cost=" << best_K_cost << " Baht\n";
-            if (best_K_cost < best.cost) {
-                best.K     = K;
-                best.cost  = best_K_cost;
-                best.subset = best_K_subset;
-                best.trips  = best_K_trips;
-            }
-        }
+        resp->set_objective(1000.0 * resp->unassigned_size());
+        resp->set_status("INFEASIBLE");
+        return grpc::Status::OK;
     }
 
-    return best;
-}
+    auto planObj = [](const hfvrptwb::ConstructionResult& p) -> double {
+        double obj = 0.0;
+        for (const auto& r : p.routes) obj += r.total_cost;
+        obj += 1000.0 * (double)p.drops.size();
+        return obj;
+    };
 
-// ---------------------------------------------------------------------------
-// Stage 3: serialise best plan into the gRPC response
-// ---------------------------------------------------------------------------
+    auto plan = hfvrptwb::adaptiveConstruct(
+        *req, cfg.fixedCostPerVehicle, cfg.costPerKm, cfg.enableMultiTrip, cfg.reloadMin);
+    auto t1 = Clock::now();
+    std::cout << "[Phase] construction"
+              << "  obj=" << planObj(plan)
+              << "  routes=" << plan.routes.size()
+              << "  unassigned=" << plan.drops.size()
+              << "  ms=" << std::chrono::duration_cast<std::chrono::milliseconds>(t1 - t0).count() << "\n";
 
-static void buildResponse(const BestPlan& plan,
-                          const SolveContext& ctx,
-                          const solver::SolveRequest* req,
-                          solver::SolveResponse* resp)
-{
-    double total_dist = 0.0;
+    // Post-construction config: ALNS doesn't account for reload breaks between trips,
+    // so all downstream phases use reloadMin=0 when ALNS is active.
+    SolveConfig post_cfg = cfg;
+    if (cfg.enableALNS) post_cfg.reloadMin = 0;
 
-    for (int i = 0; i < plan.K; ++i) {
-        int global_idx = plan.subset[i];
-        const auto& veh_info = req->vehicles(global_idx);
-        if (plan.trips[i].empty()) continue;
+    // Pre-ALNS consolidation: or-opt eliminates suboptimal vehicles so ALNS
+    // starts from a tighter solution (e.g. 4→3 routes for the 30-order demo).
+    // Without this, ALNS never discovers vehicle elimination on its own.
+    hfvrptwb::orOptRelocate(plan, *req, post_cfg);
 
-        auto* route = resp->add_routes();
-        route->set_vehicle_id(veh_info.id());
+    if (cfg.enableALNS) {
+        int limit_ms = req->time_limit_ms() > 0 ? req->time_limit_ms() : 5000;
+        int construction_ms = (int)std::chrono::duration_cast<std::chrono::milliseconds>(t1 - t0).count();
+        int alns_budget_ms = std::max(100, limit_ms - construction_ms);
 
-        double v_dist = 0.0;
-        int    v_time = veh_info.shift_start();
-        int    cur    = 0;
+        hfvrptwb::alns::ALNSConfig alns_cfg;
+        alns_cfg.enable_sector_removal = cfg.enableSectorRemoval;
 
-        for (const auto& trip : plan.trips[i]) {
-            for (int node_id : trip.route) {
-                int travel = (int)ctx.dur[cur][node_id];
-                int arr    = v_time + travel;
+        int n_starts = std::max(1, cfg.multiStartCount);
+        auto budget_per_start = std::chrono::milliseconds(alns_budget_ms / n_starts);
 
-                const auto& pn = req->nodes(node_id - 1);
-                if (pn.tw_start() > 0 && arr < pn.tw_start())
-                    arr = pn.tw_start();
-                int depart = arr + pn.service_time();
+        auto best_plan = plan;
+        double best_obj = planObj(plan);
 
-                auto* stop = route->add_stops();
-                stop->set_node_id(pn.id());
-                stop->set_arrival_min(arr);
-                stop->set_depart_min(depart);
+        for (int s = 0; s < n_starts; ++s) {
+            uint32_t run_seed = cfg.seed + s * 31337;
+            hfvrptwb::alns::ALNSSolver alns_solver(alns_cfg);
+            auto trial = alns_solver.solve(
+                *req, plan,
+                post_cfg.fixedCostPerVehicle, post_cfg.costPerKm,
+                budget_per_start,
+                post_cfg.reloadMin, run_seed);
+            if (out_stats && s == 0) *out_stats = alns_solver.stats();
 
-                v_dist += ctx.dist[cur][node_id];
-                v_time  = depart;
-                cur     = node_id;
+            double trial_obj = planObj(trial);
+            if (trial_obj < best_obj) {
+                best_obj = trial_obj;
+                best_plan = std::move(trial);
             }
         }
-        v_dist += ctx.dist[cur][0];
-        route->set_total_distance(v_dist);
-        route->set_total_duration(v_time - veh_info.shift_start());
-        total_dist += v_dist;
+        plan = std::move(best_plan);
+    } else {
+        applyTwoOpt(plan, *req, post_cfg);
     }
+    auto t2 = Clock::now();
+    std::cout << "[Phase] " << (cfg.enableALNS ? "alns" : "2-opt")
+              << "  obj=" << planObj(plan)
+              << "  routes=" << plan.routes.size()
+              << "  unassigned=" << plan.drops.size()
+              << "  ms=" << std::chrono::duration_cast<std::chrono::milliseconds>(t2 - t1).count() << "\n";
 
-    resp->set_objective(total_dist);
-    resp->set_status("OK");
+    hfvrptwb::orOptRelocate(plan, *req, post_cfg);
+    auto t3 = Clock::now();
+    std::cout << "[Phase] or-opt"
+              << "  obj=" << planObj(plan)
+              << "  routes=" << plan.routes.size()
+              << "  unassigned=" << plan.drops.size()
+              << "  ms=" << std::chrono::duration_cast<std::chrono::milliseconds>(t3 - t2).count() << "\n";
+
+    writeResponse(*req, post_cfg, plan, resp);
+
+    auto ms = [](auto a, auto b) {
+        return std::chrono::duration_cast<std::chrono::milliseconds>(b - a).count();
+    };
+    std::cout << "[Solve] construction=" << ms(t0, t1)
+              << "ms  " << (cfg.enableALNS ? "alns" : "2-opt") << "=" << ms(t1, t2)
+              << "ms  or-opt=" << ms(t2, t3)
+              << "ms  total=" << ms(t0, t3)
+              << "ms  routes=" << resp->routes_size()
+              << "  unassigned=" << resp->unassigned_size()
+              << "  objective=" << resp->objective() << "\n";
+
+    return grpc::Status::OK;
 }
 
-// ---------------------------------------------------------------------------
-// gRPC entry point
-// ---------------------------------------------------------------------------
+} // namespace
 
 grpc::Status SolverServiceImpl::Solve(grpc::ServerContext*,
                                       const solver::SolveRequest* req,
                                       solver::SolveResponse* resp)
 {
-    auto t0 = std::chrono::high_resolution_clock::now();
-    int N = req->matrix_size();
+    return solveRequest(req, cfg_, resp);
+}
 
-    if (N < 2) {
-        resp->set_status("OK");
-        return grpc::Status::OK;
-    }
-
-    SolveContext ctx  = buildSolveContext(req);
-    BestPlan     best = findBestPlan(ctx, req, cfg_);
-
-    if (best.K == -1) {
-        resp->set_status("INFEASIBLE");
-        return grpc::Status::OK;
-    }
-
-    buildResponse(best, ctx, req, resp);
-
-    auto t1 = std::chrono::high_resolution_clock::now();
-    std::cout << "[Solve] finished in "
-              << std::chrono::duration_cast<std::chrono::milliseconds>(t1 - t0).count()
-              << " ms, best K=" << best.K
-              << ", vehicles used=" << best.subset.size()
-              << ", total distance=" << resp->objective() << " m"
-              << ", total cost=" << best.cost << " Baht\n";
-
-    return grpc::Status::OK;
+solver::SolveResponse SolverV2::Solve(const solver::SolveRequest& req) {
+    solver::SolveResponse resp;
+    solveRequest(&req, cfg_, &resp, &last_alns_stats_);
+    return resp;
 }

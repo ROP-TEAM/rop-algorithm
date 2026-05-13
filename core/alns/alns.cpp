@@ -1,0 +1,248 @@
+#include "alns/alns.h"
+#include "alns/destroy.h"
+#include "alns/repair.h"
+#include "alns/local_search.h"
+#include "construction/adaptive_constructor.h"
+#include "routeOpt/two_opt.h"
+#include "validator/route_validator.h"
+#include <algorithm>
+#include <functional>
+#include <iostream>
+#include <limits>
+#include <random>
+#include <cmath>
+
+namespace hfvrptwb {
+namespace alns {
+
+using DestroyFn = std::function<void(ALNSSolution&, std::mt19937&,
+    const solver::SolveRequest&, double, double, int)>;
+using RepairFn = std::function<void(ALNSSolution&,
+    const solver::SolveRequest&, double, double, int)>;
+
+static void applyTwoOptToSolution(ALNSSolution& sol,
+    const solver::SolveRequest& req, double fixed, double km)
+{
+    for (auto& vt : sol.vehicles) {
+        const auto& vehicle = req.vehicles(vt.vehicle_index);
+
+        // Save originals for rollback
+        auto original_trips = vt.trips;
+
+        for (auto& trip : vt.trips) {
+            auto opt = twoOptTrip(req, vehicle, trip, fixed, km);
+            if (std::isfinite(opt.cost)) {
+                trip = std::move(opt);
+            }
+        }
+
+        // Validate full schedule stays feasible
+        std::vector<std::vector<int>> all_trips;
+        for (const auto& t : vt.trips) all_trips.push_back(t.nodes);
+        auto val = validateTrips(req, vehicle, all_trips, fixed, km, 0);
+        if (!val.feasible || !std::isfinite(val.total_cost)) {
+            vt.trips = std::move(original_trips);
+        }
+    }
+    sol.objective = computeObjective(sol.vehicles, (int)sol.unrouted.size());
+}
+
+ConstructionResult ALNSSolver::solve(
+    const solver::SolveRequest& req,
+    const ConstructionResult& initial,
+    double fixed, double km,
+    std::chrono::milliseconds budget,
+    int reload_min,
+    uint32_t seed)
+{
+    auto current = fromConstruction(initial, req, fixed, km);
+    auto best = current;
+    double best_obj = best.objective;
+    ALNSSolution best_feasible;
+    double best_feasible_obj = std::numeric_limits<double>::infinity();
+    bool has_feasible = current.unrouted.empty();
+    if (has_feasible) {
+        best_feasible = current;
+        best_feasible_obj = current.objective;
+    }
+
+    std::mt19937 rng(seed);
+
+    // Operator function tables — built dynamically so sectorRemoval can be toggled
+    std::vector<DestroyFn> destroyers = {
+        [](ALNSSolution& s, std::mt19937& r, const solver::SolveRequest& q,
+           double f, double k, int n) { randomRemoval(s, r, q, f, k, n); },
+        [](ALNSSolution& s, std::mt19937& r, const solver::SolveRequest& q,
+           double f, double k, int n) { worstRemoval(s, r, q, f, k, n); },
+        [](ALNSSolution& s, std::mt19937& r, const solver::SolveRequest& q,
+           double f, double k, int n) { shawRemoval(s, r, q, f, k, n); },
+        [](ALNSSolution& s, std::mt19937& r, const solver::SolveRequest& q,
+           double f, double k, int n) { priorityAwareRemoval(s, r, q, f, k, n); },
+        [](ALNSSolution& s, std::mt19937& r, const solver::SolveRequest& q,
+           double f, double k, int n) { routeConsolidationDestroy(s, r, q, f, k, n); },
+        [](ALNSSolution& s, std::mt19937& r, const solver::SolveRequest& q,
+           double f, double k, int n) { tripRemoval(s, r, q, f, k, n); },
+        [](ALNSSolution& s, std::mt19937& r, const solver::SolveRequest& q,
+           double f, double k, int n) { tagViolationRemoval(s, r, q, f, k, n); },
+        [](ALNSSolution& s, std::mt19937& r, const solver::SolveRequest& q,
+           double f, double k, int n) { lateCustomerRemoval(s, r, q, f, k, n); },
+    };
+    if (cfg_.enable_sector_removal) {
+        destroyers.push_back(
+            [](ALNSSolution& s, std::mt19937& r, const solver::SolveRequest& q,
+               double f, double k, int n) { sectorRemoval(s, r, q, f, k, n); });
+    }
+
+    RepairFn repairers[] = {
+        greedyRepair,
+        priorityFirstRepair,
+        regret2Repair,
+        regret3Repair,
+        proactiveBreakInsertion,
+    };
+
+    const int ND = (int)destroyers.size();
+    const int NR = 5;
+
+    std::vector<double> destroy_weights(ND, 1.0);
+    std::vector<double> repair_weights(NR, 1.0);
+    std::vector<double> destroy_score_sum(ND, 0.0);
+    std::vector<double> repair_score_sum(NR, 0.0);
+    std::vector<int>    destroy_use(ND, 0);
+    std::vector<int>    repair_use(NR, 0);
+
+    std::vector<int> destroy_selections(ND, 0);
+    std::vector<int> destroy_improvements(ND, 0);
+    std::vector<int> destroy_bests(ND, 0);
+
+    double T = cfg_.initial_temp;
+    int seg_feasible = 0;
+    int seg_total = 0;
+    int iter = 0;
+
+    auto t0 = std::chrono::high_resolution_clock::now();
+    AdaptivePenalty penalty;
+    std::uniform_real_distribution<double> uni(0.0, 1.0);
+
+    while (true) {
+        auto elapsed = std::chrono::duration_cast<std::chrono::milliseconds>(
+            std::chrono::high_resolution_clock::now() - t0);
+        if (elapsed >= budget) break;
+
+        // Pick operators by weighted random
+        std::discrete_distribution<int> d_dist(destroy_weights.begin(), destroy_weights.end());
+        std::discrete_distribution<int> r_dist(repair_weights.begin(), repair_weights.end());
+        int d = d_dist(rng);
+        int r = r_dist(rng);
+        ++destroy_selections[d];
+
+        // Destroy + repair
+        ALNSSolution candidate = current;
+        int total_routed = 0;
+        for (const auto& vt : candidate.vehicles)
+            for (const auto& t : vt.trips)
+                total_routed += (int)t.nodes.size();
+        int q = std::clamp(total_routed / 4, 4, 15);
+        destroyers[d](candidate, rng, req, fixed, km, q);
+        // Force consolidation: when routeConsolidationDestroy (index 4) empties vehicles,
+        // forbid repair from creating new ones so nodes must fit into surviving routes.
+        candidate.forbid_new_vehicle = (d == 4) || (uni(rng) < cfg_.forbid_new_vehicle_prob);
+        repairers[r](candidate, req, fixed, km, reload_min);
+
+        // Recompute objective with adaptive penalty to pressure toward feasibility
+        candidate.objective = computeObjective(candidate.vehicles,
+            (int)candidate.unrouted.size(), penalty.coefficient());
+
+        // Acceptance
+        double delta = candidate.objective - current.objective;
+        bool accept = delta < 0 || uni(rng) < std::exp(-delta / T);
+
+        int score = 0;
+        if (accept) {
+            current = std::move(candidate);
+            if (current.unrouted.empty()) ++seg_feasible;
+            ++seg_total;
+
+            if (current.objective < best_obj) {
+                best = current;
+                best_obj = current.objective;
+                score = cfg_.score_best;
+            } else if (delta < 0) {
+                score = cfg_.score_better;
+            } else {
+                score = cfg_.score_accepted;
+            }
+
+            if (current.unrouted.empty() && current.objective < best_feasible_obj) {
+                best_feasible = current;
+                best_feasible_obj = current.objective;
+                has_feasible = true;
+            }
+
+            destroy_score_sum[d] += score;
+            repair_score_sum[r]  += score;
+            ++destroy_use[d];
+            ++repair_use[r];
+
+            if (delta < 0) ++destroy_improvements[d];
+            if (score == cfg_.score_best) ++destroy_bests[d];
+        }
+
+        // Update weights per segment
+        ++iter;
+        if (iter % cfg_.segment_size == 0) {
+            double r_factor = cfg_.reaction_factor;
+            for (int i = 0; i < ND; ++i) {
+                if (destroy_use[i] > 0) {
+                    double avg = destroy_score_sum[i] / destroy_use[i];
+                    destroy_weights[i] = (1.0 - r_factor) * destroy_weights[i] + r_factor * avg;
+                }
+            }
+            for (int i = 0; i < NR; ++i) {
+                if (repair_use[i] > 0) {
+                    double avg = repair_score_sum[i] / repair_use[i];
+                    repair_weights[i] = (1.0 - r_factor) * repair_weights[i] + r_factor * avg;
+                }
+            }
+            std::fill(destroy_score_sum.begin(), destroy_score_sum.end(), 0.0);
+            std::fill(repair_score_sum.begin(),  repair_score_sum.end(),  0.0);
+            std::fill(destroy_use.begin(),       destroy_use.end(),       0);
+            std::fill(repair_use.begin(),        repair_use.end(),        0);
+
+            if (seg_total > 0) {
+                penalty.update((double)seg_feasible / (double)seg_total);
+            }
+            seg_feasible = 0;
+            seg_total = 0;
+        }
+
+        T *= cfg_.cooling_rate;
+        if (T < cfg_.min_temp) T = cfg_.reheat_temp;
+    }
+
+    // Prefer best feasible solution; fall back to overall best
+    ALNSSolution& returned = has_feasible ? best_feasible : best;
+
+    // Save operator stats
+    stats_ = {destroy_weights, destroy_selections, destroy_improvements, destroy_bests};
+
+    // Reset to fixed penalty so returned objective is comparable to non-ALNS path
+    returned.objective = computeObjective(returned.vehicles, (int)returned.unrouted.size());
+
+    applyTwoOptToSolution(returned, req, fixed, km);
+
+    return toConstruction(returned);
+}
+
+const char* destroyOperatorName(int index) {
+    static const char* names[] = {
+        "random", "worst", "shaw", "prioAware",
+        "routeConsolidate", "tripRemove", "tagViolation",
+        "lateCustomer", "sector",
+    };
+    if (index < 0 || index >= 9) return "???";
+    return names[index];
+}
+
+} // namespace alns
+} // namespace hfvrptwb

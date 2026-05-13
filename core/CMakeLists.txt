@@ -2,6 +2,7 @@ cmake_minimum_required(VERSION 3.15)
 project(ROPSolver)
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
+set(CMAKE_BUILD_TYPE Release)
 
 find_package(gRPC CONFIG REQUIRED)
 find_package(Protobuf REQUIRED)
@@ -26,12 +27,33 @@ add_custom_command(
     DEPENDS ${PROTO_FILE}
 )
 
+set(FEASIBILITY_SRCS
+    feasibility/capacity.cpp
+    feasibility/tags.cpp
+    feasibility/max_distance.cpp
+    feasibility/precedence.cpp
+    feasibility/shift.cpp
+    feasibility/break.cpp
+    drop/drop_logic.cpp
+    construction/adaptive_constructor.cpp
+    routeOpt/or_opt.cpp
+    routeOpt/two_opt.cpp
+    validator/labels.cpp
+    validator/route_state.cpp
+    validator/route_validator.cpp
+    alns/destroy.cpp
+    alns/repair.cpp
+    alns/local_search.cpp
+    alns/alns.cpp
+    priority_shape_clustering/slender_solver.cpp
+    priority_shape_clustering/slender_utils.cpp
+)
+
 # gRPC solver binary — started by Go's solver/process package
 add_executable(solver
     main.cpp
     solver_service.cpp
-    priority_shape_clustering/slender_utils.cpp
-    priority_shape_clustering/slender_solver.cpp
+    ${FEASIBILITY_SRCS}
     ${PROTO_SRCS}
     ${GRPC_SRCS}
 )
@@ -45,8 +67,7 @@ target_include_directories(solver PRIVATE
 add_executable(demo_solve
     demo_solve.cpp
     solver_service.cpp
-    priority_shape_clustering/slender_utils.cpp
-    priority_shape_clustering/slender_solver.cpp
+    ${FEASIBILITY_SRCS}
     ${PROTO_SRCS}
     ${GRPC_SRCS}
 )
@@ -61,13 +82,89 @@ add_executable(bench_solve
     bench_solve.cpp
     bench_gen.cpp
     solver_service.cpp
-    priority_shape_clustering/slender_utils.cpp
-    priority_shape_clustering/slender_solver.cpp
+    ${FEASIBILITY_SRCS}
     ${PROTO_SRCS}
     ${GRPC_SRCS}
 )
 target_link_libraries(bench_solve PRIVATE gRPC::grpc++ protobuf::libprotobuf)
 target_include_directories(bench_solve PRIVATE
+    ${CMAKE_CURRENT_BINARY_DIR}
+    ${CMAKE_CURRENT_SOURCE_DIR}
+)
+
+# V1 vs V2 comparison harness — Dobj%=0 on identical algo confirms harness is correct
+add_executable(bench_compare
+    bench_compare.cpp
+    bench_gen.cpp
+    solver_service.cpp
+    ${FEASIBILITY_SRCS}
+    ${PROTO_SRCS}
+    ${GRPC_SRCS}
+)
+target_link_libraries(bench_compare PRIVATE gRPC::grpc++ protobuf::libprotobuf)
+target_include_directories(bench_compare PRIVATE
+    ${CMAKE_CURRENT_BINARY_DIR}
+    ${CMAKE_CURRENT_SOURCE_DIR}
+)
+
+add_executable(bench_sector
+    sector_bench.cpp
+    bench_gen.cpp
+    solver_service.cpp
+    ${FEASIBILITY_SRCS}
+    ${PROTO_SRCS}
+    ${GRPC_SRCS}
+)
+target_link_libraries(bench_sector PRIVATE gRPC::grpc++ protobuf::libprotobuf)
+target_include_directories(bench_sector PRIVATE
+    ${CMAKE_CURRENT_BINARY_DIR}
+    ${CMAKE_CURRENT_SOURCE_DIR}
+)
+
+add_executable(route_state_test
+    validator/route_state_test.cpp
+    validator/labels.cpp
+    validator/route_state.cpp
+    validator/route_validator.cpp
+    ${PROTO_SRCS}
+    ${GRPC_SRCS}
+)
+target_link_libraries(route_state_test PRIVATE gRPC::grpc++ protobuf::libprotobuf)
+target_include_directories(route_state_test PRIVATE
+    ${CMAKE_CURRENT_BINARY_DIR}
+    ${CMAKE_CURRENT_SOURCE_DIR}
+)
+
+add_executable(solver_regression_test
+    solver_regression_test.cpp
+    solver_service.cpp
+    ${FEASIBILITY_SRCS}
+    ${PROTO_SRCS}
+    ${GRPC_SRCS}
+)
+target_link_libraries(solver_regression_test PRIVATE gRPC::grpc++ protobuf::libprotobuf)
+target_include_directories(solver_regression_test PRIVATE
+    ${CMAKE_CURRENT_BINARY_DIR}
+    ${CMAKE_CURRENT_SOURCE_DIR}
+)
+
+add_executable(labels_test
+    validator/labels_test.cpp
+    validator/labels.cpp
+)
+target_include_directories(labels_test PRIVATE
+    ${CMAKE_CURRENT_SOURCE_DIR}
+)
+
+add_executable(alns_test
+    alns/alns_test.cpp
+    solver_service.cpp
+    ${FEASIBILITY_SRCS}
+    ${PROTO_SRCS}
+    ${GRPC_SRCS}
+)
+target_link_libraries(alns_test PRIVATE gRPC::grpc++ protobuf::libprotobuf)
+target_include_directories(alns_test PRIVATE
     ${CMAKE_CURRENT_BINARY_DIR}
     ${CMAKE_CURRENT_SOURCE_DIR}
 )

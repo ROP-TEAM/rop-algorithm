@@ -5,9 +5,15 @@
 #include "solver.pb.h"
 #include <iostream>
 #include <iomanip>
+#include <algorithm>
+#include <chrono>
+#include <cstdio>
+#include <string>
 
 static std::string toHHMM(int m) {
-    return std::to_string(m / 60) + ":" + (m % 60 < 10 ? "0" : "") + std::to_string(m % 60);
+    char buf[8];
+    std::snprintf(buf, sizeof(buf), "%02d:%02d", m / 60, m % 60);
+    return buf;
 }
 
 // ---------------------------------------------------------------------------
@@ -97,36 +103,36 @@ struct NodeDef {
 };
 
 static const NodeDef NODES[30] = {
-    {"ORD-A01",16.43502,102.836,  3, 10,510, 900, 2,0,"delivery",""},
-    {"ORD-A02",16.47822,102.823, 12, 25,540,1020, 1,0,"delivery","heavy"},
-    {"ORD-A03",16.48042,102.81194,5,15,780, 960, 3,0,"delivery","fragile"},
-    {"ORD-A04",16.4802, 102.81585,1,  5,480, 600, 4,0,"delivery","express"},
-    {"ORD-A05",16.48683,102.816,  8, 12,600, 840, 2,0,"delivery",""},
-    {"ORD-A06",16.48951,102.8189,15, 30,480, 960, 1,0,"delivery","bulk"},
-    {"ORD-A07",16.48245,102.8202, 4,  8,660, 900, 2,0,"delivery","small"},
-    {"ORD-A08",16.46055,102.8261, 2, 10,540, 660, 3,0,"delivery","express"},
-    {"ORD-A09",16.48595,102.8431,10, 20,480, 720, 2,0,"delivery","heavy"},
-    {"ORD-A10",16.44659,102.8239, 6, 15,780,1020, 1,0,"delivery",""},
-    {"ORD-A11",16.44827,102.8347, 3, 12,510, 690, 4,0,"delivery","fragile"},
-    {"ORD-A12",16.4265, 102.8398, 7, 10,600, 960, 2,0,"delivery",""},
-    {"ORD-A13",16.43688,102.8385, 9, 20,540, 900, 3,0,"delivery","bulk"},
-    {"ORD-A14",16.47432,102.8599, 2,  5,840,1020, 1,0,"delivery","small"},
-    {"ORD-A15",16.44016,102.8296,11, 25,480, 900, 2,0,"delivery","heavy"},
-    {"ORD-A16",16.41872,102.8324, 5, 15,600, 720, 3,0,"delivery","express"},
-    {"ORD-A17",16.46897,102.8296, 4, 10,780, 960, 1,0,"delivery",""},
-    {"ORD-A18",16.46596,102.8255, 8, 18,540, 840, 2,0,"delivery","fragile"},
-    {"ORD-A19",16.428,  102.8339, 1,  5,480, 600, 4,0,"delivery","small"},
-    {"ORD-A20",16.47772,102.8561,14, 35,660,1020, 1,0,"delivery","bulk"},
-    {"ORD-A21",16.44829,102.8335, 6, 12,570, 810, 2,0,"delivery",""},
-    {"ORD-A22",16.46358,102.8277, 3, 10,840, 960, 3,0,"delivery","express"},
-    {"ORD-A23",16.4579, 102.8457,12, 25,480, 720, 2,0,"delivery","heavy"},
-    {"ORD-A24",16.48063,102.8685, 5, 15,600, 900, 1,0,"delivery","fragile"},
-    {"ORD-A25",16.45243,102.7959, 2,  8,480, 660, 3,0,"delivery","small"},
-    {"ORD-A26",16.48062,102.8186, 7, 12,780,1020, 2,0,"delivery",""},
-    {"ORD-A27",16.42653,102.8285,10, 20,540, 960, 1,0,"delivery","bulk"},
-    {"ORD-A28",16.43122,102.8326, 4, 10,660, 780, 4,0,"delivery","express"},
-    {"ORD-A29",16.49159,102.8328, 6, 15,510, 870, 2,0,"delivery","fragile"},
-    {"ORD-A30",16.45311,102.8329, 1,  5,900,1020, 1,0,"delivery",""},
+    {"ORD-A01", 16.435022, 102.836030, 3, 20, 420, 660, 1, 0, "delivery", ""},
+    {"ORD-A02", 16.478216, 102.819988, 12, 45, 360, 720, 2, 0, "delivery", "heavy"},
+    {"ORD-A03", 16.480415, 102.811911, 5, 5, 510, 600, 0, 0, "delivery", "fragile"},
+    {"ORD-A04", 16.480198, 102.815845, 1, 15, 600, 960, 2, 0, "delivery", "express"},
+    {"ORD-A05", 16.486826, 102.816038, 8, 30, 480, 900, 3, 0, "delivery", ""},
+    {"ORD-A06", 16.489513, 102.818906, 15, 10, 480, 570, 0, 0, "delivery", "bulk"},
+    {"ORD-A07", 16.482446, 102.820245, 4, 20, 660, 1020, 2, 0, "delivery", "small"},
+    {"ORD-A08", 16.460546, 102.826129, 2, 30, 540, 840, 2, 0, "delivery", "express"},
+    {"ORD-A09", 16.485946, 102.843109, 10, 10, 780, 1080, 3, 0, "delivery", "heavy"},
+    {"ORD-A10", 16.446586, 102.823942, 6, 15, 540, 720, 1, 0, "delivery", ""},
+    {"ORD-A11", 16.448274, 102.834671, 3, 40, 300, 600, 1, 0, "delivery", "fragile"},
+    {"ORD-A12", 16.426499, 102.839821, 7, 15, 480, 630, 0, 0, "delivery", ""},
+    {"ORD-A13", 16.436883, 102.838487, 9, 10, 900, 1020, 1, 0, "delivery", "bulk"},
+    {"ORD-A14", 16.474315, 102.859931, 2, 20, 600, 960, 2, 0, "delivery", "small"},
+    {"ORD-A15", 16.440155, 102.829593, 11, 15, 660, 900, 2, 0, "delivery", "heavy"},
+    {"ORD-A16", 16.418724, 102.832380, 5, 5, 480, 1080, 3, 0, "delivery", "express"},
+    {"ORD-A17", 16.468967, 102.829573, 4, 50, 420, 780, 2, 0, "delivery", ""},
+    {"ORD-A18", 16.465963, 102.825539, 8, 15, 780, 1020, 2, 0, "delivery", "fragile"},
+    {"ORD-A19", 16.428000, 102.833915, 1, 5, 540, 600, 0, 0, "delivery", "small"},
+    {"ORD-A20", 16.477720, 102.856120, 14, 25, 480, 780, 2, 0, "delivery", "bulk"},
+    {"ORD-A21", 16.448285, 102.833536, 6, 10, 600, 960, 3, 0, "delivery", ""},
+    {"ORD-A22", 16.463575, 102.827698, 3, 30, 720, 1080, 2, 0, "delivery", "express"},
+    {"ORD-A23", 16.457895, 102.845722, 12, 25, 540, 780, 1, 0, "delivery", "heavy"},
+    {"ORD-A24", 16.480634, 102.868522, 5, 25, 480, 1020, 3, 0, "delivery", "fragile"},
+    {"ORD-A25", 16.452426, 102.795862, 2, 10, 960, 1080, 0, 0, "delivery", "small"},
+    {"ORD-A26", 16.480622, 102.818632, 7, 15, 540, 840, 2, 0, "delivery", ""},
+    {"ORD-A27", 16.426529, 102.828486, 10, 5, 780, 1020, 3, 0, "delivery", "bulk"},
+    {"ORD-A28", 16.431222, 102.832606, 4, 20, 840, 1080, 1, 0, "delivery", "express"},
+    {"ORD-A29", 16.491586, 102.832824, 6, 45, 480, 720, 1, 0, "delivery", "fragile"},
+    {"ORD-A30", 16.453110, 102.832916, 1, 15, 840, 1080, 2, 0, "delivery", ""}
 };
 
 // ---------------------------------------------------------------------------
@@ -139,31 +145,51 @@ struct VehicleDef {
 };
 
 static const VehicleDef VEHICLES[12] = {
-    {"V-01",  50, 420,1020, 4, "refrigerated","fragile"},
-    {"V-02",  80, 360,1080, 5, "heavy","bulk"},
-    {"V-03",  10, 480,1260, 6, "small","express"},
-    {"V-04",  16, 420,1020, 4, "refrigerated","fragile"},
-    {"V-05",  12, 540, 900, 5, "heavy","bulk"},
-    {"V-06",  47, 480,1080, 6, "small","express"},
-    {"V-07",  40, 480,1020, 7, "fragile","small"},
-    {"V-08", 200, 300, 900, 7, "heavy","bulk"},
-    {"V-09",  60, 540,1140, 8, "fragile",""},
-    {"V-10",  10, 540,1020, 5, "small","express"},
-    {"V-11", 100, 240, 840, 6, "refrigerated",""},
-    {"V-12",  16, 420,1020, 5, "refrigerated","fragile"},
+    {"V-01",  50,  420, 1020, 4, "refrigerated", "fragile"},
+    {"V-02",  80,  360, 1080, 5, "heavy", "bulk"},
+    {"V-03",  10,  480, 1260, 6, "small", "express"},
+    {"V-04",  16,  420, 1020, 4, "refrigerated", "fragile"},
+    {"V-05",  12,  540,  900, 5, "heavy", "bulk"},
+    {"V-06",  47,  480, 1080, 6, "small", "express"},
+    {"V-07",  40,  480, 1020, 7, "fragile", "small"},
+    {"V-08", 200,  300,  900, 8, "heavy", "bulk"},
+    {"V-09",  60,  540, 1140, 9, "fragile", ""},
+    {"V-10",  10,  600, 1200, 0, "small", "express"},
+    {"V-11", 100,  240,  840, 0, "refrigerated", ""},
+    {"V-12",  20,  480, 1020, 0, "small", "express"}
 };
+
+static int nodeIndex(const std::string& id) {
+    for (int i = 0; i < 30; ++i)
+        if (id == NODES[i].id) return i + 1;
+    return -1;
+}
+
+static int vehicleIndex(const std::string& id) {
+    for (int i = 0; i < 12; ++i)
+        if (id == VEHICLES[i].id) return i;
+    return -1;
+}
+
+static long long ms(std::chrono::steady_clock::time_point a,
+                    std::chrono::steady_clock::time_point b) {
+    return std::chrono::duration_cast<std::chrono::milliseconds>(b - a).count();
+}
 
 // ---------------------------------------------------------------------------
 int main() {
+    auto t_start = std::chrono::steady_clock::now();
+
     solver::SolveRequest req;
 
-    // Depot
+    // Phase 1: build request
+    auto t0 = std::chrono::steady_clock::now();
+
     auto* depot = req.mutable_depot();
     depot->set_id("depot");
     depot->set_lat(16.4442);
     depot->set_lng(102.8352);
 
-    // Nodes
     for (const auto& n : NODES) {
         auto* pn = req.add_nodes();
         pn->set_id(n.id);
@@ -179,7 +205,6 @@ int main() {
         if (n.tag[0] != '\0') pn->add_tags(n.tag);
     }
 
-    // Vehicles
     for (const auto& v : VEHICLES) {
         auto* pv = req.add_vehicles();
         pv->set_id(v.id);
@@ -191,7 +216,6 @@ int main() {
         if (v.tag2[0] != '\0') pv->add_tags(v.tag2);
     }
 
-    // Matrices — flatten row-major from pre-computed 31×31 arrays
     req.set_matrix_size(N);
     for (int i = 0; i < N; ++i)
         for (int j = 0; j < N; ++j) {
@@ -199,37 +223,100 @@ int main() {
             req.add_durations(DUR[i][j]);
         }
 
-    // Solve
-    SolverServiceImpl service;
+    auto t1 = std::chrono::steady_clock::now();
+
+    // Phase 2: solve
+    SolverServiceImpl service(SolveConfig{.enableALNS = true, .enableMultiTrip = true});
     solver::SolveResponse resp;
     service.Solve(nullptr, &req, &resp);
 
-    // Print results
+    auto t2 = std::chrono::steady_clock::now();
+
+    // Phase 3: aggregate results
+    int    K          = resp.routes_size();
+    double total_dist = 0.0;
+    int    total_trips = 0;
+    for (const auto& r : resp.routes()) {
+        total_dist  += r.total_distance();
+        total_trips += r.trip_sizes_size();
+    }
+
+    auto t3 = std::chrono::steady_clock::now();
+
     std::cout << "============================================================\n";
     std::cout << "  ROP Mock Demo  |  Vehicles: 12  |  Orders: 30\n";
     std::cout << "  Depot: 16.4442, 102.8352 (Khon Kaen)\n";
     std::cout << "============================================================\n\n";
-    std::cout << "Status    : " << resp.status() << "\n";
-    std::cout << "Objective : " << std::fixed << std::setprecision(0)
-              << resp.objective() << " m\n\n";
+    std::cout << "---- Timing ------------------------------------------------\n";
+    std::cout << "  Build request : " << ms(t0, t1) << " ms\n";
+    std::cout << "  Solve         : " << ms(t1, t2) << " ms\n";
+    std::cout << "  Aggregate     : " << ms(t2, t3) << " ms\n";
+    std::cout << "  Total         : " << ms(t_start, t3) << " ms\n";
+    std::cout << "------------------------------------------------------------\n\n";
+    std::cout << "Status     : " << resp.status() << "\n";
+    std::cout << "Vehicles   : " << K << " / 12 used\n";
+    std::cout << "Trips      : " << total_trips << "\n";
+    std::cout << "Total dist : " << std::fixed << std::setprecision(1) << total_dist / 1000.0 << " km\n";
+    std::cout << "Objective  : " << std::fixed << std::setprecision(2) << resp.objective() << " THB\n\n";
 
     for (const auto& route : resp.routes()) {
-        std::cout << "Vehicle : " << route.vehicle_id()
-                  << "  (stops: " << route.stops_size() << ")\n";
-        std::cout << "  " << std::left
-                  << std::setw(10) << "Order"
-                  << std::setw(8)  << "Arrive"
-                  << std::setw(8)  << "Depart"
-                  << "\n";
-        for (const auto& stop : route.stops()) {
-            std::cout << "  " << std::setw(10) << stop.node_id()
-                      << std::setw(8)  << toHHMM(stop.arrival_min())
-                      << std::setw(8)  << toHHMM(stop.depart_min())
-                      << "\n";
+        int vi = vehicleIndex(route.vehicle_id());
+        const VehicleDef& veh = VEHICLES[vi];
+        std::printf("%s (cap %d kg, shift %s-%s):\n",
+                    veh.id,
+                    veh.capacity,
+                    toHHMM(veh.shift_start).c_str(),
+                    toHHMM(veh.shift_end).c_str());
+
+        int stop_idx = 0;
+        int cur_idx  = 0;
+        int cur_time = veh.shift_start;
+
+        for (int ti = 0; ti < route.trip_sizes_size(); ++ti) {
+            int trip_sz = route.trip_sizes(ti);
+
+            double trip_weight = 0.0;
+            for (int si = stop_idx; si < stop_idx + trip_sz; ++si) {
+                int ni = nodeIndex(route.stops(si).node_id());
+                if (ni > 0) trip_weight += NODES[ni - 1].demand;
+            }
+            std::printf("  Trip %d | weight=%.1f kg | stops=%d\n",
+                        ti + 1, trip_weight, trip_sz);
+
+            for (int si = stop_idx; si < stop_idx + trip_sz; ++si) {
+                const auto& stop = route.stops(si);
+                int ni = nodeIndex(stop.node_id());
+                const NodeDef& nd = NODES[ni - 1];
+
+                int travel = (int)DUR[cur_idx][ni];
+                int unadj  = cur_time + travel;
+                int wait   = std::max(0, nd.tw_start - unadj);
+                int arr    = unadj + wait;
+                int dep    = arr + nd.service_time;
+                bool late  = (arr > nd.tw_end);
+
+                std::printf("      %-12s  arr %s  dep %s  TW [%s-%s]%s%s\n",
+                            nd.id,
+                            toHHMM(arr).c_str(),
+                            toHHMM(dep).c_str(),
+                            toHHMM(nd.tw_start).c_str(),
+                            toHHMM(nd.tw_end).c_str(),
+                            wait > 0 ? ("  wait " + std::to_string(wait) + "m").c_str() : "",
+                            late ? "  *** LATE ***" : "");
+
+                cur_idx  = ni;
+                cur_time = dep;
+            }
+
+            int return_arr = cur_time + (int)DUR[cur_idx][0];
+            std::printf("      %-12s  arr %s\n", "-> Depot", toHHMM(return_arr).c_str());
+            cur_idx  = 0;
+            cur_time = return_arr;
+            stop_idx += trip_sz;
         }
-        std::cout << "  dist: " << std::setprecision(0)
-                  << route.total_distance() << " m"
-                  << "  |  duration: " << route.total_duration() << " min\n\n";
+
+        std::printf("  dist: %.0f m  |  duration: %d min\n\n",
+                    route.total_distance(), route.total_duration());
     }
 
     if (resp.unassigned_size() > 0) {

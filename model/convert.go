@@ -29,6 +29,7 @@ func (v InputVehicle) ToVehicle() (Vehicle, error) {
 
 	return Vehicle{
 		ID:         strconv.Itoa(v.ID),
+		Type:       v.Model,
 		Capacity:   v.Capacity,
 		ShiftStart: shiftStart,
 		ShiftEnd:   shiftEnd,
@@ -59,6 +60,8 @@ func (o InputOrder) ToNode() (Node, error) {
 		Lat:         o.Location.Lat,
 		Lng:         o.Location.Lng,
 		Demand:      o.Capacity,
+		Linehaul:    linehaulDemand(o.Type, o.Capacity),
+		Backhaul:    backhaulDemand(o.Type, o.Capacity),
 		ServiceTime: o.ServiceTime,
 		TWStart:     twStart,
 		TWEnd:       twEnd,
@@ -66,6 +69,20 @@ func (o InputOrder) ToNode() (Node, error) {
 		Type:        o.Type,
 		Priority:    o.Priority,
 	}, nil
+}
+
+func linehaulDemand(t NodeType, demand int) int {
+	if t == NodeTypePickup {
+		return 0
+	}
+	return demand
+}
+
+func backhaulDemand(t NodeType, demand int) int {
+	if t == NodeTypePickup {
+		return demand
+	}
+	return 0
 }
 
 // parseHHMM parses "HH:mm" to minutes from midnight.

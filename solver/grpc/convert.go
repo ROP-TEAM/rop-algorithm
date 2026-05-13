@@ -21,23 +21,27 @@ func problemToProto(p model.Problem) *pb.SolveRequest {
 		Durations:   flattenMatrix(p.Durations),
 		Distances:   flattenMatrix(p.Distances),
 		MatrixSize:  int32(len(p.Nodes) + 1),
+		TimeLimitMs: int32(p.TimeLimitMS),
 	}
 }
 
 func nodeToProto(n model.Node) *pb.Node {
 	return &pb.Node{
-		Id:          n.ID,
-		Lat:         n.Lat,
-		Lng:         n.Lng,
-		Demand:      int32(n.Demand),
-		ServiceTime: int32(n.ServiceTime),
-		TwStart:     int32(n.TWStart),
-		TwEnd:       int32(n.TWEnd),
-		Tags:        n.Tags,
-		Type:        string(n.Type),
-		PairId:      n.PairID,
-		Priority:    n.Priority.Rank(),
-		DeadlineMin: int32(n.DeadlineMin),
+		Id:             n.ID,
+		Lat:            n.Lat,
+		Lng:            n.Lng,
+		Demand:         int32(n.Demand),
+		ServiceTime:    int32(n.ServiceTime),
+		TwStart:        int32(n.TWStart),
+		TwEnd:          int32(n.TWEnd),
+		Tags:           n.Tags,
+		Type:           string(n.Type),
+		PairId:         n.PairID,
+		Priority:       n.Priority.Rank(),
+		DeadlineMin:    int32(n.DeadlineMin),
+		LinehaulDemand: int32(deriveLinehaul(n)),
+		BackhaulDemand: int32(deriveBackhaul(n)),
+		MustServe:      n.MustServe,
 	}
 }
 
@@ -52,6 +56,9 @@ func vehicleToProto(v model.Vehicle) *pb.Vehicle {
 		MaxTasks:    int32(v.MaxTasks),
 		MaxDistance: v.MaxDistance,
 		Tags:        v.Tags,
+		FixedCost:   v.FixedCost,
+		CostPerKm:   v.CostPerKM,
+		Type:        v.Type,
 	}
 }
 
@@ -60,11 +67,20 @@ func responseToSolution(r *pb.SolveResponse) model.Solution {
 	for i, rt := range r.Routes {
 		routes[i] = protoToRoute(rt)
 	}
+	dropReasons := make([]model.DropReason, len(r.DropReasons))
+	for i, dr := range r.DropReasons {
+		dropReasons[i] = model.DropReason{
+			NodeID: dr.NodeId,
+			Code:   dr.Code,
+			Detail: dr.Detail,
+		}
+	}
 	return model.Solution{
-		Routes:     routes,
-		Unassigned: r.Unassigned,
-		Objective:  r.Objective,
-		Status:     model.SolutionStatus(r.Status),
+		Routes:      routes,
+		Unassigned:  r.Unassigned,
+		Objective:   r.Objective,
+		Status:      model.SolutionStatus(r.Status),
+		DropReasons: dropReasons,
 	}
 }
 
@@ -82,6 +98,7 @@ func protoToRoute(r *pb.Route) model.Route {
 		Stops:         stops,
 		TotalDistance: r.TotalDistance,
 		TotalDuration: int(r.TotalDuration),
+		TotalCost:     r.TotalCost,
 	}
 }
 
@@ -94,4 +111,24 @@ func flattenMatrix(m [][]float64) []float64 {
 		flat = append(flat, row...)
 	}
 	return flat
+}
+
+func deriveLinehaul(n model.Node) int {
+	if n.Linehaul != 0 || n.Backhaul != 0 {
+		return n.Linehaul
+	}
+	if n.Type == model.NodeTypePickup {
+		return 0
+	}
+	return n.Demand
+}
+
+func deriveBackhaul(n model.Node) int {
+	if n.Linehaul != 0 || n.Backhaul != 0 {
+		return n.Backhaul
+	}
+	if n.Type == model.NodeTypePickup {
+		return n.Demand
+	}
+	return 0
 }

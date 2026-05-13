@@ -22,12 +22,21 @@ type Route struct {
 	Stops         []RouteStop
 	TotalDistance float64 // meters
 	TotalDuration int     // minutes
+	TotalCost     float64
+}
+
+// DropReason explains why a node was left out of a plan.
+type DropReason struct {
+	NodeID string
+	Code   string
+	Detail string
 }
 
 // Solution is the output from a solver run.
 type Solution struct {
-	Routes     []Route
-	Unassigned []string
-	Objective  float64
-	Status     SolutionStatus
+	Routes      []Route
+	Unassigned  []string
+	Objective   float64
+	Status      SolutionStatus
+	DropReasons []DropReason
 }

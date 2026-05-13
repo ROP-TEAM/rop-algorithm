@@ -1,6 +1,39 @@
 # rop-algorithm
 
-Pure Go module สำหรับ Vehicle Routing Problem (VRP) optimization
+Go + C++ optimization engine for vehicle routing with time windows (HFVRPTWB).
+
+---
+
+## Development Workflow
+
+### Dev Flow — daily work
+
+`rop-backend` uses Go `replace` directive to link against local `rop-algorithm`. Clone both repos side by side:
+
+```bash
+git clone https://github.com/ROP-TEAM/rop-algorithm.git
+git clone https://github.com/ROP-TEAM/rop-backend.git
+cd rop-backend && go build ./...
+# replace => ../rop-algorithm resolves automatically
+```
+
+Changes here are visible in rop-backend instantly — no tag needed.
+
+### Release Flow — production
+
+```bash
+git tag v0.1.0
+git push origin v0.1.0
+```
+
+CI (`.github/workflows/release-go.yml`) runs tests + creates GitHub Release automatically. `rop-backend`'s release workflow fetches the latest tag.
+
+## CI
+
+| Workflow | Trigger | Action |
+|---|---|---|
+| `build-solver.yml` | push main/dev, PR | Build C++ solver binary |
+| `release-go.yml` | push tag `v*` | Test + vet → GitHub Release |
 
 ---
 
@@ -8,6 +41,13 @@ Pure Go module สำหรับ Vehicle Routing Problem (VRP) optimization
 
 ```
 rop-algorithm/
+├── osrm/                         — package osrm: OSRM data layer (implements gmap.DistanceMatrix)
+│   ├── matrix_service.go         — OSRMMatrix struct, NewOSRMMatrix, BuildMatrix
+│   ├── matrix_endpoints.go       — Nearest, Trip, Route, BuildRectangularMatrix
+│   ├── matrix_http.go            — HTTP execution, response parse, coordinate format
+│   ├── matrix_response.go        — OSRM response types + public result types
+│   └── readme.md                 — OSRM API docs
+│
 ├── gmap/                         — package gmap: Google Maps data layer (nodes + edges)
 │   ├── matrix_service.go         — GoogleMapsMatrix, ExecuteMatrix, BuildMatrix, orchestration
 │   ├── matrix_request.go         — query building, validation, location normalization
@@ -48,7 +88,7 @@ rop-algorithm/
     └── matrix_cache_test.go      — cache key/TTL/policy unit tests
 ```
 
-Layer rule: **gmap** = Google Maps data · **model** = data shapes · **solver** = interface + implementations · **test** = verification
+Layer rule: **osrm / gmap** = distance matrix data · **model** = data shapes · **solver** = interface + implementations · **test** = verification
 
 ---
 
@@ -112,10 +152,26 @@ Matrix dimensions: `(1 + len(Nodes)) × (1 + len(Nodes))`
 
 ---
 
-## Distance Matrix
+## Distance Matrix Providers
 
-ดูรายละเอียดการใช้งาน Google Maps Distance Matrix API, caching, และการ wire กับ backend ได้ที่
+Two implementations of `gmap.DistanceMatrix`:
 
-→ [gmap/readme.md](gmap/readme.md)
+| Provider | Package | When to use |
+|---|---|---|
+| Google Maps | `gmap` | Production with real traffic data |
+| OSRM | `osrm` | Self-hosted, no API cost, offline capable |
+
+```go
+// OSRM — self-hosted, no API key
+m, _ := osrm.NewOSRMMatrix("http://localhost:5000")
+durations, distances, _ := m.BuildMatrix(ctx, locs, model.MatrixOptions{})
+
+// Google Maps — real traffic
+m, _ := gmap.NewGoogleMapsMatrix(apiKey, gmap.WithInMemoryCache(cfg))
+durations, distances, _ := m.BuildMatrix(ctx, locs, opts)
+```
+
+→ [gmap/readme.md](gmap/readme.md) — Google Maps API, cache, traffic
+→ [osrm/readme.md](osrm/readme.md) — OSRM API, all endpoints
 
 ---
