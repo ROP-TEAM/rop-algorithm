@@ -39,12 +39,13 @@ static void applyTwoOptToSolution(ALNSSolution& sol,
         // Validate full schedule stays feasible
         std::vector<std::vector<int>> all_trips;
         for (const auto& t : vt.trips) all_trips.push_back(t.nodes);
-        auto val = validateTrips(req, vehicle, all_trips, fixed, km, 0);
+        auto val = validateTrips(req, vehicle, all_trips, fixed, km, fixed, km, 0);
         if (!val.feasible || !std::isfinite(val.total_cost)) {
             vt.trips = std::move(original_trips);
         }
     }
     sol.objective = computeObjective(sol.vehicles, (int)sol.unrouted.size());
+    sol.internal_score = computeInternalScore(sol.vehicles, (int)sol.unrouted.size());
 }
 
 ConstructionResult ALNSSolver::solve(
@@ -57,18 +58,19 @@ ConstructionResult ALNSSolver::solve(
 {
     auto current = fromConstruction(initial, req, fixed, km);
     auto best = current;
-    double best_obj = best.objective;
+    
+    double best_obj = best.internal_score; 
+    
     ALNSSolution best_feasible;
     double best_feasible_obj = std::numeric_limits<double>::infinity();
     bool has_feasible = current.unrouted.empty();
     if (has_feasible) {
         best_feasible = current;
-        best_feasible_obj = current.objective;
+        best_feasible_obj = current.internal_score; // use internal_score
     }
 
     std::mt19937 rng(seed);
 
-    // Operator function tables — built dynamically so sectorRemoval can be toggled
     std::vector<DestroyFn> destroyers = {
         [](ALNSSolution& s, std::mt19937& r, const solver::SolveRequest& q,
            double f, double k, int n) { randomRemoval(s, r, q, f, k, n); },
@@ -129,14 +131,12 @@ ConstructionResult ALNSSolver::solve(
             std::chrono::high_resolution_clock::now() - t0);
         if (elapsed >= budget) break;
 
-        // Pick operators by weighted random
         std::discrete_distribution<int> d_dist(destroy_weights.begin(), destroy_weights.end());
         std::discrete_distribution<int> r_dist(repair_weights.begin(), repair_weights.end());
         int d = d_dist(rng);
         int r = r_dist(rng);
         ++destroy_selections[d];
 
-        // Destroy + repair
         ALNSSolution candidate = current;
         int total_routed = 0;
         for (const auto& vt : candidate.vehicles)
@@ -144,17 +144,15 @@ ConstructionResult ALNSSolver::solve(
                 total_routed += (int)t.nodes.size();
         int q = std::clamp(total_routed / 4, 4, 15);
         destroyers[d](candidate, rng, req, fixed, km, q);
-        // Force consolidation: when routeConsolidationDestroy (index 4) empties vehicles,
-        // forbid repair from creating new ones so nodes must fit into surviving routes.
+        
         candidate.forbid_new_vehicle = (d == 4) || (uni(rng) < cfg_.forbid_new_vehicle_prob);
         repairers[r](candidate, req, fixed, km, reload_min);
 
-        // Recompute objective with adaptive penalty to pressure toward feasibility
-        candidate.objective = computeObjective(candidate.vehicles,
-            (int)candidate.unrouted.size(), penalty.coefficient());
+        candidate.objective = computeObjective(candidate.vehicles, (int)candidate.unrouted.size(), penalty.coefficient());
+        candidate.internal_score = computeInternalScore(candidate.vehicles, (int)candidate.unrouted.size(), penalty.coefficient());
 
-        // Acceptance
-        double delta = candidate.objective - current.objective;
+        // Acceptance (use internal_score)
+        double delta = candidate.internal_score - current.internal_score;
         bool accept = delta < 0 || uni(rng) < std::exp(-delta / T);
 
         int score = 0;
@@ -163,9 +161,9 @@ ConstructionResult ALNSSolver::solve(
             if (current.unrouted.empty()) ++seg_feasible;
             ++seg_total;
 
-            if (current.objective < best_obj) {
+            if (current.internal_score < best_obj) {
                 best = current;
-                best_obj = current.objective;
+                best_obj = current.internal_score;
                 score = cfg_.score_best;
             } else if (delta < 0) {
                 score = cfg_.score_better;
@@ -173,9 +171,9 @@ ConstructionResult ALNSSolver::solve(
                 score = cfg_.score_accepted;
             }
 
-            if (current.unrouted.empty() && current.objective < best_feasible_obj) {
+            if (current.unrouted.empty() && current.internal_score < best_feasible_obj) {
                 best_feasible = current;
-                best_feasible_obj = current.objective;
+                best_feasible_obj = current.internal_score;
                 has_feasible = true;
             }
 
@@ -220,15 +218,11 @@ ConstructionResult ALNSSolver::solve(
         if (T < cfg_.min_temp) T = cfg_.reheat_temp;
     }
 
-    // Prefer best feasible solution; fall back to overall best
     ALNSSolution& returned = has_feasible ? best_feasible : best;
-
-    // Save operator stats
     stats_ = {destroy_weights, destroy_selections, destroy_improvements, destroy_bests};
 
-    // Reset to fixed penalty so returned objective is comparable to non-ALNS path
+    // Reset objective before returning to ensure the API receives the clean standard cost
     returned.objective = computeObjective(returned.vehicles, (int)returned.unrouted.size());
-
     applyTwoOptToSolution(returned, req, fixed, km);
 
     return toConstruction(returned);

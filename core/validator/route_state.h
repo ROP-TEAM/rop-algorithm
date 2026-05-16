@@ -13,6 +13,10 @@ struct RouteState {
     double distance_m = 0.0;
     int duration_min = 0;
     double cost = 0.0;
+
+    double total_wait_time = 0.0;
+    double internal_score = 0.0;
+
     std::vector<ForwardLabel> forward_labels;
     RouteLabelSummary label_summary;
 };

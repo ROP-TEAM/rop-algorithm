@@ -75,7 +75,7 @@ InsertionEval evaluateRouteState(
     eval.next.nodes = std::move(candidate_nodes);
 
     auto validation = validateTrips(
-        req, vehicle, {eval.next.nodes}, default_fixed_cost, default_cost_per_km);
+        req, vehicle, {eval.next.nodes}, default_fixed_cost, default_cost_per_km, default_fixed_cost, default_cost_per_km);
     if (!validation.feasible) {
         eval.fail_code = validation.code;
         eval.fail_detail = validation.detail;
@@ -83,10 +83,15 @@ InsertionEval evaluateRouteState(
     }
 
     eval.feasible = true;
-    eval.delta_cost = validation.total_cost - current.cost;
+    double current_internal = current.internal_score > 0 ? current.internal_score : current.cost;
+    eval.delta_cost = validation.internal_score - current_internal;
     eval.next.distance_m = validation.total_distance_m;
     eval.next.duration_min = validation.total_duration_min;
     eval.next.cost = validation.total_cost;
+
+    eval.next.total_wait_time = validation.total_wait_time;
+    eval.next.internal_score = validation.internal_score;
+
     eval.next.forward_labels = buildForwardLabels(req, vehicle, eval.next.nodes);
     eval.next.label_summary = summarizeForwardLabels(
         eval.next.forward_labels,

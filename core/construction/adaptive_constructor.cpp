@@ -199,7 +199,7 @@ Candidate bestMultiTripInsertion(
                 candidate_trips[ti] = eval.next;
                 auto validation = validateTrips(
                     req, req.vehicles(vi), tripNodes(candidate_trips),
-                    default_fixed_cost, default_cost_per_km, reload_min);
+                    default_fixed_cost, default_cost_per_km, default_fixed_cost, default_cost_per_km, reload_min);
                 if (!validation.feasible) {
                     best.fail_code = validation.code;
                     best.fail_detail = validation.detail;
@@ -227,7 +227,7 @@ Candidate bestMultiTripInsertion(
             candidate_trips.push_back(eval.next);
             auto validation = validateTrips(
                 req, req.vehicles(vi), tripNodes(candidate_trips),
-                default_fixed_cost, default_cost_per_km, reload_min);
+                default_fixed_cost, default_cost_per_km, default_fixed_cost, default_cost_per_km, reload_min);
             if (!validation.feasible) {
                 best.fail_code = validation.code;
                 best.fail_detail = validation.detail;

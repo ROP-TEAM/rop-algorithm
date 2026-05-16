@@ -12,7 +12,7 @@ namespace alns {
 struct ALNSConfig {
     int    segment_size          = 40;
     double reaction_factor       = 0.1;
-    double initial_temp          = 100.0;
+    double initial_temp          = 200.0;
     double cooling_rate          = 0.9995;
     double min_temp              = 1.0;
     double reheat_temp           = 50.0;

@@ -12,6 +12,7 @@ namespace alns {
 struct VehicleTrips {
     int vehicle_index = -1;
     std::vector<RouteState> trips;
+    double internal_score = 0.0;
 };
 
 struct ALNSSolution {
@@ -19,6 +20,7 @@ struct ALNSSolution {
     std::vector<int> unrouted;
     double objective = 0.0;
     bool forbid_new_vehicle = false;
+    double internal_score = 0.0;
 };
 
 inline double computeObjective(const std::vector<VehicleTrips>& vehicles, int unrouted_count,
@@ -27,6 +29,22 @@ inline double computeObjective(const std::vector<VehicleTrips>& vehicles, int un
     for (const auto& vt : vehicles) {
         for (const auto& trip : vt.trips) {
             total += trip.cost;
+        }
+    }
+    total += penalty_coeff * unrouted_count;
+    return total;
+}
+
+inline double computeInternalScore(const std::vector<VehicleTrips>& vehicles, int unrouted_count,
+                                   double penalty_coeff = 1000.0) {
+    double total = 0.0;
+    for (const auto& vt : vehicles) {
+        for (const auto& trip : vt.trips) {
+            double wait_penalty = 0.0;
+            for(const auto& label : trip.forward_labels) {
+                wait_penalty += label.time_warp * 2.0;
+            }
+            total += trip.cost + wait_penalty;
         }
     }
     total += penalty_coeff * unrouted_count;
@@ -79,6 +97,7 @@ inline ALNSSolution fromConstruction(
     }
 
     sol.objective = computeObjective(sol.vehicles, (int)sol.unrouted.size());
+    sol.internal_score = computeInternalScore(sol.vehicles, (int)sol.unrouted.size());
     return sol;
 }
 
@@ -89,6 +108,8 @@ inline ConstructionResult toConstruction(const ALNSSolution& sol) {
         ConstructedRoute route;
         route.vehicle_index = vt.vehicle_index;
         route.total_cost = 0.0;
+
+        route.internal_score = vt.internal_score;
 
         for (const auto& trip : vt.trips) {
             route.trips.push_back(trip.nodes);

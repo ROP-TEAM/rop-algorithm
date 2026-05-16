@@ -12,18 +12,36 @@ const double kInf = std::numeric_limits<double>::infinity();
 struct NormRoute {
     int vehicle_index = -1;
     std::vector<std::vector<int>> trips;
-    double cost = 0.0;
+    double cost = 0.0; // internal score 
+    double billing_cost = 0.0;
 };
+
+// add a separate billing eval:
+double evalBillingCost(
+    const solver::SolveRequest& req,
+    const solver::Vehicle& vehicle,
+    const std::vector<std::vector<int>>& trips,
+    double billing_fc, double billing_cpk, int reload)
+{
+    if (trips.empty()) return 0.0;
+    auto r = validateTrips(req, vehicle, trips,
+        billing_fc, billing_cpk,
+        billing_fc, billing_cpk, reload);
+    return r.feasible ? r.total_cost : kInf;
+}
 
 double evalCost(
     const solver::SolveRequest& req,
     const solver::Vehicle& vehicle,
     const std::vector<std::vector<int>>& trips,
-    double fc, double cpk, int reload)
+    double billing_fc, double billing_cpk,
+    double score_fc, double score_cpk, int reload)
 {
     if (trips.empty()) return 0.0;
-    auto r = validateTrips(req, vehicle, trips, fc, cpk, reload);
-    return r.feasible ? r.total_cost : kInf;
+    auto r = validateTrips(req, vehicle, trips,
+        billing_fc, billing_cpk,
+        score_fc, score_cpk, reload);
+    return r.feasible ? r.internal_score : kInf;
 }
 
 std::vector<std::vector<int>> removeStop(
@@ -88,7 +106,10 @@ void orOptRelocate(
             ? std::vector<std::vector<int>>{r.nodes}
             : r.trips;
         nr.cost = evalCost(req, req.vehicles(r.vehicle_index), nr.trips,
-                           cfg.fixedCostPerVehicle, cfg.costPerKm, cfg.reloadMin);
+                           cfg.fixedCostPerVehicle, cfg.costPerKm, 
+                           cfg.weight_fixed_cost, cfg.weight_per_km, cfg.reloadMin);
+        nr.billing_cost = evalBillingCost(req, req.vehicles(r.vehicle_index), nr.trips,
+            cfg.fixedCostPerVehicle, cfg.costPerKm, cfg.reloadMin);
         routes.push_back(std::move(nr));
     }
 
@@ -107,8 +128,9 @@ void orOptRelocate(
                     // ลบ stop ออกจาก snapshot
                     auto src_after = removeStop(currentTrips, ti, si);
                     double src_cost_after = evalCost(req, sv, src_after,
-                                                    cfg.fixedCostPerVehicle,
-                                                    cfg.costPerKm, cfg.reloadMin);
+                                                    cfg.fixedCostPerVehicle, cfg.costPerKm,
+                                                    cfg.weight_fixed_cost,
+                                                    cfg.weight_per_km, cfg.reloadMin);
                     if (!std::isfinite(src_cost_after)) continue;
                     double removal_gain = src.cost - src_cost_after;
 
@@ -135,18 +157,23 @@ void orOptRelocate(
 
                                 auto dst_after = insertStop(base_trips, node, tj, pj);
                                 double dst_cost_after = evalCost(req, dv, dst_after,
-                                                                cfg.fixedCostPerVehicle,
-                                                                cfg.costPerKm,
+                                                                cfg.fixedCostPerVehicle, cfg.costPerKm,
+                                                                cfg.weight_fixed_cost,
+                                                                cfg.weight_per_km,
                                                                 cfg.reloadMin);
                                 if (!std::isfinite(dst_cost_after)) continue;
 
                                 double net_gain = removal_gain - (dst_cost_after - base_cost);
                                 if (net_gain > 1e-6) {
-                                    src.trips = src_after;
-                                    src.cost  = src_cost_after;
-                                    dst.trips = dst_after;
-                                    dst.cost  = dst_cost_after;
-                                    improved  = true;
+                                  src.trips = src_after;
+                                  src.cost  = src_cost_after;
+                                  src.billing_cost = evalBillingCost(req, sv, src_after,
+                                      cfg.fixedCostPerVehicle, cfg.costPerKm, cfg.reloadMin);
+                                  dst.trips = dst_after;
+                                  dst.cost  = dst_cost_after;
+                                  dst.billing_cost = evalBillingCost(req, dv, dst_after,
+                                      cfg.fixedCostPerVehicle, cfg.costPerKm, cfg.reloadMin);
+                                  improved  = true;
                                 }
                             }
                         }
@@ -169,7 +196,8 @@ void orOptRelocate(
             for (const auto& t : nr.trips)
                 r.nodes.insert(r.nodes.end(), t.begin(), t.end());
         }
-        r.total_cost = nr.cost;
+        r.total_cost = nr.billing_cost;
+        r.internal_score = nr.cost;
         plan.routes.push_back(std::move(r));
     }
 }

@@ -11,6 +11,7 @@ struct ConstructedRoute {
     std::vector<int> nodes;
     std::vector<std::vector<int>> trips;
     double total_cost = 0.0;
+    double internal_score = 0.0;
 };
 
 struct ConstructionDrop {

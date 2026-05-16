@@ -99,7 +99,7 @@ InsertionOption findBestInsertion(
                 }
                 all_trips.push_back(eval.next.nodes);
 
-                auto full_val = validateTrips(req, vehicle, all_trips, fixed, km, reload_min);
+                auto full_val = validateTrips(req, vehicle, all_trips, fixed, km, fixed, km, reload_min);
                 if (!full_val.feasible || !std::isfinite(full_val.total_cost)) continue;
                 score = full_val.total_cost - existing_cost
                          - priorityBonus(req.nodes(node_index - 1));
@@ -156,7 +156,7 @@ void insertNode(ALNSSolution& sol, int node_index, const InsertionOption& opt,
         std::vector<std::vector<int>> all_trips;
         for (const auto& t : vt.trips) all_trips.push_back(t.nodes);
         const auto& vehicle = req.vehicles(vt.vehicle_index);
-        auto val = validateTrips(req, vehicle, all_trips, fixed, km, reload_min);
+        auto val = validateTrips(req, vehicle, all_trips, fixed, km, fixed, km, reload_min);
         if (!val.feasible || !std::isfinite(val.total_cost)) {
             vt.trips[opt.ti] = std::move(original_state); // rollback
             sol.unrouted.push_back(node_index);
@@ -279,7 +279,7 @@ void regret2Repair(ALNSSolution& sol, const solver::SolveRequest& req,
                         }
                         all_trips.push_back(eval.next.nodes);
 
-                        auto full_val = validateTrips(req, vehicle, all_trips, fixed, km, reload_min);
+                        auto full_val = validateTrips(req, vehicle, all_trips, fixed, km, fixed, km, reload_min);
                         if (!full_val.feasible || !std::isfinite(full_val.total_cost)) continue;
                         score = full_val.total_cost - existing_cost
                               - priorityBonus(req.nodes(ni - 1));
@@ -410,7 +410,7 @@ void regret3Repair(ALNSSolution& sol, const solver::SolveRequest& req,
                         }
                         all_trips.push_back(eval.next.nodes);
 
-                        auto full_val = validateTrips(req, vehicle, all_trips, fixed, km, 0);
+                        auto full_val = validateTrips(req, vehicle, all_trips, fixed, km, fixed, km, 0);
                         if (!full_val.feasible || !std::isfinite(full_val.total_cost)) continue;
                         score = full_val.total_cost - existing_cost
                               - priorityBonus(req.nodes(ni - 1));

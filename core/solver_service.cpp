@@ -10,6 +10,7 @@
 #include <chrono>
 #include <iostream>
 #include <unordered_set>
+#include "config_manager.h"
 
 namespace {
 
@@ -25,7 +26,7 @@ void addDrop(solver::SolveResponse* resp,
     dr->set_detail(detail);
 }
 
-bool writeRoute(const solver::SolveRequest& req,
+double writeRoute(const solver::SolveRequest& req,
                 const solver::Vehicle& vehicle,
                 const hfvrptwb::ConstructedRoute& constructed,
                 const SolveConfig& cfg,
@@ -35,13 +36,14 @@ bool writeRoute(const solver::SolveRequest& req,
         ? std::vector<std::vector<int>>{constructed.nodes}
         : constructed.trips;
     auto validation = hfvrptwb::validateTrips(
-        req, vehicle, trips, cfg.fixedCostPerVehicle, cfg.costPerKm, cfg.reloadMin);
+        req, vehicle, trips, cfg.fixedCostPerVehicle, cfg.costPerKm,
+        cfg.weight_fixed_cost, cfg.weight_per_km, cfg.reloadMin, cfg.weight_wait_time);
     if (!validation.feasible) {
         for (int node_index : constructed.nodes) {
             const auto& node = req.nodes(node_index - 1);
             addDrop(resp, node.id(), validation.code, validation.detail);
         }
-        return false;
+        return -1.0;
     }
 
     auto* route = resp->add_routes();
@@ -61,7 +63,7 @@ bool writeRoute(const solver::SolveRequest& req,
         stop->set_depart_min(timing.depart_min);
     }
 
-    return true;
+    return validation.internal_score;
 }
 
 void writeResponse(const solver::SolveRequest& req,
@@ -81,14 +83,18 @@ void writeResponse(const solver::SolveRequest& req,
         if (constructed.vehicle_index < 0 || constructed.vehicle_index >= req.vehicles_size()) {
             continue;
         }
-        int before = resp->routes_size();
-        if (writeRoute(req, req.vehicles(constructed.vehicle_index), constructed, cfg, resp)) {
-            objective += resp->routes(before).total_cost();
+        double score = writeRoute(req, req.vehicles(constructed.vehicle_index), constructed, cfg, resp);
+        if (score >= 0.0) {          
+            objective += score;     
         }
     }
 
+    double display_cost = 0.0;
+    for (int i = 0; i < resp->routes_size(); i++) {
+      display_cost += resp->routes(i).total_cost();  // ← real cost
+    }
     objective += 1000.0 * resp->unassigned_size();
-    resp->set_objective(objective);
+    resp->set_objective(display_cost);
 
     if (plan.timed_out) {
         resp->set_status("TIMEOUT");
@@ -128,7 +134,7 @@ void applyTwoOpt(hfvrptwb::ConstructionResult& plan,
 
             auto seed = hfvrptwb::evaluateRouteState(
                 req, vehicle, init, trip_nodes,
-                cfg.fixedCostPerVehicle, cfg.costPerKm);
+                cfg.weight_fixed_cost, cfg.weight_per_km);
 
             if (!seed.feasible || !std::isfinite(seed.next.cost)) {
                 any_infeasible = true;
@@ -137,7 +143,7 @@ void applyTwoOpt(hfvrptwb::ConstructionResult& plan,
 
             auto opt = hfvrptwb::twoOptTrip(
                 req, vehicle, std::move(seed.next),
-                cfg.fixedCostPerVehicle, cfg.costPerKm);
+                cfg.weight_fixed_cost, cfg.weight_per_km);
 
             if (!std::isfinite(opt.cost)) {
                 any_infeasible = true;
@@ -194,13 +200,13 @@ grpc::Status solveRequest(const solver::SolveRequest* req,
 
     auto planObj = [](const hfvrptwb::ConstructionResult& p) -> double {
         double obj = 0.0;
-        for (const auto& r : p.routes) obj += r.total_cost;
+        for (const auto& r : p.routes) obj += r.internal_score;
         obj += 1000.0 * (double)p.drops.size();
         return obj;
     };
 
     auto plan = hfvrptwb::adaptiveConstruct(
-        *req, cfg.fixedCostPerVehicle, cfg.costPerKm, cfg.enableMultiTrip, cfg.reloadMin);
+        *req, cfg.weight_fixed_cost, cfg.weight_per_km, cfg.enableMultiTrip, cfg.reloadMin);
     auto t1 = Clock::now();
     std::cout << "[Phase] construction"
               << "  obj=" << planObj(plan)
@@ -219,7 +225,7 @@ grpc::Status solveRequest(const solver::SolveRequest* req,
     hfvrptwb::orOptRelocate(plan, *req, post_cfg);
 
     if (cfg.enableALNS) {
-        int limit_ms = req->time_limit_ms() > 0 ? req->time_limit_ms() : 5000;
+        int limit_ms = req->time_limit_ms() > 0 ? req->time_limit_ms() : 60000;
         int construction_ms = (int)std::chrono::duration_cast<std::chrono::milliseconds>(t1 - t0).count();
         int alns_budget_ms = std::max(100, limit_ms - construction_ms);
 
@@ -233,19 +239,27 @@ grpc::Status solveRequest(const solver::SolveRequest* req,
         double best_obj = planObj(plan);
 
         for (int s = 0; s < n_starts; ++s) {
+
+          auto planInternalScore = [](const hfvrptwb::ConstructionResult& p) -> double {
+            double total_internal = 0.0;
+            for (const auto& r : p.routes) total_internal += r.internal_score;
+            total_internal += 1000.0 * (double)p.drops.size();
+            return total_internal;
+          };
+
             uint32_t run_seed = cfg.seed + s * 31337;
             hfvrptwb::alns::ALNSSolver alns_solver(alns_cfg);
             auto trial = alns_solver.solve(
                 *req, plan,
-                post_cfg.fixedCostPerVehicle, post_cfg.costPerKm,
+                post_cfg.weight_fixed_cost, post_cfg.weight_per_km,
                 budget_per_start,
                 post_cfg.reloadMin, run_seed);
             if (out_stats && s == 0) *out_stats = alns_solver.stats();
 
-            double trial_obj = planObj(trial);
-            if (trial_obj < best_obj) {
-                best_obj = trial_obj;
-                best_plan = std::move(trial);
+            double trial_score = planInternalScore(trial);
+            if (trial_score < best_obj) {
+              best_obj = trial_score;
+              best_plan = std::move(trial);
             }
         }
         plan = std::move(best_plan);
@@ -289,7 +303,22 @@ grpc::Status SolverServiceImpl::Solve(grpc::ServerContext*,
                                       const solver::SolveRequest* req,
                                       solver::SolveResponse* resp)
 {
-    return solveRequest(req, cfg_, resp);
+    // "MIN_WAIT_TIME", "MIN_DISTANCE", "BALANCE_ALL_CARS", "DEFAULT"
+    std::string my_mode = "MIN_DISTANCE";
+
+    std::cout << "RUNNING WITH MODE: " << my_mode << "\n\n";
+
+    // Load the specific weights for this mode using ConfigManager
+    SolveConfig dynamic_cfg = ConfigManager::loadMode(my_mode);
+
+    // Keep the non-math settings from the original class configuration (cfg_)
+    dynamic_cfg.enableALNS = cfg_.enableALNS;
+    dynamic_cfg.enableMultiTrip = cfg_.enableMultiTrip;
+    dynamic_cfg.reloadMin = cfg_.reloadMin;
+    dynamic_cfg.multiStartCount = cfg_.multiStartCount;
+    dynamic_cfg.seed = cfg_.seed;
+
+    return solveRequest(req, dynamic_cfg, resp);
 }
 
 solver::SolveResponse SolverV2::Solve(const solver::SolveRequest& req) {
