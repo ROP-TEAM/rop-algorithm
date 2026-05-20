@@ -310,16 +310,21 @@ func (x *Vehicle) GetType() string {
 }
 
 type SolveRequest struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	Depot         *Node                  `protobuf:"bytes,1,opt,name=depot,proto3" json:"depot,omitempty"`
-	Nodes         []*Node                `protobuf:"bytes,2,rep,name=nodes,proto3" json:"nodes,omitempty"`
-	Vehicles      []*Vehicle             `protobuf:"bytes,3,rep,name=vehicles,proto3" json:"vehicles,omitempty"`
-	Durations     []float64              `protobuf:"fixed64,4,rep,packed,name=durations,proto3" json:"durations,omitempty"`             // flattened n×n, row-major (minutes)
-	Distances     []float64              `protobuf:"fixed64,5,rep,packed,name=distances,proto3" json:"distances,omitempty"`             // flattened n×n, row-major (meters)
-	MatrixSize    int32                  `protobuf:"varint,6,opt,name=matrix_size,json=matrixSize,proto3" json:"matrix_size,omitempty"` // n (depot + nodes)
-	TimeLimitMs   int32                  `protobuf:"varint,7,opt,name=time_limit_ms,json=timeLimitMs,proto3" json:"time_limit_ms,omitempty"`
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
+	state           protoimpl.MessageState `protogen:"open.v1"`
+	Depot           *Node                  `protobuf:"bytes,1,opt,name=depot,proto3" json:"depot,omitempty"`
+	Nodes           []*Node                `protobuf:"bytes,2,rep,name=nodes,proto3" json:"nodes,omitempty"`
+	Vehicles        []*Vehicle             `protobuf:"bytes,3,rep,name=vehicles,proto3" json:"vehicles,omitempty"`
+	Durations       []float64              `protobuf:"fixed64,4,rep,packed,name=durations,proto3" json:"durations,omitempty"`             // flattened n×n, row-major (minutes)
+	Distances       []float64              `protobuf:"fixed64,5,rep,packed,name=distances,proto3" json:"distances,omitempty"`             // flattened n×n, row-major (meters)
+	MatrixSize      int32                  `protobuf:"varint,6,opt,name=matrix_size,json=matrixSize,proto3" json:"matrix_size,omitempty"` // n (depot + nodes)
+	TimeLimitMs     int32                  `protobuf:"varint,7,opt,name=time_limit_ms,json=timeLimitMs,proto3" json:"time_limit_ms,omitempty"`
+	EnableAlns      bool                   `protobuf:"varint,8,opt,name=enable_alns,json=enableAlns,proto3" json:"enable_alns,omitempty"`
+	EnableMultiTrip bool                   `protobuf:"varint,9,opt,name=enable_multi_trip,json=enableMultiTrip,proto3" json:"enable_multi_trip,omitempty"`
+	ReloadMin       int32                  `protobuf:"varint,10,opt,name=reload_min,json=reloadMin,proto3" json:"reload_min,omitempty"`                     // minutes; 0 = use server default (30)
+	Seed            uint32                 `protobuf:"varint,11,opt,name=seed,proto3" json:"seed,omitempty"`                                                // 0 = non-deterministic
+	MultiStartCount int32                  `protobuf:"varint,12,opt,name=multi_start_count,json=multiStartCount,proto3" json:"multi_start_count,omitempty"` // 0 = use server default (2)
+	unknownFields   protoimpl.UnknownFields
+	sizeCache       protoimpl.SizeCache
 }
 
 func (x *SolveRequest) Reset() {
@@ -397,6 +402,41 @@ func (x *SolveRequest) GetMatrixSize() int32 {
 func (x *SolveRequest) GetTimeLimitMs() int32 {
 	if x != nil {
 		return x.TimeLimitMs
+	}
+	return 0
+}
+
+func (x *SolveRequest) GetEnableAlns() bool {
+	if x != nil {
+		return x.EnableAlns
+	}
+	return false
+}
+
+func (x *SolveRequest) GetEnableMultiTrip() bool {
+	if x != nil {
+		return x.EnableMultiTrip
+	}
+	return false
+}
+
+func (x *SolveRequest) GetReloadMin() int32 {
+	if x != nil {
+		return x.ReloadMin
+	}
+	return 0
+}
+
+func (x *SolveRequest) GetSeed() uint32 {
+	if x != nil {
+		return x.Seed
+	}
+	return 0
+}
+
+func (x *SolveRequest) GetMultiStartCount() int32 {
+	if x != nil {
+		return x.MultiStartCount
 	}
 	return 0
 }
@@ -720,7 +760,7 @@ const file_solver_proto_rawDesc = "" +
 	"fixed_cost\x18\n" +
 	" \x01(\x01R\tfixedCost\x12\x1e\n" +
 	"\vcost_per_km\x18\v \x01(\x01R\tcostPerKm\x12\x12\n" +
-	"\x04type\x18\f \x01(\tR\x04type\"\x84\x02\n" +
+	"\x04type\x18\f \x01(\tR\x04type\"\xb0\x03\n" +
 	"\fSolveRequest\x12\"\n" +
 	"\x05depot\x18\x01 \x01(\v2\f.solver.NodeR\x05depot\x12\"\n" +
 	"\x05nodes\x18\x02 \x03(\v2\f.solver.NodeR\x05nodes\x12+\n" +
@@ -729,7 +769,15 @@ const file_solver_proto_rawDesc = "" +
 	"\tdistances\x18\x05 \x03(\x01R\tdistances\x12\x1f\n" +
 	"\vmatrix_size\x18\x06 \x01(\x05R\n" +
 	"matrixSize\x12\"\n" +
-	"\rtime_limit_ms\x18\a \x01(\x05R\vtimeLimitMs\"Q\n" +
+	"\rtime_limit_ms\x18\a \x01(\x05R\vtimeLimitMs\x12\x1f\n" +
+	"\venable_alns\x18\b \x01(\bR\n" +
+	"enableAlns\x12*\n" +
+	"\x11enable_multi_trip\x18\t \x01(\bR\x0fenableMultiTrip\x12\x1d\n" +
+	"\n" +
+	"reload_min\x18\n" +
+	" \x01(\x05R\treloadMin\x12\x12\n" +
+	"\x04seed\x18\v \x01(\rR\x04seed\x12*\n" +
+	"\x11multi_start_count\x18\f \x01(\x05R\x0fmultiStartCount\"Q\n" +
 	"\n" +
 	"DropReason\x12\x17\n" +
 	"\anode_id\x18\x01 \x01(\tR\x06nodeId\x12\x12\n" +

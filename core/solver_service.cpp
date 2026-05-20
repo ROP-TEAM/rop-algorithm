@@ -289,7 +289,13 @@ grpc::Status SolverServiceImpl::Solve(grpc::ServerContext*,
                                       const solver::SolveRequest* req,
                                       solver::SolveResponse* resp)
 {
-    return solveRequest(req, cfg_, resp);
+    SolveConfig request_cfg = cfg_;
+    if (req->enable_alns())            request_cfg.enableALNS      = true;
+    if (req->enable_multi_trip())      request_cfg.enableMultiTrip = true;
+    if (req->reload_min() > 0)         request_cfg.reloadMin       = req->reload_min();
+    if (req->seed() != 0)              request_cfg.seed            = req->seed();
+    if (req->multi_start_count() > 0)  request_cfg.multiStartCount = req->multi_start_count();
+    return solveRequest(req, request_cfg, resp);
 }
 
 solver::SolveResponse SolverV2::Solve(const solver::SolveRequest& req) {

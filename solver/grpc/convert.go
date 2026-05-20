@@ -15,13 +15,18 @@ func problemToProto(p model.Problem) *pb.SolveRequest {
 		vehicles[i] = vehicleToProto(v)
 	}
 	return &pb.SolveRequest{
-		Depot:       nodeToProto(p.Depot),
-		Nodes:       nodes,
-		Vehicles:    vehicles,
-		Durations:   flattenMatrix(p.Durations),
-		Distances:   flattenMatrix(p.Distances),
-		MatrixSize:  int32(len(p.Nodes) + 1),
-		TimeLimitMs: int32(p.TimeLimitMS),
+		Depot:            nodeToProto(p.Depot),
+		Nodes:            nodes,
+		Vehicles:         vehicles,
+		Durations:        flattenMatrix(p.Durations),
+		Distances:        flattenMatrix(p.Distances),
+		MatrixSize:       int32(len(p.Nodes) + 1),
+		TimeLimitMs:      int32(p.TimeLimitMS),
+		EnableAlns:       p.EnableALNS,
+		EnableMultiTrip:  p.EnableMultiTrip,
+		ReloadMin:        int32(p.ReloadMin),
+		Seed:             p.Seed,
+		MultiStartCount:  int32(p.MultiStartCount),
 	}
 }
 
@@ -93,12 +98,20 @@ func protoToRoute(r *pb.Route) model.Route {
 			DepartMin:  int(s.DepartMin),
 		}
 	}
+	var tripSizes []int
+	if len(r.TripSizes) > 0 {
+		tripSizes = make([]int, len(r.TripSizes))
+		for i, sz := range r.TripSizes {
+			tripSizes[i] = int(sz)
+		}
+	}
 	return model.Route{
 		VehicleID:     r.VehicleId,
 		Stops:         stops,
 		TotalDistance: r.TotalDistance,
 		TotalDuration: int(r.TotalDuration),
 		TotalCost:     r.TotalCost,
+		TripSizes:     tripSizes,
 	}
 }
 
