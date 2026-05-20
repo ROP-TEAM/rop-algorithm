@@ -2,6 +2,7 @@ package solver
 
 import (
 	"context"
+	"errors"
 
 	"github.com/ROP-TEAM/rop-algorithm/model"
 )
@@ -16,13 +17,6 @@ type StubSolver struct{}
 
 func NewStub() Solver { return &StubSolver{} }
 
-func (s *StubSolver) Solve(_ context.Context, p model.Problem) (model.Solution, error) {
-	ids := make([]string, len(p.Nodes))
-	for i, n := range p.Nodes {
-		ids[i] = n.ID
-	}
-	return model.Solution{
-		Unassigned: ids,
-		Status:     model.SolutionStatusInfeasible,
-	}, nil
+func (s *StubSolver) Solve(_ context.Context, _ model.Problem) (model.Solution, error) {
+	return model.Solution{}, errors.New("solver not available: SOLVER_BINARY_PATH is not set")
 }
