@@ -21,15 +21,92 @@ jobs:
       - name: Vet
         run: go vet ./...
 
+  build-solver-linux:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y cmake ninja-build libgrpc++-dev protobuf-compiler-grpc
+
+      - name: Build
+        run: |
+          cmake -S core -B core/build -G Ninja -DCMAKE_BUILD_TYPE=Release
+          cmake --build core/build --target solver --parallel
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: solver-linux
+          path: core/build/solver
+
+  build-solver-windows:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: msys2/setup-msys2@v2
+        with:
+          msystem: MINGW64
+          update: true
+          install: >-
+            mingw-w64-x86_64-cmake
+            mingw-w64-x86_64-ninja
+            mingw-w64-x86_64-grpc
+            mingw-w64-x86_64-protobuf
+
+      - name: Build
+        shell: msys2 {0}
+        run: |
+          cmake -S core -B core/build -G Ninja -DCMAKE_BUILD_TYPE=Release
+          cmake --build core/build --target solver --parallel
+
+      - name: Bundle DLLs
+        shell: msys2 {0}
+        run: |
+          mkdir -p dist
+          cp core/build/solver.exe dist/
+          ldd core/build/solver.exe \
+            | grep '/mingw64/' \
+            | awk '{print $3}' \
+            | xargs -I{} cp {} dist/
+
+      - name: Zip
+        run: Compress-Archive -Path dist\* -DestinationPath solver-windows.zip
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: solver-windows
+          path: solver-windows.zip
+
   release:
-    needs: test
+    needs: [test, build-solver-linux, build-solver-windows]
     runs-on: ubuntu-latest
     permissions:
       contents: write
     steps:
       - uses: actions/checkout@v4
 
+      - uses: actions/download-artifact@v4
+        with:
+          name: solver-linux
+          path: artifacts/
+
+      - uses: actions/download-artifact@v4
+        with:
+          name: solver-windows
+          path: artifacts/
+
+      - name: Mark Linux binary executable
+        run: chmod +x artifacts/solver
+
       - name: Create Release
         uses: softprops/action-gh-release@v2
         with:
           generate_release_notes: true
+          files: |
+            artifacts/solver
+            artifacts/solver-windows.zip
