@@ -70,10 +70,10 @@ func waitForReady(addr string, timeout time.Duration) error {
 	return fmt.Errorf("solver not ready at %s after %s", addr, timeout)
 }
 
-// solverEnv returns the current environment with a discovered MSYS2 mingw64
-// bin dir prepended on Windows. Checks MSYS2_ROOT env var first, then scans
-// common install locations across all drive letters. Errors if none found,
-// since the solver binary requires mingw64 DLLs to start.
+// solverEnv returns the current environment, with MSYS2 mingw64 prepended on
+// Windows if found. Skipped silently when not found — release binaries ship
+// DLLs alongside solver.exe so Windows resolves them without PATH changes.
+// For locally-built binaries, set MSYS2_ROOT or install MSYS2 at a standard path.
 func solverEnv() ([]string, error) {
 	env := os.Environ()
 	if runtime.GOOS != "windows" {
@@ -81,9 +81,7 @@ func solverEnv() ([]string, error) {
 	}
 	msys2Bin, found := findMsys2Bin()
 	if !found {
-		return nil, fmt.Errorf(
-			"solver requires MSYS2 mingw64 DLLs: set MSYS2_ROOT env var to your MSYS2 install directory (e.g. C:\\msys64)",
-		)
+		return env, nil
 	}
 	for i, e := range env {
 		if len(e) >= 5 && e[:5] == "PATH=" {
