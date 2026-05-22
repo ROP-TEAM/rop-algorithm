@@ -1,0 +1,46 @@
+KAN-100 — Speed/Cost Weight Parameter
+
+Files modified:
+
+solver/proto/solver.proto
+  - Added field: double speed_weight = 8
+    (0.0 = minimize cost, 1.0 = minimize duration)
+
+model/problem.go
+  - Added field: SpeedWeight float64 to Problem struct
+
+core/solver_service.h
+  - Added field: double speedWeight = 0.0 to SolveConfig
+    (default 0.7 for quick testing; revert to 0.0 for production)
+
+core/solver_service.cpp
+  - solveRequest(): copies request and applies cfg.speedWeight when caller does not set speed_weight
+  - writeResponse(): objective now blended as (1-w)*total_cost + w*total_duration
+
+core/main.cpp
+  - Reads SPEED_WEIGHT env var at startup and applies it to SolveConfig
+
+core/validator/route_state.h
+  - Added delta_duration to InsertionEval struct
+
+core/validator/route_state.cpp
+  - Populates delta_duration in evaluateRouteState()
+
+core/alns/solution.h
+  - computeObjective() now accepts speed_weight and blends cost + duration
+
+core/construction/adaptive_constructor.cpp
+  - 3 insertion scoring sites updated to blend delta_cost and delta_duration
+
+core/alns/repair.cpp
+  - 9 scoring sites updated across findBestInsertion, regret2Repair, regret3Repair
+
+core/alns/alns.cpp
+  - Both computeObjective() calls now pass req.speed_weight()
+
+core/alns/local_search.cpp
+  - All 6 local search operators updated to blend cost and duration
+
+Pending (requires internet / protoc-gen-go):
+  - Run: go generate ./solver/proto/
+  - Add SpeedWeight: p.SpeedWeight to problemToProto() in solver/grpc/convert.go

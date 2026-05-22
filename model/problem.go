@@ -8,6 +8,7 @@ type Problem struct {
 	Durations   [][]float64 // (1+N)×(1+N) travel-time matrix, minutes; row/col 0 = depot
 	Distances   [][]float64 // (1+N)×(1+N) distance matrix, meters
 	TimeLimitMS int
+	SpeedWeight float64 // 0.0 = minimize cost, 1.0 = minimize duration
 }
 
 // TimeWindow is an HH:mm time interval.

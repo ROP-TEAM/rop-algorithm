@@ -84,6 +84,7 @@ InsertionEval evaluateRouteState(
 
     eval.feasible = true;
     eval.delta_cost = validation.total_cost - current.cost;
+    eval.delta_duration = validation.total_duration_min - current.duration_min;
     eval.next.distance_m = validation.total_distance_m;
     eval.next.duration_min = validation.total_duration_min;
     eval.next.cost = validation.total_cost;

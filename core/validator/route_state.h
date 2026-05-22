@@ -21,6 +21,7 @@ struct InsertionEval {
     bool feasible = false;
     int position = -1;
     double delta_cost = 0.0;
+    int delta_duration = 0; // minutes; next.duration_min - current.duration_min
     RouteState next;
     std::string fail_code;
     std::string fail_detail;

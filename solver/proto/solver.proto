@@ -43,6 +43,7 @@ message SolveRequest {
   repeated double  distances     = 5; // flattened n×n, row-major (meters)
   int32            matrix_size   = 6; // n (depot + nodes)
   int32            time_limit_ms = 7;
+  double           speed_weight  = 8; // 0.0 = minimize cost, 1.0 = minimize duration
 }
 
 message DropReason {

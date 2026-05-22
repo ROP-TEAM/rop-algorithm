@@ -14,6 +14,7 @@ struct SolveConfig {
     bool     enableSectorRemoval   = true;
     int      reloadMin             = 30;
     int      multiStartCount       = 2;    // number of ALNS restarts with different seeds
+    double   speedWeight           = 0.7;  // 0.0 = minimize cost, 1.0 = minimize duration
 };
 
 class SolverServiceImpl final : public solver::SolverService::Service {

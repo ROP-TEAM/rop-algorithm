@@ -68,7 +68,10 @@ InsertionOption findBestInsertion(
                 for (int pos = 0; pos <= (int)trip.nodes.size(); ++pos) {
                     auto eval = evaluateInsertion(req, vehicle, trip, node_index, pos, fixed, km);
                     if (eval.feasible && std::isfinite(eval.delta_cost)) {
-                        double score = eval.delta_cost - priorityBonus(req.nodes(node_index - 1));
+                        double w = req.speed_weight();
+                        double score = (1.0 - w) * eval.delta_cost
+                                     + w * static_cast<double>(eval.delta_duration)
+                                     - priorityBonus(req.nodes(node_index - 1));
                         if (score < best.cost) {
                             best.vi = vi_sol;
                             best.ti = ti;
@@ -101,8 +104,14 @@ InsertionOption findBestInsertion(
 
                 auto full_val = validateTrips(req, vehicle, all_trips, fixed, km, reload_min);
                 if (!full_val.feasible || !std::isfinite(full_val.total_cost)) continue;
-                score = full_val.total_cost - existing_cost
-                         - priorityBonus(req.nodes(node_index - 1));
+                {
+                    int existing_dur = 0;
+                    for (const auto& t : vt.trips) existing_dur += t.duration_min;
+                    double w = req.speed_weight();
+                    score = (1.0 - w) * (full_val.total_cost - existing_cost)
+                          + w * static_cast<double>(full_val.total_duration_min - existing_dur)
+                          - priorityBonus(req.nodes(node_index - 1));
+                }
                 if (score < best.cost) {
                     best.vi = vi_sol;
                     best.ti = -1;
@@ -113,7 +122,12 @@ InsertionOption findBestInsertion(
                 }
             } else if (!sol.forbid_new_vehicle) {
                 // Unused vehicle — single trip, no multi-trip validation needed
-                score = eval.next.cost - priorityBonus(req.nodes(node_index - 1));
+                {
+                    double w = req.speed_weight();
+                    score = (1.0 - w) * eval.next.cost
+                          + w * static_cast<double>(eval.next.duration_min)
+                          - priorityBonus(req.nodes(node_index - 1));
+                }
                 if (score < best.cost) {
                     best.vehicle_index = vi_req;
                     best.ti = -1;
@@ -246,7 +260,10 @@ void regret2Repair(ALNSSolution& sol, const solver::SolveRequest& req,
                         for (int pos = 0; pos <= (int)trip.nodes.size(); ++pos) {
                             auto eval = evaluateInsertion(req, vehicle, trip, ni, pos, fixed, km);
                             if (eval.feasible && std::isfinite(eval.delta_cost)) {
-                                double score = eval.delta_cost - priorityBonus(req.nodes(ni - 1));
+                                double w = req.speed_weight();
+                                double score = (1.0 - w) * eval.delta_cost
+                                             + w * static_cast<double>(eval.delta_duration)
+                                             - priorityBonus(req.nodes(ni - 1));
                                 InsertionOption opt;
                                 opt.vi = vi_sol;
                                 opt.ti = ti;
@@ -273,21 +290,30 @@ void regret2Repair(ALNSSolution& sol, const solver::SolveRequest& req,
                         const auto& vt = sol.vehicles[vi_sol];
                         std::vector<std::vector<int>> all_trips;
                         double existing_cost = 0.0;
+                        int existing_dur = 0;
                         for (const auto& t : vt.trips) {
                             all_trips.push_back(t.nodes);
                             existing_cost += t.cost;
+                            existing_dur += t.duration_min;
                         }
                         all_trips.push_back(eval.next.nodes);
 
                         auto full_val = validateTrips(req, vehicle, all_trips, fixed, km, reload_min);
                         if (!full_val.feasible || !std::isfinite(full_val.total_cost)) continue;
-                        score = full_val.total_cost - existing_cost
-                              - priorityBonus(req.nodes(ni - 1));
+                        {
+                            double w = req.speed_weight();
+                            score = (1.0 - w) * (full_val.total_cost - existing_cost)
+                                  + w * static_cast<double>(full_val.total_duration_min - existing_dur)
+                                  - priorityBonus(req.nodes(ni - 1));
+                        }
                         opt.vi = vi_sol;
                         opt.ti = -1;
                         opt.new_vehicle = false;
                     } else if (!sol.forbid_new_vehicle) {
-                        score = eval.next.cost - priorityBonus(req.nodes(ni - 1));
+                        double w = req.speed_weight();
+                        score = (1.0 - w) * eval.next.cost
+                              + w * static_cast<double>(eval.next.duration_min)
+                              - priorityBonus(req.nodes(ni - 1));
                         opt.vehicle_index = vi_req;
                         opt.ti = -1;
                         opt.new_vehicle = true;
@@ -377,7 +403,10 @@ void regret3Repair(ALNSSolution& sol, const solver::SolveRequest& req,
                         for (int pos = 0; pos <= (int)trip.nodes.size(); ++pos) {
                             auto eval = evaluateInsertion(req, vehicle, trip, ni, pos, fixed, km);
                             if (eval.feasible && std::isfinite(eval.delta_cost)) {
-                                double score = eval.delta_cost - priorityBonus(req.nodes(ni - 1));
+                                double w = req.speed_weight();
+                                double score = (1.0 - w) * eval.delta_cost
+                                             + w * static_cast<double>(eval.delta_duration)
+                                             - priorityBonus(req.nodes(ni - 1));
                                 InsertionOption opt;
                                 opt.vi = vi_sol;
                                 opt.ti = ti;
@@ -404,21 +433,30 @@ void regret3Repair(ALNSSolution& sol, const solver::SolveRequest& req,
                         const auto& vt = sol.vehicles[vi_sol];
                         std::vector<std::vector<int>> all_trips;
                         double existing_cost = 0.0;
+                        int existing_dur = 0;
                         for (const auto& t : vt.trips) {
                             all_trips.push_back(t.nodes);
                             existing_cost += t.cost;
+                            existing_dur += t.duration_min;
                         }
                         all_trips.push_back(eval.next.nodes);
 
                         auto full_val = validateTrips(req, vehicle, all_trips, fixed, km, 0);
                         if (!full_val.feasible || !std::isfinite(full_val.total_cost)) continue;
-                        score = full_val.total_cost - existing_cost
-                              - priorityBonus(req.nodes(ni - 1));
+                        {
+                            double w = req.speed_weight();
+                            score = (1.0 - w) * (full_val.total_cost - existing_cost)
+                                  + w * static_cast<double>(full_val.total_duration_min - existing_dur)
+                                  - priorityBonus(req.nodes(ni - 1));
+                        }
                         opt.vi = vi_sol;
                         opt.ti = -1;
                         opt.new_vehicle = false;
                     } else if (!sol.forbid_new_vehicle) {
-                        score = eval.next.cost - priorityBonus(req.nodes(ni - 1));
+                        double w = req.speed_weight();
+                        score = (1.0 - w) * eval.next.cost
+                              + w * static_cast<double>(eval.next.duration_min)
+                              - priorityBonus(req.nodes(ni - 1));
                         opt.vehicle_index = vi_req;
                         opt.ti = -1;
                         opt.new_vehicle = true;

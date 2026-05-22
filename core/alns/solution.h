@@ -22,11 +22,12 @@ struct ALNSSolution {
 };
 
 inline double computeObjective(const std::vector<VehicleTrips>& vehicles, int unrouted_count,
-                                double penalty_coeff = 1000.0) {
+                                double penalty_coeff = 1000.0, double speed_weight = 0.0) {
     double total = 0.0;
     for (const auto& vt : vehicles) {
         for (const auto& trip : vt.trips) {
-            total += trip.cost;
+            total += (1.0 - speed_weight) * trip.cost
+                   + speed_weight * static_cast<double>(trip.duration_min);
         }
     }
     total += penalty_coeff * unrouted_count;

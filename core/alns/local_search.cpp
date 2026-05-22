@@ -34,7 +34,11 @@ void tripMerge(ALNSSolution& sol, const solver::SolveRequest& req,
                     if (!std::isfinite(opt.cost)) continue;
 
                     double old_cost = vt.trips[ti1].cost + vt.trips[ti2].cost;
-                    if (opt.cost < old_cost - 1e-6) {
+                    int old_dur = vt.trips[ti1].duration_min + vt.trips[ti2].duration_min;
+                    double w = req.speed_weight();
+                    double new_b = (1.0 - w) * opt.cost + w * static_cast<double>(opt.duration_min);
+                    double old_b = (1.0 - w) * old_cost + w * static_cast<double>(old_dur);
+                    if (new_b < old_b - 1e-6) {
                         vt.trips[ti1] = std::move(opt);
                         vt.trips.erase(vt.trips.begin() + ti2);
                         improved = true;
@@ -43,7 +47,8 @@ void tripMerge(ALNSSolution& sol, const solver::SolveRequest& req,
             }
         }
     }
-    sol.objective = computeObjective(sol.vehicles, (int)sol.unrouted.size());
+    sol.objective = computeObjective(sol.vehicles, (int)sol.unrouted.size(),
+                                     1000.0, req.speed_weight());
 }
 
 void customerMoveAcrossTrips(ALNSSolution& sol, const solver::SolveRequest& req,
@@ -86,7 +91,13 @@ void customerMoveAcrossTrips(ALNSSolution& sol, const solver::SolveRequest& req,
 
                             double new_cost = src_eval.next.cost + dst_eval.next.cost;
                             double old_cost = vt.trips[from_ti].cost + vt.trips[to_ti].cost;
-
+                            {
+                                double w = req.speed_weight();
+                                int new_dur = src_eval.next.duration_min + dst_eval.next.duration_min;
+                                int old_dur = vt.trips[from_ti].duration_min + vt.trips[to_ti].duration_min;
+                                new_cost = (1.0 - w) * new_cost + w * static_cast<double>(new_dur);
+                                old_cost = (1.0 - w) * old_cost + w * static_cast<double>(old_dur);
+                            }
                             if (new_cost < old_cost - 1e-6) {
                                 vt.trips[from_ti] = std::move(src_eval.next);
                                 vt.trips[to_ti] = std::move(dst_eval.next);
@@ -100,7 +111,8 @@ void customerMoveAcrossTrips(ALNSSolution& sol, const solver::SolveRequest& req,
             }
         }
     }
-    sol.objective = computeObjective(sol.vehicles, (int)sol.unrouted.size());
+    sol.objective = computeObjective(sol.vehicles, (int)sol.unrouted.size(),
+                                     1000.0, req.speed_weight());
 }
 
 void twoOptStar(ALNSSolution& sol, const solver::SolveRequest& req,
@@ -143,8 +155,11 @@ void twoOptStar(ALNSSolution& sol, const solver::SolveRequest& req,
                             if (eval_a.feasible && eval_b.feasible
                                 && std::isfinite(eval_a.next.cost)
                                 && std::isfinite(eval_b.next.cost)) {
-                                double new_cost = eval_a.next.cost + eval_b.next.cost;
-                                double old_cost = trip_a.cost + trip_b.cost;
+                                double w = req.speed_weight();
+                                double new_cost = (1.0 - w) * (eval_a.next.cost + eval_b.next.cost)
+                                               + w * static_cast<double>(eval_a.next.duration_min + eval_b.next.duration_min);
+                                double old_cost = (1.0 - w) * (trip_a.cost + trip_b.cost)
+                                               + w * static_cast<double>(trip_a.duration_min + trip_b.duration_min);
                                 if (new_cost < old_cost - 1e-6) {
                                     sol.vehicles[va].trips[ta] = std::move(eval_a.next);
                                     sol.vehicles[vb].trips[tb] = std::move(eval_b.next);
@@ -156,7 +171,8 @@ void twoOptStar(ALNSSolution& sol, const solver::SolveRequest& req,
             }
         }
     }
-    sol.objective = computeObjective(sol.vehicles, (int)sol.unrouted.size());
+    sol.objective = computeObjective(sol.vehicles, (int)sol.unrouted.size(),
+                                     1000.0, req.speed_weight());
 }
 
 void relocateAcrossVehicles(ALNSSolution& sol, const solver::SolveRequest& req,
@@ -199,9 +215,11 @@ void relocateAcrossVehicles(ALNSSolution& sol, const solver::SolveRequest& req,
                                 auto dst_eval = evaluateRouteState(req, vehicle_b, init_b, dst_nodes, fixed, km);
                                 if (!dst_eval.feasible || !std::isfinite(dst_eval.next.cost)) continue;
 
-                                double new_cost = src_eval.next.cost + dst_eval.next.cost;
-                                double old_cost = sol.vehicles[va].trips[ta].cost
-                                                + sol.vehicles[vb].trips[tb].cost;
+                                double w = req.speed_weight();
+                                double new_cost = (1.0 - w) * (src_eval.next.cost + dst_eval.next.cost)
+                                               + w * static_cast<double>(src_eval.next.duration_min + dst_eval.next.duration_min);
+                                double old_cost = (1.0 - w) * (sol.vehicles[va].trips[ta].cost + sol.vehicles[vb].trips[tb].cost)
+                                               + w * static_cast<double>(sol.vehicles[va].trips[ta].duration_min + sol.vehicles[vb].trips[tb].duration_min);
 
                                 if (new_cost < old_cost - 1e-6) {
                                     if (src_nodes.empty()) {
@@ -225,7 +243,8 @@ void relocateAcrossVehicles(ALNSSolution& sol, const solver::SolveRequest& req,
             }
         }
     }
-    sol.objective = computeObjective(sol.vehicles, (int)sol.unrouted.size());
+    sol.objective = computeObjective(sol.vehicles, (int)sol.unrouted.size(),
+                                     1000.0, req.speed_weight());
 }
 
 void consolidateVehicles(ALNSSolution& sol, const solver::SolveRequest& req,
@@ -296,7 +315,9 @@ void consolidateVehicles(ALNSSolution& sol, const solver::SolveRequest& req,
                     for (int pos = 0; pos <= (int)trip.nodes.size(); ++pos) {
                         auto eval = evaluateInsertion(req, vehicle, trip, ni, pos, fixed, km);
                         if (eval.feasible && std::isfinite(eval.delta_cost)) {
-                            double score = eval.delta_cost;
+                            double w = req.speed_weight();
+                            double score = (1.0 - w) * eval.delta_cost
+                                         + w * static_cast<double>(eval.delta_duration);
                             if (score < best_score) {
                                 best_score = score;
                                 best_opt.vi = vi_sol;
@@ -320,7 +341,8 @@ void consolidateVehicles(ALNSSolution& sol, const solver::SolveRequest& req,
             if (it2 != sol.unrouted.end()) sol.unrouted.erase(it2);
         }
 
-        sol.objective = computeObjective(sol.vehicles, (int)sol.unrouted.size());
+        sol.objective = computeObjective(sol.vehicles, (int)sol.unrouted.size(),
+                                     1000.0, req.speed_weight());
 
         if (!all_inserted || sol.objective >= obj_before - 1e-6) {
             // Rollback: undo. We can't easily undo, so skip this vehicle.
@@ -440,35 +462,46 @@ void swapStar(ALNSSolution& sol, const solver::SolveRequest& req,
                                 if (best_trip_b < 0) continue;
 
                                 // --- Compute total cost delta ---
-                                double old_cost = 0.0;
-                                for (const auto& t : sol.vehicles[va].trips) old_cost += t.cost;
-                                for (const auto& t : sol.vehicles[vb].trips) old_cost += t.cost;
+                                double old_raw = 0.0;
+                                int old_dur = 0;
+                                for (const auto& t : sol.vehicles[va].trips) { old_raw += t.cost; old_dur += t.duration_min; }
+                                for (const auto& t : sol.vehicles[vb].trips) { old_raw += t.cost; old_dur += t.duration_min; }
 
-                                double new_cost = best_cost_a + best_cost_b;
+                                double new_raw = best_cost_a + best_cost_b;
+                                int new_dur = best_eval_a.next.duration_min + best_eval_b.next.duration_min;
                                 // Add unaffected trips
                                 for (int t2 = 0; t2 < (int)sol.vehicles[va].trips.size(); ++t2)
-                                    if (t2 != ta && t2 != best_trip_a)
-                                        new_cost += sol.vehicles[va].trips[t2].cost;
+                                    if (t2 != ta && t2 != best_trip_a) {
+                                        new_raw += sol.vehicles[va].trips[t2].cost;
+                                        new_dur += sol.vehicles[va].trips[t2].duration_min;
+                                    }
                                 // Handle ta when it's not the target trip
                                 if (best_trip_a != ta && !nodes_a_minus.empty()) {
                                     auto base = evaluateRouteState(
                                         req, vehicle_a, init_a, nodes_a_minus, fixed, km);
-                                    if (base.feasible && std::isfinite(base.next.cost))
-                                        new_cost += base.next.cost;
-                                    else continue;
+                                    if (base.feasible && std::isfinite(base.next.cost)) {
+                                        new_raw += base.next.cost;
+                                        new_dur += base.next.duration_min;
+                                    } else continue;
                                 }
 
                                 for (int t2 = 0; t2 < (int)sol.vehicles[vb].trips.size(); ++t2)
-                                    if (t2 != tb && t2 != best_trip_b)
-                                        new_cost += sol.vehicles[vb].trips[t2].cost;
+                                    if (t2 != tb && t2 != best_trip_b) {
+                                        new_raw += sol.vehicles[vb].trips[t2].cost;
+                                        new_dur += sol.vehicles[vb].trips[t2].duration_min;
+                                    }
                                 if (best_trip_b != tb && !nodes_b_minus.empty()) {
                                     auto base = evaluateRouteState(
                                         req, vehicle_b, init_b, nodes_b_minus, fixed, km);
-                                    if (base.feasible && std::isfinite(base.next.cost))
-                                        new_cost += base.next.cost;
-                                    else continue;
+                                    if (base.feasible && std::isfinite(base.next.cost)) {
+                                        new_raw += base.next.cost;
+                                        new_dur += base.next.duration_min;
+                                    } else continue;
                                 }
 
+                                double sw = req.speed_weight();
+                                double new_cost = (1.0 - sw) * new_raw + sw * static_cast<double>(new_dur);
+                                double old_cost = (1.0 - sw) * old_raw + sw * static_cast<double>(old_dur);
                                 if (new_cost < old_cost - 1e-6) {
                                     // Apply swap
                                     sol.vehicles[va].trips[best_trip_a]
@@ -512,7 +545,8 @@ void swapStar(ALNSSolution& sol, const solver::SolveRequest& req,
             }
         }
     }
-    sol.objective = computeObjective(sol.vehicles, (int)sol.unrouted.size());
+    sol.objective = computeObjective(sol.vehicles, (int)sol.unrouted.size(),
+                                     1000.0, req.speed_weight());
 }
 
 void applyLocalSearch(ALNSSolution& sol, const solver::SolveRequest& req,

@@ -1,0 +1,43 @@
+KAN-100 — How to Use the Speed/Cost Weight Parameter
+
+The parameter speed_weight controls the solver objective:
+  0.0 = minimize cost only (default)
+  1.0 = minimize duration only
+  0.5 = equal blend of cost and duration
+
+--- Quick test (hardcode) ---
+
+1. Open core/solver_service.h
+2. Change the default value on this line:
+     double speedWeight = 0.0;  // set to 0.0–1.0
+3. Rebuild and run:
+     cd core/build
+     make -j$(nproc)
+     ./solver_regression_test
+
+--- Run server with env var ---
+
+  SPEED_WEIGHT=0.7 ./solver
+
+This sets speedWeight via environment variable at startup.
+The env var only applies when the caller does not set speed_weight in the proto request.
+
+--- Set per-request in C++ tests ---
+
+  solver::SolveRequest req;
+  req.set_speed_weight(0.7);
+  SolverV2 solver;
+  auto resp = solver.Solve(req);
+
+--- What to observe ---
+
+Run with speedWeight=0.0 and speedWeight=1.0 and compare:
+  - objective= in [Solve] log line  →  changes scale (THB vs minutes)
+  - total_duration on routes        →  lower when weight=1.0
+  - total_cost on routes            →  lower when weight=0.0
+
+--- Wire Go→C++ transport (requires internet) ---
+
+  go generate ./solver/proto/
+  # then in solver/grpc/convert.go, inside problemToProto():
+  req.SpeedWeight = p.SpeedWeight

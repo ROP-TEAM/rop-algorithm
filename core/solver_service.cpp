@@ -76,6 +76,7 @@ void writeResponse(const solver::SolveRequest& req,
         }
     }
 
+    double w = req.speed_weight();
     double objective = 0.0;
     for (const auto& constructed : plan.routes) {
         if (constructed.vehicle_index < 0 || constructed.vehicle_index >= req.vehicles_size()) {
@@ -83,7 +84,9 @@ void writeResponse(const solver::SolveRequest& req,
         }
         int before = resp->routes_size();
         if (writeRoute(req, req.vehicles(constructed.vehicle_index), constructed, cfg, resp)) {
-            objective += resp->routes(before).total_cost();
+            const auto& r = resp->routes(before);
+            objective += (1.0 - w) * r.total_cost()
+                       + w * static_cast<double>(r.total_duration());
         }
     }
 
@@ -198,6 +201,14 @@ grpc::Status solveRequest(const solver::SolveRequest* req,
         obj += 1000.0 * (double)p.drops.size();
         return obj;
     };
+
+    // Allow SolveConfig to override speed_weight when not set by the caller.
+    solver::SolveRequest req_copy;
+    if (cfg.speedWeight != 0.0 && req->speed_weight() == 0.0) {
+        req_copy = *req;
+        req_copy.set_speed_weight(cfg.speedWeight);
+        req = &req_copy;
+    }
 
     auto plan = hfvrptwb::adaptiveConstruct(
         *req, cfg.fixedCostPerVehicle, cfg.costPerKm, cfg.enableMultiTrip, cfg.reloadMin);

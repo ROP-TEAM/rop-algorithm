@@ -151,7 +151,7 @@ ConstructionResult ALNSSolver::solve(
 
         // Recompute objective with adaptive penalty to pressure toward feasibility
         candidate.objective = computeObjective(candidate.vehicles,
-            (int)candidate.unrouted.size(), penalty.coefficient());
+            (int)candidate.unrouted.size(), penalty.coefficient(), req.speed_weight());
 
         // Acceptance
         double delta = candidate.objective - current.objective;
@@ -227,7 +227,8 @@ ConstructionResult ALNSSolver::solve(
     stats_ = {destroy_weights, destroy_selections, destroy_improvements, destroy_bests};
 
     // Reset to fixed penalty so returned objective is comparable to non-ALNS path
-    returned.objective = computeObjective(returned.vehicles, (int)returned.unrouted.size());
+    returned.objective = computeObjective(returned.vehicles, (int)returned.unrouted.size(),
+                                          1000.0, req.speed_weight());
 
     applyTwoOptToSolution(returned, req, fixed, km);
 

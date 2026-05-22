@@ -151,7 +151,10 @@ Candidate bestSingleInsertion(
                 continue;
             }
 
-            double score = eval.delta_cost - priorityBonus(req.nodes(node_index - 1));
+            double w = req.speed_weight();
+            double score = (1.0 - w) * eval.delta_cost
+                         + w * static_cast<double>(eval.delta_duration)
+                         - priorityBonus(req.nodes(node_index - 1));
             if (score < best.score) {
                 best.vehicle_index = vi;
                 best.insert_pos = pos;
@@ -247,7 +250,10 @@ Candidate bestMultiTripInsertion(
                 best.fail_detail = validation.detail;
                 continue;
             }
-            double score = eval.next.cost - priorityBonus(req.nodes(node_index - 1));
+            double w = req.speed_weight();
+            double score = (1.0 - w) * eval.next.cost
+                         + w * static_cast<double>(eval.next.duration_min)
+                         - priorityBonus(req.nodes(node_index - 1));
             if (score < best.score) {
                 best.vehicle_index = vi;
                 best.trip_index = (int)schedule.trips.size();
@@ -325,7 +331,11 @@ Candidate bestPairInsertion(
                     continue;
                 }
 
-                double score = eval.delta_cost - priorityBonus(first) - priorityBonus(req.nodes(second_index - 1));
+                double w = req.speed_weight();
+                double score = (1.0 - w) * eval.delta_cost
+                             + w * static_cast<double>(eval.delta_duration)
+                             - priorityBonus(first)
+                             - priorityBonus(req.nodes(second_index - 1));
                 if (score < best.score) {
                     best.vehicle_index = vi;
                     best.insert_pos = p1;
