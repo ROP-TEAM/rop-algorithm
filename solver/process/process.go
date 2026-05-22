@@ -38,18 +38,20 @@ func Start(binaryPath string) (*Handle, error) {
 
 	if err := waitForReady(addr, 10*time.Second); err != nil {
 		cmd.Process.Kill()
+		cmd.Wait()
 		return nil, err
 	}
 
 	conn, err := grpc.NewClient(addr, grpc.WithTransportCredentials(insecure.NewCredentials()))
 	if err != nil {
 		cmd.Process.Kill()
+		cmd.Wait()
 		return nil, fmt.Errorf("dial solver: %w", err)
 	}
 
 	return &Handle{
 		Conn: conn,
-		stop: func() { conn.Close(); cmd.Process.Kill() },
+		stop: func() { conn.Close(); cmd.Process.Kill(); cmd.Wait() },
 	}, nil
 }
 
