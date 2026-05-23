@@ -293,7 +293,7 @@ grpc::Status SolverServiceImpl::Solve(grpc::ServerContext*,
     if (req->enable_alns())            request_cfg.enableALNS      = true;
     if (req->enable_multi_trip())      request_cfg.enableMultiTrip = true;
     if (req->reload_min() > 0)         request_cfg.reloadMin       = req->reload_min();
-    if (req->seed() != 0)              request_cfg.seed            = req->seed();
+    request_cfg.seed = (req->seed() != 0) ? req->seed() : std::random_device{}();
     if (req->multi_start_count() > 0)  request_cfg.multiStartCount = req->multi_start_count();
     return solveRequest(req, request_cfg, resp);
 }
