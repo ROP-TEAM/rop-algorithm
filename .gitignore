@@ -1,5 +1,12 @@
+# build file
 *.exe
 *.gch
 build/
 
+test/
+
+# local note
 *.local.md
+
+# visual project graph
+graphify-out/
