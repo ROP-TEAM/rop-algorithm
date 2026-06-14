@@ -216,8 +216,7 @@ RouteValidationResult validateTrips(
     out.total_wait_time = total_wait;
     // internal score — used by solver only
     out.internal_score = score_fixed_cost
-                       + (out.total_distance_m / 1000.0) * score_cost_per_km
-                       + (total_wait * weight_wait_time);
+                       + (out.total_distance_m / 1000.0) * score_cost_per_km;
 
     return out;
 }

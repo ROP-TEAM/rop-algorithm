@@ -13,14 +13,15 @@ struct ALNSConfig {
     int    segment_size          = 40;
     double reaction_factor       = 0.1;
     double initial_temp          = 200.0;
-    double cooling_rate          = 0.9995;
+    double cooling_rate          = 0.9999;
     double min_temp              = 1.0;
     double reheat_temp           = 50.0;
     int    score_best            = 33;
-    int    score_better          = 9;
-    int    score_accepted        = 13;
+    int    score_better          = 13;
+    int    score_accepted        = 9;
     bool   enable_sector_removal = true;
-    double forbid_new_vehicle_prob = 0.5;
+    double forbid_new_vehicle_prob = 0.0;
+    double weight_wait_time      = 0.0;
 };
 
 struct OperatorStats {
@@ -43,7 +44,8 @@ public:
         double fixed, double km,
         std::chrono::milliseconds budget,
         int reload_min = 0,
-        uint32_t seed = 42);
+        uint32_t seed = 42,
+        double weight_wait_time = 0.0);
 
     const OperatorStats& stats() const { return stats_; }
 

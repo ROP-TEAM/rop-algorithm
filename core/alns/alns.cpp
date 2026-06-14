@@ -15,18 +15,19 @@
 namespace hfvrptwb {
 namespace alns {
 
+// ← added weight_wait_time to both function type signatures
 using DestroyFn = std::function<void(ALNSSolution&, std::mt19937&,
-    const solver::SolveRequest&, double, double, int)>;
+    const solver::SolveRequest&, double, double, int, double)>;
 using RepairFn = std::function<void(ALNSSolution&,
-    const solver::SolveRequest&, double, double, int)>;
+    const solver::SolveRequest&, double, double, int, double)>;
 
 static void applyTwoOptToSolution(ALNSSolution& sol,
-    const solver::SolveRequest& req, double fixed, double km)
+    const solver::SolveRequest& req, double fixed, double km,
+    double weight_wait_time = 0.0)  // ← add weight_wait_time
 {
     for (auto& vt : sol.vehicles) {
         const auto& vehicle = req.vehicles(vt.vehicle_index);
 
-        // Save originals for rollback
         auto original_trips = vt.trips;
 
         for (auto& trip : vt.trips) {
@@ -36,16 +37,17 @@ static void applyTwoOptToSolution(ALNSSolution& sol,
             }
         }
 
-        // Validate full schedule stays feasible
         std::vector<std::vector<int>> all_trips;
         for (const auto& t : vt.trips) all_trips.push_back(t.nodes);
-        auto val = validateTrips(req, vehicle, all_trips, fixed, km, fixed, km, 0);
+        // ← pass weight_wait_time to validateTrips
+        auto val = validateTrips(req, vehicle, all_trips,
+                                 fixed, km, fixed, km, 0, weight_wait_time);
         if (!val.feasible || !std::isfinite(val.total_cost)) {
             vt.trips = std::move(original_trips);
         }
     }
-    sol.objective = computeObjective(sol.vehicles, (int)sol.unrouted.size());
-    sol.internal_score = computeInternalScore(sol.vehicles, (int)sol.unrouted.size());
+    sol.objective       = computeObjective(sol.vehicles, (int)sol.unrouted.size());
+    sol.internal_score  = computeInternalScore(sol.vehicles, (int)sol.unrouted.size());
 }
 
 ConstructionResult ALNSSolver::solve(
@@ -54,53 +56,61 @@ ConstructionResult ALNSSolver::solve(
     double fixed, double km,
     std::chrono::milliseconds budget,
     int reload_min,
-    uint32_t seed)
+    uint32_t seed,
+    double weight_wait_time)
 {
-    auto current = fromConstruction(initial, req, fixed, km);
-    auto best = current;
-    
-    double best_obj = best.internal_score; 
-    
+    auto current = fromConstruction(initial, req, fixed, km, weight_wait_time);
+    auto best    = current;
+
+    double best_obj = best.internal_score;
+
     ALNSSolution best_feasible;
     double best_feasible_obj = std::numeric_limits<double>::infinity();
     bool has_feasible = current.unrouted.empty();
     if (has_feasible) {
-        best_feasible = current;
-        best_feasible_obj = current.internal_score; // use internal_score
+        best_feasible     = current;
+        best_feasible_obj = current.internal_score;
     }
 
     std::mt19937 rng(seed);
 
+    // ← lambdas now accept and forward weight_wait_time (last param)
     std::vector<DestroyFn> destroyers = {
         [](ALNSSolution& s, std::mt19937& r, const solver::SolveRequest& q,
-           double f, double k, int n) { randomRemoval(s, r, q, f, k, n); },
+           double f, double k, int n, double w) { randomRemoval(s, r, q, f, k, n, w); },
         [](ALNSSolution& s, std::mt19937& r, const solver::SolveRequest& q,
-           double f, double k, int n) { worstRemoval(s, r, q, f, k, n); },
+           double f, double k, int n, double w) { worstRemoval(s, r, q, f, k, n, w); },
         [](ALNSSolution& s, std::mt19937& r, const solver::SolveRequest& q,
-           double f, double k, int n) { shawRemoval(s, r, q, f, k, n); },
+           double f, double k, int n, double w) { shawRemoval(s, r, q, f, k, n, w); },
         [](ALNSSolution& s, std::mt19937& r, const solver::SolveRequest& q,
-           double f, double k, int n) { priorityAwareRemoval(s, r, q, f, k, n); },
+           double f, double k, int n, double w) { priorityAwareRemoval(s, r, q, f, k, n, w); },
         [](ALNSSolution& s, std::mt19937& r, const solver::SolveRequest& q,
-           double f, double k, int n) { routeConsolidationDestroy(s, r, q, f, k, n); },
+           double f, double k, int n, double w) { routeConsolidationDestroy(s, r, q, f, k, n, w); },
         [](ALNSSolution& s, std::mt19937& r, const solver::SolveRequest& q,
-           double f, double k, int n) { tripRemoval(s, r, q, f, k, n); },
+           double f, double k, int n, double w) { tripRemoval(s, r, q, f, k, n, w); },
         [](ALNSSolution& s, std::mt19937& r, const solver::SolveRequest& q,
-           double f, double k, int n) { tagViolationRemoval(s, r, q, f, k, n); },
+           double f, double k, int n, double w) { tagViolationRemoval(s, r, q, f, k, n, w); },
         [](ALNSSolution& s, std::mt19937& r, const solver::SolveRequest& q,
-           double f, double k, int n) { lateCustomerRemoval(s, r, q, f, k, n); },
+           double f, double k, int n, double w) { lateCustomerRemoval(s, r, q, f, k, n, w); },
     };
     if (cfg_.enable_sector_removal) {
         destroyers.push_back(
             [](ALNSSolution& s, std::mt19937& r, const solver::SolveRequest& q,
-               double f, double k, int n) { sectorRemoval(s, r, q, f, k, n); });
+               double f, double k, int n, double w) { sectorRemoval(s, r, q, f, k, n, w); });
     }
 
+    // ← repair functions also get weight_wait_time
     RepairFn repairers[] = {
-        greedyRepair,
-        priorityFirstRepair,
-        regret2Repair,
-        regret3Repair,
-        proactiveBreakInsertion,
+        [](ALNSSolution& s, const solver::SolveRequest& q,
+           double f, double k, int rl, double w) { greedyRepair(s, q, f, k, rl, w); },
+        [](ALNSSolution& s, const solver::SolveRequest& q,
+           double f, double k, int rl, double w) { priorityFirstRepair(s, q, f, k, rl, w); },
+        [](ALNSSolution& s, const solver::SolveRequest& q,
+           double f, double k, int rl, double w) { regret2Repair(s, q, f, k, rl, w); },
+        [](ALNSSolution& s, const solver::SolveRequest& q,
+           double f, double k, int rl, double w) { regret3Repair(s, q, f, k, rl, w); },
+        [](ALNSSolution& s, const solver::SolveRequest& q,
+           double f, double k, int rl, double w) { proactiveBreakInsertion(s, q, f, k, rl, w); },
     };
 
     const int ND = (int)destroyers.size();
@@ -119,8 +129,8 @@ ConstructionResult ALNSSolver::solve(
 
     double T = cfg_.initial_temp;
     int seg_feasible = 0;
-    int seg_total = 0;
-    int iter = 0;
+    int seg_total    = 0;
+    int iter         = 0;
 
     auto t0 = std::chrono::high_resolution_clock::now();
     AdaptivePenalty penalty;
@@ -143,17 +153,17 @@ ConstructionResult ALNSSolver::solve(
             for (const auto& t : vt.trips)
                 total_routed += (int)t.nodes.size();
         int q = std::clamp(total_routed / 4, 4, 15);
-        destroyers[d](candidate, rng, req, fixed, km, q);
-        
-        candidate.forbid_new_vehicle = (d == 4) || (uni(rng) < cfg_.forbid_new_vehicle_prob);
-        repairers[r](candidate, req, fixed, km, reload_min);
 
-        candidate.objective = computeObjective(candidate.vehicles, (int)candidate.unrouted.size(), penalty.coefficient());
+        // ← pass weight_wait_time to destroy and repair
+        destroyers[d](candidate, rng, req, fixed, km, q, weight_wait_time);
+        candidate.forbid_new_vehicle = (d == 4) || (uni(rng) < cfg_.forbid_new_vehicle_prob);
+        repairers[r](candidate, req, fixed, km, reload_min, weight_wait_time);
+
+        candidate.objective     = computeObjective(candidate.vehicles, (int)candidate.unrouted.size(), penalty.coefficient());
         candidate.internal_score = computeInternalScore(candidate.vehicles, (int)candidate.unrouted.size(), penalty.coefficient());
 
-        // Acceptance (use internal_score)
         double delta = candidate.internal_score - current.internal_score;
-        bool accept = delta < 0 || uni(rng) < std::exp(-delta / T);
+        bool accept  = delta < 0 || uni(rng) < std::exp(-delta / T);
 
         int score = 0;
         if (accept) {
@@ -162,9 +172,9 @@ ConstructionResult ALNSSolver::solve(
             ++seg_total;
 
             if (current.internal_score < best_obj) {
-                best = current;
+                best     = current;
                 best_obj = current.internal_score;
-                score = cfg_.score_best;
+                score    = cfg_.score_best;
             } else if (delta < 0) {
                 score = cfg_.score_better;
             } else {
@@ -172,9 +182,9 @@ ConstructionResult ALNSSolver::solve(
             }
 
             if (current.unrouted.empty() && current.internal_score < best_feasible_obj) {
-                best_feasible = current;
+                best_feasible     = current;
                 best_feasible_obj = current.internal_score;
-                has_feasible = true;
+                has_feasible      = true;
             }
 
             destroy_score_sum[d] += score;
@@ -182,11 +192,10 @@ ConstructionResult ALNSSolver::solve(
             ++destroy_use[d];
             ++repair_use[r];
 
-            if (delta < 0) ++destroy_improvements[d];
-            if (score == cfg_.score_best) ++destroy_bests[d];
+            if (delta < 0)                   ++destroy_improvements[d];
+            if (score == cfg_.score_best)    ++destroy_bests[d];
         }
 
-        // Update weights per segment
         ++iter;
         if (iter % cfg_.segment_size == 0) {
             double r_factor = cfg_.reaction_factor;
@@ -207,11 +216,10 @@ ConstructionResult ALNSSolver::solve(
             std::fill(destroy_use.begin(),       destroy_use.end(),       0);
             std::fill(repair_use.begin(),        repair_use.end(),        0);
 
-            if (seg_total > 0) {
+            if (seg_total > 0)
                 penalty.update((double)seg_feasible / (double)seg_total);
-            }
             seg_feasible = 0;
-            seg_total = 0;
+            seg_total    = 0;
         }
 
         T *= cfg_.cooling_rate;
@@ -221,9 +229,9 @@ ConstructionResult ALNSSolver::solve(
     ALNSSolution& returned = has_feasible ? best_feasible : best;
     stats_ = {destroy_weights, destroy_selections, destroy_improvements, destroy_bests};
 
-    // Reset objective before returning to ensure the API receives the clean standard cost
     returned.objective = computeObjective(returned.vehicles, (int)returned.unrouted.size());
-    applyTwoOptToSolution(returned, req, fixed, km);
+
+    applyTwoOptToSolution(returned, req, fixed, km, weight_wait_time);
 
     return toConstruction(returned);
 }

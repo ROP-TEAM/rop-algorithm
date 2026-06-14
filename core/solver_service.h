@@ -11,14 +11,14 @@ struct SolveConfig {
     bool     enableMultiTrip       = false;
     bool     enableSectorRemoval   = true;
     int      reloadMin             = 30;
-    int      multiStartCount       = 10;              // number of ALNS restarts with different seeds
-    double   fixedCostPerVehicle   = 550.0;          // fixed cost per km
-    double   costPerKm             = 4.0003;         // fuel cost per km
-    double   weight_fixed_cost     = 550.0;          // mode weight for optimization
-    double   weight_per_km         = 4.0003;         // mode weight for optimization                           //
-    double   weight_wait_time      = 0.0;            // cost of waiting time per minute
-    double   weight_under_fill     = 0.0;            // cost of under-filling
-    double   weight_unbalance      = 0.0;            // cost of unbalance
+    int      multiStartCount       = 6;
+    double   fixedCostPerVehicle   = 550.0;
+    double   costPerKm             = 4.0003;
+
+    // optimization weights — set by ConfigManager::loadMode()
+    double   weight_fixed_cost     = 550.0;
+    double   weight_per_km         = 4.0003;
+    double   alns_forbid_new_vehicle_prob = 0.0;
 };
 
 class SolverServiceImpl final : public solver::SolverService::Service {
@@ -41,6 +41,6 @@ public:
     const hfvrptwb::alns::OperatorStats& lastAlnsStats() const { return last_alns_stats_; }
 
 private:
-    SolveConfig                             cfg_;
-    hfvrptwb::alns::OperatorStats           last_alns_stats_;
+    SolveConfig                   cfg_;
+    hfvrptwb::alns::OperatorStats last_alns_stats_;
 };

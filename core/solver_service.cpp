@@ -11,6 +11,7 @@
 #include <iostream>
 #include <unordered_set>
 #include "config_manager.h"
+#include "alns/solution.h"
 
 namespace {
 
@@ -35,9 +36,13 @@ double writeRoute(const solver::SolveRequest& req,
     std::vector<std::vector<int>> trips = constructed.trips.empty()
         ? std::vector<std::vector<int>>{constructed.nodes}
         : constructed.trips;
+
     auto validation = hfvrptwb::validateTrips(
-        req, vehicle, trips, cfg.fixedCostPerVehicle, cfg.costPerKm,
-        cfg.weight_fixed_cost, cfg.weight_per_km, cfg.reloadMin, cfg.weight_wait_time);
+        req, vehicle, trips,
+        cfg.fixedCostPerVehicle, cfg.costPerKm,           // billing
+        cfg.weight_fixed_cost, cfg.weight_per_km,         // score
+        cfg.reloadMin, 0.0);                              // wait weight = 0
+
     if (!validation.feasible) {
         for (int node_index : constructed.nodes) {
             const auto& node = req.nodes(node_index - 1);
@@ -84,16 +89,17 @@ void writeResponse(const solver::SolveRequest& req,
             continue;
         }
         double score = writeRoute(req, req.vehicles(constructed.vehicle_index), constructed, cfg, resp);
-        if (score >= 0.0) {          
-            objective += score;     
+        if (score >= 0.0) {
+            objective += score;
         }
     }
 
     double display_cost = 0.0;
     for (int i = 0; i < resp->routes_size(); i++) {
-      display_cost += resp->routes(i).total_cost();  // ← real cost
+        display_cost += resp->routes(i).total_cost();
     }
-    objective += 1000.0 * resp->unassigned_size();
+    objective    += 5000.0 * resp->unassigned_size();
+    display_cost += 5000.0 * resp->unassigned_size();
     resp->set_objective(display_cost);
 
     if (plan.timed_out) {
@@ -112,14 +118,12 @@ void applyTwoOpt(hfvrptwb::ConstructionResult& plan,
     for (auto& route : plan.routes) {
         const auto& vehicle = req.vehicles(route.vehicle_index);
 
-        // เก็บสำเนาเดิมไว้ใช้ fallback
         auto original_nodes = route.nodes;
         auto original_trips = route.trips;
         double original_total_cost = route.total_cost;
 
         bool single = route.trips.empty();
         if (single && !route.nodes.empty()) {
-            // push เฉพาะกรณีมี nodes จริง
             route.trips.push_back(route.nodes);
         }
 
@@ -127,14 +131,14 @@ void applyTwoOpt(hfvrptwb::ConstructionResult& plan,
         bool any_infeasible = false;
 
         for (auto& trip_nodes : route.trips) {
-            if (trip_nodes.empty()) continue; // ข้าม trip ว่าง
+            if (trip_nodes.empty()) continue;
 
             hfvrptwb::RouteState init;
             init.vehicle_index = route.vehicle_index;
 
             auto seed = hfvrptwb::evaluateRouteState(
                 req, vehicle, init, trip_nodes,
-                cfg.weight_fixed_cost, cfg.weight_per_km);
+                cfg.weight_fixed_cost, cfg.weight_per_km);   
 
             if (!seed.feasible || !std::isfinite(seed.next.cost)) {
                 any_infeasible = true;
@@ -155,12 +159,10 @@ void applyTwoOpt(hfvrptwb::ConstructionResult& plan,
         }
 
         if (any_infeasible) {
-            // fallback กลับไปใช้ route เดิม
             route.nodes = std::move(original_nodes);
             route.trips = std::move(original_trips);
             route.total_cost = original_total_cost;
         } else {
-            // rebuild nodes และอัพเดท cost
             if (single) {
                 if (!route.trips.empty())
                     route.nodes = route.trips[0];
@@ -193,20 +195,24 @@ grpc::Status solveRequest(const solver::SolveRequest* req,
         for (const auto& node : req->nodes()) {
             addDrop(resp, node.id(), "NO_VEHICLE", "no vehicles available");
         }
-        resp->set_objective(1000.0 * resp->unassigned_size());
+        resp->set_objective(5000.0 * resp->unassigned_size());
         resp->set_status("INFEASIBLE");
         return grpc::Status::OK;
     }
 
     auto planObj = [](const hfvrptwb::ConstructionResult& p) -> double {
         double obj = 0.0;
-        for (const auto& r : p.routes) obj += r.internal_score;
-        obj += 1000.0 * (double)p.drops.size();
+        for (const auto& r : p.routes) obj += r.total_cost;   // billing cost
+        obj += 5000.0 * (double)p.drops.size();
         return obj;
     };
 
     auto plan = hfvrptwb::adaptiveConstruct(
-        *req, cfg.weight_fixed_cost, cfg.weight_per_km, cfg.enableMultiTrip, cfg.reloadMin);
+        *req,
+        cfg.weight_fixed_cost, cfg.weight_per_km,    // mode weights
+        cfg.fixedCostPerVehicle, cfg.costPerKm,       // billing rates
+        cfg.enableMultiTrip, cfg.reloadMin);
+
     auto t1 = Clock::now();
     std::cout << "[Phase] construction"
               << "  obj=" << planObj(plan)
@@ -214,23 +220,19 @@ grpc::Status solveRequest(const solver::SolveRequest* req,
               << "  unassigned=" << plan.drops.size()
               << "  ms=" << std::chrono::duration_cast<std::chrono::milliseconds>(t1 - t0).count() << "\n";
 
-    // Post-construction config: ALNS doesn't account for reload breaks between trips,
-    // so all downstream phases use reloadMin=0 when ALNS is active.
     SolveConfig post_cfg = cfg;
     if (cfg.enableALNS) post_cfg.reloadMin = 0;
 
-    // Pre-ALNS consolidation: or-opt eliminates suboptimal vehicles so ALNS
-    // starts from a tighter solution (e.g. 4→3 routes for the 30-order demo).
-    // Without this, ALNS never discovers vehicle elimination on its own.
     hfvrptwb::orOptRelocate(plan, *req, post_cfg);
 
     if (cfg.enableALNS) {
-        int limit_ms = req->time_limit_ms() > 0 ? req->time_limit_ms() : 60000;
+        int limit_ms = req->time_limit_ms() > 0 ? req->time_limit_ms() : 90000;
         int construction_ms = (int)std::chrono::duration_cast<std::chrono::milliseconds>(t1 - t0).count();
         int alns_budget_ms = std::max(100, limit_ms - construction_ms);
 
         hfvrptwb::alns::ALNSConfig alns_cfg;
-        alns_cfg.enable_sector_removal = cfg.enableSectorRemoval;
+        alns_cfg.enable_sector_removal   = cfg.enableSectorRemoval;
+        alns_cfg.forbid_new_vehicle_prob = post_cfg.alns_forbid_new_vehicle_prob;
 
         int n_starts = std::max(1, cfg.multiStartCount);
         auto budget_per_start = std::chrono::milliseconds(alns_budget_ms / n_starts);
@@ -239,13 +241,12 @@ grpc::Status solveRequest(const solver::SolveRequest* req,
         double best_obj = planObj(plan);
 
         for (int s = 0; s < n_starts; ++s) {
-
-          auto planInternalScore = [](const hfvrptwb::ConstructionResult& p) -> double {
-            double total_internal = 0.0;
-            for (const auto& r : p.routes) total_internal += r.internal_score;
-            total_internal += 1000.0 * (double)p.drops.size();
-            return total_internal;
-          };
+            auto planInternalScore = [](const hfvrptwb::ConstructionResult& p) -> double {
+                double total = 0.0;
+                for (const auto& r : p.routes) total += r.internal_score;
+                total += 5000.0 * (double)p.drops.size();
+                return total;
+            };
 
             uint32_t run_seed = cfg.seed + s * 31337;
             hfvrptwb::alns::ALNSSolver alns_solver(alns_cfg);
@@ -253,13 +254,14 @@ grpc::Status solveRequest(const solver::SolveRequest* req,
                 *req, plan,
                 post_cfg.weight_fixed_cost, post_cfg.weight_per_km,
                 budget_per_start,
-                post_cfg.reloadMin, run_seed);
+                post_cfg.reloadMin, run_seed
+                );                                        // weight_wait_time = 0
             if (out_stats && s == 0) *out_stats = alns_solver.stats();
 
             double trial_score = planInternalScore(trial);
             if (trial_score < best_obj) {
-              best_obj = trial_score;
-              best_plan = std::move(trial);
+                best_obj  = trial_score;
+                best_plan = std::move(trial);
             }
         }
         plan = std::move(best_plan);
@@ -273,7 +275,6 @@ grpc::Status solveRequest(const solver::SolveRequest* req,
               << "  unassigned=" << plan.drops.size()
               << "  ms=" << std::chrono::duration_cast<std::chrono::milliseconds>(t2 - t1).count() << "\n";
 
-    hfvrptwb::orOptRelocate(plan, *req, post_cfg);
     auto t3 = Clock::now();
     std::cout << "[Phase] or-opt"
               << "  obj=" << planObj(plan)
@@ -303,20 +304,16 @@ grpc::Status SolverServiceImpl::Solve(grpc::ServerContext*,
                                       const solver::SolveRequest* req,
                                       solver::SolveResponse* resp)
 {
-    // "MIN_WAIT_TIME", "MIN_DISTANCE", "BALANCE_ALL_CARS", "DEFAULT"
-    std::string my_mode = "MIN_DISTANCE";
+    SolveConfig dynamic_cfg = ConfigManager::loadMode(
+        1.0f,   // w_dist
+        0.0f    // w_cost
+    );
 
-    std::cout << "RUNNING WITH MODE: " << my_mode << "\n\n";
-
-    // Load the specific weights for this mode using ConfigManager
-    SolveConfig dynamic_cfg = ConfigManager::loadMode(my_mode);
-
-    // Keep the non-math settings from the original class configuration (cfg_)
-    dynamic_cfg.enableALNS = cfg_.enableALNS;
+    dynamic_cfg.enableALNS      = cfg_.enableALNS;
     dynamic_cfg.enableMultiTrip = cfg_.enableMultiTrip;
-    dynamic_cfg.reloadMin = cfg_.reloadMin;
+    dynamic_cfg.reloadMin       = cfg_.reloadMin;
     dynamic_cfg.multiStartCount = cfg_.multiStartCount;
-    dynamic_cfg.seed = cfg_.seed;
+    dynamic_cfg.seed            = std::random_device{}();
 
     return solveRequest(req, dynamic_cfg, resp);
 }

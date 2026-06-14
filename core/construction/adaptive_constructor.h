@@ -28,8 +28,10 @@ struct ConstructionResult {
 
 ConstructionResult adaptiveConstruct(
     const solver::SolveRequest& req,
-    double default_fixed_cost,
-    double default_cost_per_km,
+    double weight_fixed_cost,
+    double weight_per_km,
+    double billing_fixed_cost,
+    double billing_cost_per_km,
     bool enable_multi_trip = false,
     int reload_min = 0);
 
