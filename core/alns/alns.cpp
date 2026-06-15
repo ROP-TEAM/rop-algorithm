@@ -154,16 +154,15 @@ ConstructionResult ALNSSolver::solve(
                 total_routed += (int)t.nodes.size();
         int q = std::clamp(total_routed / 4, 4, 15);
 
-        // ← pass weight_wait_time to destroy and repair
-        destroyers[d](candidate, rng, req, fixed, km, q, weight_wait_time);
-        candidate.forbid_new_vehicle = (d == 4) || (uni(rng) < cfg_.forbid_new_vehicle_prob);
-        repairers[r](candidate, req, fixed, km, reload_min, weight_wait_time);
+        candidate.objective = computeObjective(candidate.vehicles, (int)candidate.unrouted.size(), 
+            cfg_.unassigned_penalty);
+        candidate.internal_score = computeInternalScore(candidate.vehicles, (int)candidate.unrouted.size(), 
+            cfg_.unassigned_penalty);
 
-        candidate.objective     = computeObjective(candidate.vehicles, (int)candidate.unrouted.size(), penalty.coefficient());
-        candidate.internal_score = computeInternalScore(candidate.vehicles, (int)candidate.unrouted.size(), penalty.coefficient());
-
-        double delta = candidate.internal_score - current.internal_score;
-        bool accept  = delta < 0 || uni(rng) < std::exp(-delta / T);
+        // Acceptance (use internal_score)
+        // double delta = candidate.internal_score - current.internal_score;
+        double delta = candidate.objective - current.objective;
+        bool accept = delta < 0 || uni(rng) < std::exp(-delta / T);
 
         int score = 0;
         if (accept) {

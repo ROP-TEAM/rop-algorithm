@@ -20,8 +20,8 @@ struct ALNSConfig {
     int    score_better          = 13;
     int    score_accepted        = 9;
     bool   enable_sector_removal = true;
-    double forbid_new_vehicle_prob = 0.0;
-    double weight_wait_time      = 0.0;
+    double forbid_new_vehicle_prob = 0.5;
+    int    unassigned_penalty    = 5000;
 };
 
 struct OperatorStats {

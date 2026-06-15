@@ -37,11 +37,12 @@ double writeRoute(const solver::SolveRequest& req,
         ? std::vector<std::vector<int>>{constructed.nodes}
         : constructed.trips;
 
+    // billing uses real rates, score uses mode weights
     auto validation = hfvrptwb::validateTrips(
         req, vehicle, trips,
-        cfg.fixedCostPerVehicle, cfg.costPerKm,           // billing
-        cfg.weight_fixed_cost, cfg.weight_per_km,         // score
-        cfg.reloadMin, 0.0);                              // wait weight = 0
+        cfg.fixedCostPerVehicle, cfg.costPerKm,
+        cfg.weight_fixed_cost, cfg.weight_per_km,
+        cfg.reloadMin, cfg.weight_wait_time);
 
     if (!validation.feasible) {
         for (int node_index : constructed.nodes) {
@@ -59,7 +60,6 @@ double writeRoute(const solver::SolveRequest& req,
     for (const auto& trip : trips) {
         route->add_trip_sizes((int)trip.size());
     }
-
     for (const auto& timing : validation.timings) {
         const auto& node = req.nodes(timing.node_index - 1);
         auto* stop = route->add_stops();
@@ -98,8 +98,8 @@ void writeResponse(const solver::SolveRequest& req,
     for (int i = 0; i < resp->routes_size(); i++) {
         display_cost += resp->routes(i).total_cost();
     }
-    objective    += 5000.0 * resp->unassigned_size();
-    display_cost += 5000.0 * resp->unassigned_size();
+    objective    += 1000.0 * resp->unassigned_size();
+    display_cost += 1000.0 * resp->unassigned_size();
     resp->set_objective(display_cost);
 
     if (plan.timed_out) {
@@ -202,8 +202,8 @@ grpc::Status solveRequest(const solver::SolveRequest* req,
 
     auto planObj = [](const hfvrptwb::ConstructionResult& p) -> double {
         double obj = 0.0;
-        for (const auto& r : p.routes) obj += r.total_cost;   // billing cost
-        obj += 5000.0 * (double)p.drops.size();
+        for (const auto& r : p.routes) obj += r.total_cost;
+        obj += 1000.0 * (double)p.drops.size();
         return obj;
     };
 
@@ -232,7 +232,8 @@ grpc::Status solveRequest(const solver::SolveRequest* req,
 
         hfvrptwb::alns::ALNSConfig alns_cfg;
         alns_cfg.enable_sector_removal   = cfg.enableSectorRemoval;
-        alns_cfg.forbid_new_vehicle_prob = post_cfg.alns_forbid_new_vehicle_prob;
+        alns_cfg.forbid_new_vehicle_prob = cfg.alns_forbid_new_vehicle_prob;
+        alns_cfg.unassigned_penalty      = cfg.unassigned_penalty;
 
         int n_starts = std::max(1, cfg.multiStartCount);
         auto budget_per_start = std::chrono::milliseconds(alns_budget_ms / n_starts);
@@ -241,12 +242,6 @@ grpc::Status solveRequest(const solver::SolveRequest* req,
         double best_obj = planObj(plan);
 
         for (int s = 0; s < n_starts; ++s) {
-            auto planInternalScore = [](const hfvrptwb::ConstructionResult& p) -> double {
-                double total = 0.0;
-                for (const auto& r : p.routes) total += r.internal_score;
-                total += 5000.0 * (double)p.drops.size();
-                return total;
-            };
 
             uint32_t run_seed = cfg.seed + s * 31337;
             hfvrptwb::alns::ALNSSolver alns_solver(alns_cfg);
@@ -258,7 +253,7 @@ grpc::Status solveRequest(const solver::SolveRequest* req,
                 );                                        // weight_wait_time = 0
             if (out_stats && s == 0) *out_stats = alns_solver.stats();
 
-            double trial_score = planInternalScore(trial);
+            double trial_score = planObj(trial);
             if (trial_score < best_obj) {
                 best_obj  = trial_score;
                 best_plan = std::move(trial);
@@ -267,6 +262,7 @@ grpc::Status solveRequest(const solver::SolveRequest* req,
         plan = std::move(best_plan);
     } else {
         applyTwoOpt(plan, *req, post_cfg);
+        hfvrptwb::orOptRelocate(plan, *req, post_cfg);
     }
     auto t2 = Clock::now();
     std::cout << "[Phase] " << (cfg.enableALNS ? "alns" : "2-opt")
@@ -282,7 +278,8 @@ grpc::Status solveRequest(const solver::SolveRequest* req,
               << "  unassigned=" << plan.drops.size()
               << "  ms=" << std::chrono::duration_cast<std::chrono::milliseconds>(t3 - t2).count() << "\n";
 
-    writeResponse(*req, post_cfg, plan, resp);
+    // use original cfg (real reloadMin) for final validation and display
+    writeResponse(*req, cfg, plan, resp);
 
     auto ms = [](auto a, auto b) {
         return std::chrono::duration_cast<std::chrono::milliseconds>(b - a).count();
@@ -305,13 +302,13 @@ grpc::Status SolverServiceImpl::Solve(grpc::ServerContext*,
                                       solver::SolveResponse* resp)
 {
     SolveConfig dynamic_cfg = ConfigManager::loadMode(
-        1.0f,   // w_dist
-        0.0f    // w_cost
+        0.5f,  // w_dist
+        0.5f// w_cost
     );
 
     dynamic_cfg.enableALNS      = cfg_.enableALNS;
     dynamic_cfg.enableMultiTrip = cfg_.enableMultiTrip;
-    dynamic_cfg.reloadMin       = cfg_.reloadMin;
+    // dynamic_cfg.reloadMin       = cfg_.reloadMin;
     dynamic_cfg.multiStartCount = cfg_.multiStartCount;
     dynamic_cfg.seed            = std::random_device{}();
 

@@ -38,11 +38,11 @@ inline double computeObjective(const std::vector<VehicleTrips>& vehicles, int un
 
 inline double computeInternalScore(const std::vector<VehicleTrips>& vehicles,
                                    int unrouted_count,
-                                   double penalty_coeff = 5000.0) {
+                                   double penalty_coeff = 1000.0) {
     double total = 0.0;
     for (const auto& vt : vehicles) {
         for (const auto& trip : vt.trips) {
-            total += trip.internal_score;   // mode‑weighted score
+            total += trip.cost;  
         }
     }
     total += penalty_coeff * unrouted_count;

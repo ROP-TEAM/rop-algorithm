@@ -61,8 +61,8 @@ template <typename StateVec, typename IsEmptyFunc>
 std::vector<int> getSmartVehicleOrder(
     const solver::SolveRequest& req,
     const StateVec& states,
-    double weight_fixed_cost,
-    double weight_per_km,
+    double default_fixed_cost,      // same name as in caller
+    double default_cost_per_km,     // same name as in caller
     IsEmptyFunc isEmpty)
 {
     std::vector<int> order(req.vehicles_size());
@@ -78,19 +78,12 @@ std::vector<int> getSmartVehicleOrder(
         bool active_a = !isEmpty(states, a);
         bool active_b = !isEmpty(states, b);
 
-        // Prefer already‑active vehicles to pack orders tightly,
-        // leaving more time‑window flexibility for the remaining orders.
-        if (active_a != active_b) {
-        // For MIN_DIST (weight_fixed~0, weight_per_km~104): prefer empty vehicles
-        // For MIN_COST (weight_fixed~500, weight_per_km~4): prefer active vehicles
-        if (weight_fixed_cost / 500.0 > weight_per_km / 100.0)
-        return active_a > active_b;
-        else
-        return active_a < active_b;
-        }
+        // Dynamic rule – adapt to mode weights
+        if (active_a != active_b)
+        return active_a < active_b;   // always spread orders during construction
 
-        double cost_a = va.fixed_cost() > 0 ? va.fixed_cost() : weight_fixed_cost;
-        double cost_b = vb.fixed_cost() > 0 ? vb.fixed_cost() : weight_fixed_cost;
+        double cost_a = va.fixed_cost() > 0 ? va.fixed_cost() : default_fixed_cost;
+        double cost_b = vb.fixed_cost() > 0 ? vb.fixed_cost() : default_fixed_cost;
         if (cost_a != cost_b) return cost_a < cost_b;
 
         if (va.capacity() != vb.capacity()) return va.capacity() > vb.capacity();
@@ -130,7 +123,7 @@ Candidate bestSingleInsertion(
 {
     Candidate best;
 
-    auto smart_order = getSmartVehicleOrder(req, routes, weight_fixed_cost, weight_per_km, isRouteStateEmpty);
+    auto smart_order = getSmartVehicleOrder(req, routes, default_fixed_cost, default_cost_per_km, isRouteStateEmpty);
     for (int vi : smart_order) {
         const auto& current = routes[vi];
         for (int pos = 0; pos <= (int)current.nodes.size(); ++pos) {
@@ -189,7 +182,7 @@ Candidate bestMultiTripInsertion(
     int reload_min)
 {
     Candidate best;
-    auto smart_order = getSmartVehicleOrder(req, schedules, weight_fixed_cost, weight_per_km, isScheduleStateEmpty);
+    auto smart_order = getSmartVehicleOrder(req, schedules, default_fixed_cost, default_cost_per_km, isScheduleStateEmpty);
     for (int vi : smart_order) {
         const auto& schedule = schedules[vi];
 

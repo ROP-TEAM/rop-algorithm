@@ -74,13 +74,10 @@ InsertionEval evaluateRouteState(
     eval.next.vehicle_index = current.vehicle_index;
     eval.next.nodes = std::move(candidate_nodes);
 
-    auto validation = validateTrips(
-        req, vehicle, {eval.next.nodes},
-        550.0, 4.0003,                              // billing
-        default_fixed_cost, default_cost_per_km,    // mode weights
-        0,                                          // reload_min
-        weight_wait_time);                          // <-- use it here
-
+auto validation = validateTrips(
+    req, vehicle, {eval.next.nodes},
+    default_fixed_cost, default_cost_per_km,
+    default_fixed_cost, default_cost_per_km);
     if (!validation.feasible) {
         eval.fail_code = validation.code;
         eval.fail_detail = validation.detail;
