@@ -2,6 +2,7 @@
 
 #include "construction/adaptive_constructor.h"
 #include "validator/route_state.h"
+#include "validator/route_validator.h"
 #include <unordered_set>
 #include <vector>
 #include <cmath>
@@ -12,6 +13,7 @@ namespace alns {
 struct VehicleTrips {
     int vehicle_index = -1;
     std::vector<RouteState> trips;
+    double internal_score = 0.0;
 };
 
 struct ALNSSolution {
@@ -19,10 +21,11 @@ struct ALNSSolution {
     std::vector<int> unrouted;
     double objective = 0.0;
     bool forbid_new_vehicle = false;
+    double internal_score = 0.0;
 };
 
 inline double computeObjective(const std::vector<VehicleTrips>& vehicles, int unrouted_count,
-                                double penalty_coeff = 1000.0) {
+                                double penalty_coeff = 5000.0) {
     double total = 0.0;
     for (const auto& vt : vehicles) {
         for (const auto& trip : vt.trips) {
@@ -33,10 +36,25 @@ inline double computeObjective(const std::vector<VehicleTrips>& vehicles, int un
     return total;
 }
 
+inline double computeInternalScore(const std::vector<VehicleTrips>& vehicles,
+                                   int unrouted_count,
+                                   double penalty_coeff = 1000.0) {
+    double total = 0.0;
+    for (const auto& vt : vehicles) {
+        for (const auto& trip : vt.trips) {
+            total += trip.cost;  
+        }
+    }
+    total += penalty_coeff * unrouted_count;
+    return total;
+}
+
 inline ALNSSolution fromConstruction(
     const ConstructionResult& result,
     const solver::SolveRequest& req,
-    double fixed, double km)
+    double fixed, double km,
+    double weight_wait_time = 0.0,
+    int reload_min = 0)  // ← add reload_min
 {
     ALNSSolution sol;
     std::unordered_set<int> routed;
@@ -53,13 +71,23 @@ inline ALNSSolution fromConstruction(
             ? std::vector<std::vector<int>>{route.nodes}
             : route.trips;
 
+        // ← validate full multi-trip schedule with correct reload_min first
+        // this prevents silently dropping orders from feasible multi-trip routes
+        if (trip_lists.size() > 1) {
+            auto full_val = validateTrips(req, vehicle, trip_lists,
+                                          fixed, km, fixed, km,
+                                          reload_min, weight_wait_time);
+            if (!full_val.feasible) continue;  // skip whole route
+        }
+
         for (const auto& trip_nodes : trip_lists) {
             if (trip_nodes.empty()) continue;
 
             RouteState init;
             init.vehicle_index = route.vehicle_index;
 
-            auto eval = evaluateRouteState(req, vehicle, init, trip_nodes, fixed, km);
+            auto eval = evaluateRouteState(req, vehicle, init, trip_nodes,
+                                           fixed, km);
             if (eval.feasible && std::isfinite(eval.next.cost)) {
                 vt.trips.push_back(std::move(eval.next));
                 for (int ni : trip_nodes) routed.insert(ni);
@@ -79,6 +107,7 @@ inline ALNSSolution fromConstruction(
     }
 
     sol.objective = computeObjective(sol.vehicles, (int)sol.unrouted.size());
+    sol.internal_score = computeInternalScore(sol.vehicles, (int)sol.unrouted.size());
     return sol;
 }
 
@@ -89,10 +118,12 @@ inline ConstructionResult toConstruction(const ALNSSolution& sol) {
         ConstructedRoute route;
         route.vehicle_index = vt.vehicle_index;
         route.total_cost = 0.0;
+        route.internal_score = 0.0;
 
         for (const auto& trip : vt.trips) {
             route.trips.push_back(trip.nodes);
             route.total_cost += trip.cost;
+            route.internal_score += trip.cost;
             route.nodes.insert(route.nodes.end(), trip.nodes.begin(), trip.nodes.end());
         }
 

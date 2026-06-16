@@ -19,6 +19,10 @@ struct RouteValidationResult {
     double total_distance_m = 0.0;
     int total_duration_min = 0;
     double total_cost = 0.0;
+
+    double total_wait_time = 0.0;  // accumulated wait time (min)
+    double internal_score = 0.0;   // score for alns to make dicision
+
     std::vector<StopTiming> timings;
 };
 
@@ -28,6 +32,9 @@ RouteValidationResult validateTrips(
     const std::vector<std::vector<int>>& trips,
     double default_fixed_cost,
     double default_cost_per_km,
-    int reload_min = 0);
+    double score_fixed_cost,      // mode weight for optimization
+    double score_cost_per_km,     // mode weight for optimization
+    int reload_min = 0,
+    double weight_wait_time = 0.0);
 
 } // namespace hfvrptwb

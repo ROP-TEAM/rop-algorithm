@@ -1,5 +1,4 @@
 #include "validator/route_state.h"
-
 #include "validator/route_validator.h"
 
 namespace hfvrptwb {
@@ -68,14 +67,17 @@ InsertionEval evaluateRouteState(
     const RouteState& current,
     std::vector<int> candidate_nodes,
     double default_fixed_cost,
-    double default_cost_per_km)
+    double default_cost_per_km,
+    double weight_wait_time)    // <-- keep parameter
 {
     InsertionEval eval;
     eval.next.vehicle_index = current.vehicle_index;
     eval.next.nodes = std::move(candidate_nodes);
 
-    auto validation = validateTrips(
-        req, vehicle, {eval.next.nodes}, default_fixed_cost, default_cost_per_km);
+auto validation = validateTrips(
+    req, vehicle, {eval.next.nodes},
+    default_fixed_cost, default_cost_per_km,
+    default_fixed_cost, default_cost_per_km);
     if (!validation.feasible) {
         eval.fail_code = validation.code;
         eval.fail_detail = validation.detail;
@@ -83,16 +85,21 @@ InsertionEval evaluateRouteState(
     }
 
     eval.feasible = true;
-    eval.delta_cost = validation.total_cost - current.cost;
-    eval.next.distance_m = validation.total_distance_m;
-    eval.next.duration_min = validation.total_duration_min;
-    eval.next.cost = validation.total_cost;
+    double current_cost = current.cost;
+    eval.delta_cost = validation.total_cost - current_cost;
+    eval.next.distance_m       = validation.total_distance_m;
+    eval.next.duration_min     = validation.total_duration_min;
+    eval.next.cost             = validation.total_cost;
+    eval.next.total_wait_time  = validation.total_wait_time;
+    eval.next.internal_score   = validation.internal_score;
+
     eval.next.forward_labels = buildForwardLabels(req, vehicle, eval.next.nodes);
     eval.next.label_summary = summarizeForwardLabels(
         eval.next.forward_labels,
         vehicle.capacity(),
         vehicle.shift_end() == 0 ? 1440 : vehicle.shift_end(),
         eval.next.distance_m);
+
     return eval;
 }
 
@@ -103,7 +110,8 @@ InsertionEval evaluateInsertion(
     int node_index,
     int position,
     double default_fixed_cost,
-    double default_cost_per_km)
+    double default_cost_per_km,
+    double weight_wait_time)    // <-- keep parameter
 {
     InsertionEval eval;
     if (position < 0 || position > (int)route.nodes.size()) {
@@ -114,8 +122,11 @@ InsertionEval evaluateInsertion(
 
     auto candidate_nodes = route.nodes;
     candidate_nodes.insert(candidate_nodes.begin() + position, node_index);
+
     eval = evaluateRouteState(
-        req, vehicle, route, std::move(candidate_nodes), default_fixed_cost, default_cost_per_km);
+        req, vehicle, route, std::move(candidate_nodes),
+        default_fixed_cost, default_cost_per_km,
+        weight_wait_time);          // forward
     eval.position = position;
     return eval;
 }

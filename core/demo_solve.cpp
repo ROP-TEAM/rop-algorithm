@@ -1,5 +1,5 @@
-// Demo: runs the full solver pipeline using real mock data from rop-algorithm/mock/
-// Depot: 16.4442, 102.8352 (Khon Kaen area)  |  30 orders  |  12 vehicles
+// Demo: runs the full solver pipeline using real mock data from CSV
+// Depot: 16.4442, 102.8352 (Khon Kaen area) | 30 orders | 12 vehicles
 
 #include "solver_service.h"
 #include "solver.pb.h"
@@ -9,7 +9,11 @@
 #include <chrono>
 #include <cstdio>
 #include <string>
+#include <fstream>
+#include <sstream>
+#include <cctype>
 
+// Helper for print time
 static std::string toHHMM(int m) {
     char buf[16]; // 8 was enough for valid minutes-from-midnight but GCC -Wformat-truncation sees full int range
     std::snprintf(buf, sizeof(buf), "%02d:%02d", m / 60, m % 60);
@@ -17,11 +21,117 @@ static std::string toHHMM(int m) {
 }
 
 // ---------------------------------------------------------------------------
+// Helpers for CSV Parsing
+// ---------------------------------------------------------------------------
+
+// convert HH:MM to minutes from midnight
+static int parseTimeToMinutes(const std::string& timeStr) {
+    if (timeStr.empty()) return 0;
+    int h = 0, m = 0;
+    char colon;
+    std::stringstream ss(timeStr);
+    ss >> h >> colon >> m;
+    return h * 60 + m;
+}
+
+// convert Priority to number
+static int parsePriority(const std::string& p) {
+    if (p == "Critical") return 4;
+    if (p == "High") return 3;
+    if (p == "Medium") return 2;
+    if (p == "Low") return 1;
+    return 0; 
+}
+
+// convert Tag to lowercase
+static std::string toLower(std::string s) {
+    std::transform(s.begin(), s.end(), s.begin(), [](unsigned char c){ return std::tolower(c); });
+    return s;
+}
+
+struct NodeDef {
+    std::string id;
+    double lat, lng;
+    int demand, service_time, tw_start, tw_end, priority, deadline_min;
+    std::string type;
+    std::vector<std::string> tags;   
+};
+
+static std::vector<NodeDef> DYNAMIC_NODES;
+
+// load nodes from CSV file
+static bool loadNodesFromCSV(const std::string& filepath) {
+    std::ifstream file(filepath);
+    if (!file.is_open()) {
+        std::cerr << "ERROR!: Could not open file " << filepath << "\n";
+        return false;
+    }
+
+    std::string line;
+    // skip header
+    std::getline(file, line);
+
+    while (std::getline(file, line)) {
+        if (line.empty()) continue;
+
+        std::stringstream ss(line);
+        std::string token;
+        std::vector<std::string> cols;
+
+        // separate columns by comma
+        while (std::getline(ss, token, ',')) {
+            cols.push_back(token);
+        }
+
+        if (cols.size() < 8) continue;               // other test
+        // if (cols.size() < 9) continue;            // test 2
+
+        NodeDef n;
+
+        // n.id = "ORD-" + cols[0];                  // Column 0 for test 2
+        
+        n.id = cols[0];                              // Column 0: Order ID (e.g. ORD-A01)
+                                                     //
+        n.demand = std::stoi(cols[1]);               // Column 1: Capacity
+        
+        // Column 2: Tags
+        std::string tag = toLower(cols[2]);
+        if (!tag.empty()) n.tags.push_back(tag);
+
+        n.tw_start = parseTimeToMinutes(cols[3]);    // Column 3: Start Time
+        n.tw_end   = parseTimeToMinutes(cols[4]);    // Column 4: End Time
+
+        // test 2
+        // n.priority = parsePriority(cols[5]);         // Column 5: Priority (test 2)
+        // n.service_time = std::stoi(cols[6]);         // Column 6: duration (Service Time) (test 2)
+        // n.lat = std::stod(cols[7]);                  // Column 7: Lat (test 2)
+        // n.lng = std::stod(cols[8]);                  // Column 8: Lng (test 2)
+
+        // other test
+        n.service_time = std::stoi(cols[5]);         // Column 5: duration (Service Time)
+        n.lat = std::stod(cols[6]);                  // Column 6: Lat
+        n.lng = std::stod(cols[7]);                  // Column 7: Lng
+
+        n.priority = 2; // Default Medium priority (commented out for test 2)
+        n.type = "delivery";
+        n.deadline_min = 0; 
+
+        DYNAMIC_NODES.push_back(n);
+    }
+    
+    file.close();
+    std::cout << "Successfully loaded! " << DYNAMIC_NODES.size() << " orders from CSV.\n\n";
+    return true;
+}
+
+
+// ---------------------------------------------------------------------------
 // Pre-computed 31×31 matrices from Google Maps API (mock/message.txt)
-// Row 0 = depot, rows 1-30 = ORD-A01…ORD-A30
+// Row 0 = depot, rows 1-30 = DYNAMIC_NODES[0...29]
 // ---------------------------------------------------------------------------
 static const int N = 31;
 
+// [KEEP YOUR EXACT DIST MATRIX HERE]
 static const double DIST[N][N] = {
     {0,1802,6748,7589,7612,8703,7962,7634,3999,7812,2330,3505,2315,2156,7967,1201,2447,4811,4707,1404,8003,3385,4304,5474,9160,5235,7436,1144,978,9480,4323},
     {1915,0,6979,7820,7843,8934,8193,7865,4230,8044,2551,2271,1461,466,5603,3127,2016,5042,5427,982,5639,2151,4535,3110,6796,5977,7667,1698,918,9711,4555},
@@ -56,6 +166,7 @@ static const double DIST[N][N] = {
     {2673,2865,7250,8091,8113,9205,8463,8135,4500,7266,2821,1122,4957,2769,5584,1775,5089,5313,5894,4046,5619,1001,4806,3090,6776,6444,7937,3786,3620,9981,0}
 };
 
+// [KEEP YOUR EXACT DUR MATRIX HERE]
 static const double DUR[N][N] = {
     {0,4.95,10.78,13.13,12.32,13.67,11.88,12.62,6.7,11.63,6.9,5.23,6.5,6.0,12.8,3.47,6.77,9.55,8.07,3.97,13.28,4.98,6.78,8.92,15.15,9.38,11.95,3.0,2.8,12.55,6.77},
     {5.9,0,14.07,16.42,15.6,16.95,15.17,15.9,9.98,14.92,8.68,6.2,4.32,1.57,11.0,7.57,5.57,12.83,11.22,3.07,11.47,5.95,10.07,7.1,13.35,13.05,15.23,4.63,3.07,15.83,10.05},
@@ -90,78 +201,30 @@ static const double DUR[N][N] = {
     {4.82,7.53,12.78,15.13,14.32,15.67,13.88,14.62,8.7,14.53,7.4,3.3,10.88,6.65,10.87,4.18,11.15,11.55,11.0,8.35,11.35,3.05,8.8,6.98,13.23,12.83,13.95,7.38,7.18,14.57,0}
 };
 
-// ---------------------------------------------------------------------------
-// Node data (mock/message (3).txt) — 30 orders, depot defined separately
-// priority: 4=critical 3=high 2=medium 1=low
-// ---------------------------------------------------------------------------
-struct NodeDef {
-    const char* id;
-    double lat, lng;
-    int demand, service_time, tw_start, tw_end, priority, deadline_min;
-    const char* type;
-    const char* tag;   // single tag or "" for none
-};
-
-static const NodeDef NODES[30] = {
-    {"ORD-A01", 16.435022, 102.836030, 3, 20, 420, 660, 1, 0, "delivery", ""},
-    {"ORD-A02", 16.478216, 102.819988, 12, 45, 360, 720, 2, 0, "delivery", "heavy"},
-    {"ORD-A03", 16.480415, 102.811911, 5, 5, 510, 600, 0, 0, "delivery", "fragile"},
-    {"ORD-A04", 16.480198, 102.815845, 1, 15, 600, 960, 2, 0, "delivery", "express"},
-    {"ORD-A05", 16.486826, 102.816038, 8, 30, 480, 900, 3, 0, "delivery", ""},
-    {"ORD-A06", 16.489513, 102.818906, 15, 10, 480, 570, 0, 0, "delivery", "bulk"},
-    {"ORD-A07", 16.482446, 102.820245, 4, 20, 660, 1020, 2, 0, "delivery", "small"},
-    {"ORD-A08", 16.460546, 102.826129, 2, 30, 540, 840, 2, 0, "delivery", "express"},
-    {"ORD-A09", 16.485946, 102.843109, 10, 10, 780, 1080, 3, 0, "delivery", "heavy"},
-    {"ORD-A10", 16.446586, 102.823942, 6, 15, 540, 720, 1, 0, "delivery", ""},
-    {"ORD-A11", 16.448274, 102.834671, 3, 40, 300, 600, 1, 0, "delivery", "fragile"},
-    {"ORD-A12", 16.426499, 102.839821, 7, 15, 480, 630, 0, 0, "delivery", ""},
-    {"ORD-A13", 16.436883, 102.838487, 9, 10, 900, 1020, 1, 0, "delivery", "bulk"},
-    {"ORD-A14", 16.474315, 102.859931, 2, 20, 600, 960, 2, 0, "delivery", "small"},
-    {"ORD-A15", 16.440155, 102.829593, 11, 15, 660, 900, 2, 0, "delivery", "heavy"},
-    {"ORD-A16", 16.418724, 102.832380, 5, 5, 480, 1080, 3, 0, "delivery", "express"},
-    {"ORD-A17", 16.468967, 102.829573, 4, 50, 420, 780, 2, 0, "delivery", ""},
-    {"ORD-A18", 16.465963, 102.825539, 8, 15, 780, 1020, 2, 0, "delivery", "fragile"},
-    {"ORD-A19", 16.428000, 102.833915, 1, 5, 540, 600, 0, 0, "delivery", "small"},
-    {"ORD-A20", 16.477720, 102.856120, 14, 25, 480, 780, 2, 0, "delivery", "bulk"},
-    {"ORD-A21", 16.448285, 102.833536, 6, 10, 600, 960, 3, 0, "delivery", ""},
-    {"ORD-A22", 16.463575, 102.827698, 3, 30, 720, 1080, 2, 0, "delivery", "express"},
-    {"ORD-A23", 16.457895, 102.845722, 12, 25, 540, 780, 1, 0, "delivery", "heavy"},
-    {"ORD-A24", 16.480634, 102.868522, 5, 25, 480, 1020, 3, 0, "delivery", "fragile"},
-    {"ORD-A25", 16.452426, 102.795862, 2, 10, 960, 1080, 0, 0, "delivery", "small"},
-    {"ORD-A26", 16.480622, 102.818632, 7, 15, 540, 840, 2, 0, "delivery", ""},
-    {"ORD-A27", 16.426529, 102.828486, 10, 5, 780, 1020, 3, 0, "delivery", "bulk"},
-    {"ORD-A28", 16.431222, 102.832606, 4, 20, 840, 1080, 1, 0, "delivery", "express"},
-    {"ORD-A29", 16.491586, 102.832824, 6, 45, 480, 720, 1, 0, "delivery", "fragile"},
-    {"ORD-A30", 16.453110, 102.832916, 1, 15, 840, 1080, 2, 0, "delivery", ""}
-};
-
-// ---------------------------------------------------------------------------
-// Vehicle data (mock/message (2).txt) — 12 vehicles
-// ---------------------------------------------------------------------------
 struct VehicleDef {
     const char* id;
     int capacity, shift_start, shift_end, max_tasks;
-    const char* tag1; const char* tag2;  // "" = no tag
+    const char* tag1; const char* tag2; 
 };
 
 static const VehicleDef VEHICLES[12] = {
-    {"V-01",  50,  420, 1020, 4, "refrigerated", "fragile"},
-    {"V-02",  80,  360, 1080, 5, "heavy", "bulk"},
-    {"V-03",  10,  480, 1260, 6, "small", "express"},
-    {"V-04",  16,  420, 1020, 4, "refrigerated", "fragile"},
-    {"V-05",  12,  540,  900, 5, "heavy", "bulk"},
-    {"V-06",  47,  480, 1080, 6, "small", "express"},
-    {"V-07",  40,  480, 1020, 7, "fragile", "small"},
-    {"V-08", 200,  300,  900, 8, "heavy", "bulk"},
-    {"V-09",  60,  540, 1140, 9, "fragile", ""},
+    {"V-01",  50,  420, 1020, 0, "refrigerated", "fragile"},
+    {"V-02",  80,  360, 1080, 0, "heavy", "bulk"},
+    {"V-03",  10,  480, 1260, 0, "small", "express"},
+    {"V-04",  16,  420, 1020, 0, "refrigerated", "fragile"},
+    {"V-05",  12,  540,  900, 0, "heavy", "bulk"},
+    {"V-06",  47,  480, 1080, 0, "small", "express"},
+    {"V-07",  40,  480, 1020, 0, "fragile", "small"},
+    {"V-08", 200,  300,  900, 0, "heavy", "bulk"},
+    {"V-09",  60,  540, 1140, 0, "fragile", ""},
     {"V-10",  10,  600, 1200, 0, "small", "express"},
     {"V-11", 100,  240,  840, 0, "refrigerated", ""},
     {"V-12",  20,  480, 1020, 0, "small", "express"}
 };
 
 static int nodeIndex(const std::string& id) {
-    for (int i = 0; i < 30; ++i)
-        if (id == NODES[i].id) return i + 1;
+    for (size_t i = 0; i < DYNAMIC_NODES.size(); ++i)
+        if (id == DYNAMIC_NODES[i].id) return i + 1;
     return -1;
 }
 
@@ -179,10 +242,8 @@ static long long ms(std::chrono::steady_clock::time_point a,
 // ---------------------------------------------------------------------------
 int main() {
     auto t_start = std::chrono::steady_clock::now();
-
     solver::SolveRequest req;
 
-    // Phase 1: build request
     auto t0 = std::chrono::steady_clock::now();
 
     auto* depot = req.mutable_depot();
@@ -190,7 +251,13 @@ int main() {
     depot->set_lat(16.4442);
     depot->set_lng(102.8352);
 
-    for (const auto& n : NODES) {
+    // load nodes from CSV file
+    if (!loadNodesFromCSV("../order_testcases/test5.csv")) {
+        return 1;
+    }
+
+    // set up gRPC request
+    for (const auto& n : DYNAMIC_NODES) {
         auto* pn = req.add_nodes();
         pn->set_id(n.id);
         pn->set_lat(n.lat);
@@ -202,7 +269,10 @@ int main() {
         pn->set_priority(n.priority);
         pn->set_deadline_min(n.deadline_min);
         pn->set_type(n.type);
-        if (n.tag[0] != '\0') pn->add_tags(n.tag);
+        
+        for (const auto& t : n.tags) {
+            pn->add_tags(t);
+        }
     }
 
     for (const auto& v : VEHICLES) {
@@ -225,14 +295,16 @@ int main() {
 
     auto t1 = std::chrono::steady_clock::now();
 
-    // Phase 2: solve
-    SolverServiceImpl service(SolveConfig{.enableALNS = true, .enableMultiTrip = true});
+    SolveConfig config;
+    config.enableALNS = true;
+    config.enableMultiTrip = true;
+
+    SolverServiceImpl service(config);
     solver::SolveResponse resp;
     service.Solve(nullptr, &req, &resp);
 
     auto t2 = std::chrono::steady_clock::now();
 
-    // Phase 3: aggregate results
     int    K          = resp.routes_size();
     double total_dist = 0.0;
     int    total_trips = 0;
@@ -244,15 +316,8 @@ int main() {
     auto t3 = std::chrono::steady_clock::now();
 
     std::cout << "============================================================\n";
-    std::cout << "  ROP Mock Demo  |  Vehicles: 12  |  Orders: 30\n";
-    std::cout << "  Depot: 16.4442, 102.8352 (Khon Kaen)\n";
+    std::cout << "  ROP CSV Demo  |  Vehicles: 12  |  Orders: " << DYNAMIC_NODES.size() << "\n";
     std::cout << "============================================================\n\n";
-    std::cout << "---- Timing ------------------------------------------------\n";
-    std::cout << "  Build request : " << ms(t0, t1) << " ms\n";
-    std::cout << "  Solve         : " << ms(t1, t2) << " ms\n";
-    std::cout << "  Aggregate     : " << ms(t2, t3) << " ms\n";
-    std::cout << "  Total         : " << ms(t_start, t3) << " ms\n";
-    std::cout << "------------------------------------------------------------\n\n";
     std::cout << "Status     : " << resp.status() << "\n";
     std::cout << "Vehicles   : " << K << " / 12 used\n";
     std::cout << "Trips      : " << total_trips << "\n";
@@ -263,10 +328,7 @@ int main() {
         int vi = vehicleIndex(route.vehicle_id());
         const VehicleDef& veh = VEHICLES[vi];
         std::printf("%s (cap %d kg, shift %s-%s):\n",
-                    veh.id,
-                    veh.capacity,
-                    toHHMM(veh.shift_start).c_str(),
-                    toHHMM(veh.shift_end).c_str());
+                    veh.id, veh.capacity, toHHMM(veh.shift_start).c_str(), toHHMM(veh.shift_end).c_str());
 
         int stop_idx = 0;
         int cur_idx  = 0;
@@ -278,15 +340,14 @@ int main() {
             double trip_weight = 0.0;
             for (int si = stop_idx; si < stop_idx + trip_sz; ++si) {
                 int ni = nodeIndex(route.stops(si).node_id());
-                if (ni > 0) trip_weight += NODES[ni - 1].demand;
+                if (ni > 0) trip_weight += DYNAMIC_NODES[ni - 1].demand;
             }
-            std::printf("  Trip %d | weight=%.1f kg | stops=%d\n",
-                        ti + 1, trip_weight, trip_sz);
+            std::printf("  Trip %d | weight=%.1f kg | stops=%d\n", ti + 1, trip_weight, trip_sz);
 
             for (int si = stop_idx; si < stop_idx + trip_sz; ++si) {
                 const auto& stop = route.stops(si);
                 int ni = nodeIndex(stop.node_id());
-                const NodeDef& nd = NODES[ni - 1];
+                const NodeDef& nd = DYNAMIC_NODES[ni - 1];
 
                 int travel = (int)DUR[cur_idx][ni];
                 int unadj  = cur_time + travel;
@@ -296,11 +357,8 @@ int main() {
                 bool late  = (arr > nd.tw_end);
 
                 std::printf("      %-12s  arr %s  dep %s  TW [%s-%s]%s%s\n",
-                            nd.id,
-                            toHHMM(arr).c_str(),
-                            toHHMM(dep).c_str(),
-                            toHHMM(nd.tw_start).c_str(),
-                            toHHMM(nd.tw_end).c_str(),
+                            nd.id.c_str(), toHHMM(arr).c_str(), toHHMM(dep).c_str(),
+                            toHHMM(nd.tw_start).c_str(), toHHMM(nd.tw_end).c_str(),
                             wait > 0 ? ("  wait " + std::to_string(wait) + "m").c_str() : "",
                             late ? "  *** LATE ***" : "");
 
@@ -314,9 +372,7 @@ int main() {
             cur_time = return_arr;
             stop_idx += trip_sz;
         }
-
-        std::printf("  dist: %.0f m  |  duration: %d min\n\n",
-                    route.total_distance(), route.total_duration());
+        std::printf("  dist: %.0f m  |  duration: %d min\n\n", route.total_distance(), route.total_duration());
     }
 
     if (resp.unassigned_size() > 0) {
@@ -324,7 +380,7 @@ int main() {
         for (const auto& u : resp.unassigned()) std::cout << "  " << u;
         std::cout << "\n";
     } else {
-        std::cout << "All 30 orders assigned.\n";
+        std::cout << "All " << DYNAMIC_NODES.size() << " orders assigned.\n";
     }
 
     return 0;

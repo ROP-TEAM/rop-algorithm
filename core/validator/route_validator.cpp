@@ -1,6 +1,6 @@
 #include "validator/route_validator.h"
+#include "config_manager.h"
 
-#include <algorithm>
 #include <sstream>
 #include <unordered_map>
 #include <unordered_set>
@@ -105,7 +105,10 @@ RouteValidationResult validateTrips(
     const std::vector<std::vector<int>>& trips,
     double default_fixed_cost,
     double default_cost_per_km,
-    int reload_min)
+    double score_fixed_cost,
+    double score_cost_per_km,
+    int reload_min,
+    double weight_wait_time)
 {
     if (req.matrix_size() <= 0) return fail("MATRIX", "matrix_size must be positive");
     if (req.distances_size() != req.matrix_size() * req.matrix_size()) {
@@ -119,6 +122,8 @@ RouteValidationResult validateTrips(
     int time = vehicle.shift_start();
     const int shift_end = vehicle.shift_end() == 0 ? 1440 : vehicle.shift_end();
     bool break_taken = vehicle.break_start() == 0;
+
+    double total_wait = 0.0;
 
     for (size_t trip_index = 0; trip_index < trips.size(); ++trip_index) {
         const auto& trip = trips[trip_index];
@@ -154,6 +159,12 @@ RouteValidationResult validateTrips(
                 arrival = time + travel;
             }
             if (node.tw_start() > 0 && arrival < node.tw_start()) arrival = node.tw_start();
+
+            if (node.tw_start() > 0 && arrival < node.tw_start()) {
+              total_wait += (node.tw_start() - arrival);
+              arrival = node.tw_start(); // arrival at tw_start
+            }
+
             const int latest = node.tw_end() > 0 ? node.tw_end() : 1440;
             if (arrival > latest) {
                 std::ostringstream msg;
@@ -207,6 +218,13 @@ RouteValidationResult validateTrips(
     const double fixed = vehicle.fixed_cost() > 0.0 ? vehicle.fixed_cost() : default_fixed_cost;
     const double per_km = vehicle.cost_per_km() > 0.0 ? vehicle.cost_per_km() : default_cost_per_km;
     out.total_cost = fixed + (out.total_distance_m / 1000.0) * per_km;
+
+    double wait_time_penalty_rate = weight_wait_time;
+    out.total_wait_time = total_wait;
+    // internal score — used by solver only
+    out.internal_score = score_fixed_cost
+                       + (out.total_distance_m / 1000.0) * score_cost_per_km;
+
     return out;
 }
 

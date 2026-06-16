@@ -134,7 +134,7 @@ int main() {
         int unrouted_before = (int)sol.unrouted.size();
         std::mt19937 rng(42);
 
-        hfvrptwb::alns::randomRemoval(sol, rng, req, 550.0, 4.0003, 3);
+        hfvrptwb::alns::randomRemoval(sol, rng, req, 550.0, 4.0003, 0.0, 3);
         if (!expect((int)sol.unrouted.size() == unrouted_before + 3,
                     "randomRemoval should remove exactly q=3 nodes")) return 1;
 
@@ -189,6 +189,7 @@ int main() {
         auto constructed = hfvrptwb::adaptiveConstruct(req, 550.0, 4.0003, false, 0);
 
         hfvrptwb::alns::ALNSSolver solver;
+
         auto result = solver.solve(req, constructed, 550.0, 4.0003,
                                     std::chrono::milliseconds(500), 0, 42);
 

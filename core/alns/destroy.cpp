@@ -10,7 +10,8 @@ namespace hfvrptwb {
 namespace alns {
 
 void removeNode(ALNSSolution& sol, int vi, int ti, int node_index,
-                const solver::SolveRequest& req, double fixed, double km)
+                const solver::SolveRequest& req, double fixed, double km,
+                double weight_wait_time)    // <-- added
 {
     if (vi < 0 || vi >= (int)sol.vehicles.size()) return;
     auto& vt = sol.vehicles[vi];
@@ -30,7 +31,8 @@ void removeNode(ALNSSolution& sol, int vi, int ti, int node_index,
         const auto& vehicle = req.vehicles(vt.vehicle_index);
         RouteState init;
         init.vehicle_index = vt.vehicle_index;
-        auto eval = evaluateRouteState(req, vehicle, init, trip.nodes, fixed, km);
+        auto eval = evaluateRouteState(req, vehicle, init, trip.nodes,
+                                       fixed, km);   // <-- pass wait
         if (eval.feasible && std::isfinite(eval.next.cost)) {
             trip = std::move(eval.next);
         } else {
@@ -46,7 +48,7 @@ void removeNode(ALNSSolution& sol, int vi, int ti, int node_index,
 }
 
 void randomRemoval(ALNSSolution& sol, std::mt19937& rng, const solver::SolveRequest& req,
-                   double fixed, double km, int q)
+                   double fixed, double km, double weight_wait_time, int q)   // added
 {
     struct Slot { int vi; int ti; int pos; int node_index; };
     std::vector<Slot> slots;
@@ -61,12 +63,13 @@ void randomRemoval(ALNSSolution& sol, std::mt19937& rng, const solver::SolveRequ
     std::shuffle(slots.begin(), slots.end(), rng);
     int count = std::min(q, (int)slots.size());
     for (int i = 0; i < count; ++i) {
-        removeNode(sol, slots[i].vi, slots[i].ti, slots[i].node_index, req, fixed, km);
+        removeNode(sol, slots[i].vi, slots[i].ti, slots[i].node_index,
+                   req, fixed, km, weight_wait_time);   // pass
     }
 }
 
 void worstRemoval(ALNSSolution& sol, std::mt19937&, const solver::SolveRequest& req,
-                  double fixed, double km, int q)
+                  double fixed, double km, double weight_wait_time, int q)   // added
 {
     struct Candidate { int vi; int ti; int node_index; double delta; };
     std::vector<Candidate> candidates;
@@ -84,7 +87,8 @@ void worstRemoval(ALNSSolution& sol, std::mt19937&, const solver::SolveRequest& 
                 }
                 RouteState init;
                 init.vehicle_index = sol.vehicles[vi].vehicle_index;
-                auto eval = evaluateRouteState(req, vehicle, init, without, fixed, km);
+                auto eval = evaluateRouteState(req, vehicle, init, without,
+                                               fixed, km); // pass
                 double cost_without = eval.feasible ? eval.next.cost : 1e9;
                 double delta = trip.cost - cost_without;
                 candidates.push_back({vi, ti, node_index, delta});
@@ -101,15 +105,14 @@ void worstRemoval(ALNSSolution& sol, std::mt19937&, const solver::SolveRequest& 
         if (count >= q) break;
         if (removed.count(c.node_index)) continue;
         removed.insert(c.node_index);
-        removeNode(sol, c.vi, c.ti, c.node_index, req, fixed, km);
+        removeNode(sol, c.vi, c.ti, c.node_index, req, fixed, km, weight_wait_time);
         ++count;
     }
 }
 
 void shawRemoval(ALNSSolution& sol, std::mt19937& rng, const solver::SolveRequest& req,
-                 double fixed, double km, int q)
+                 double fixed, double km, double weight_wait_time, int q)   // added
 {
-    // Collect all nodes
     struct Slot { int vi; int ti; int node_index; };
     std::vector<Slot> all;
     for (int vi = 0; vi < (int)sol.vehicles.size(); ++vi) {
@@ -144,12 +147,13 @@ void shawRemoval(ALNSSolution& sol, std::mt19937& rng, const solver::SolveReques
 
     int count = std::min(q, (int)scored.size());
     for (int i = 0; i < count; ++i) {
-        removeNode(sol, scored[i].vi, scored[i].ti, scored[i].node_index, req, fixed, km);
+        removeNode(sol, scored[i].vi, scored[i].ti, scored[i].node_index,
+                   req, fixed, km, weight_wait_time);
     }
 }
 
 void priorityAwareRemoval(ALNSSolution& sol, std::mt19937&, const solver::SolveRequest& req,
-                           double fixed, double km, int q)
+                           double fixed, double km, double weight_wait_time, int q)   // added
 {
     struct Candidate { int vi; int ti; int node_index; int priority; };
     std::vector<Candidate> candidates;
@@ -165,12 +169,13 @@ void priorityAwareRemoval(ALNSSolution& sol, std::mt19937&, const solver::SolveR
 
     int count = std::min(q, (int)candidates.size());
     for (int i = 0; i < count; ++i) {
-        removeNode(sol, candidates[i].vi, candidates[i].ti, candidates[i].node_index, req, fixed, km);
+        removeNode(sol, candidates[i].vi, candidates[i].ti, candidates[i].node_index,
+                   req, fixed, km, weight_wait_time);
     }
 }
 
 void routeConsolidationDestroy(ALNSSolution& sol, std::mt19937&, const solver::SolveRequest& req,
-                               double fixed, double km, int /*q*/)
+                               double fixed, double km, double weight_wait_time, int /*q*/) // added
 {
     if (sol.vehicles.size() < 2) return;
 
@@ -184,7 +189,6 @@ void routeConsolidationDestroy(ALNSSolution& sol, std::mt19937&, const solver::S
     std::sort(sizes.begin(), sizes.end(),
               [](const Size& a, const Size& b) { return a.total < b.total; });
 
-    // Remove all nodes from 2 smallest vehicles (work backwards to preserve indices)
     int v1 = sizes[0].vi;
     int v2 = sizes[1].vi;
     for (int vi : {v2, v1}) {
@@ -192,7 +196,7 @@ void routeConsolidationDestroy(ALNSSolution& sol, std::mt19937&, const solver::S
             int ti = (int)sol.vehicles[vi].trips.size() - 1;
             while (!sol.vehicles[vi].trips[ti].nodes.empty()) {
                 int ni = sol.vehicles[vi].trips[ti].nodes.back();
-                removeNode(sol, vi, ti, ni, req, fixed, km);
+                removeNode(sol, vi, ti, ni, req, fixed, km, weight_wait_time);
                 if (vi >= (int)sol.vehicles.size()) break;
             }
             if (vi < (int)sol.vehicles.size() && ti < (int)sol.vehicles[vi].trips.size()) {
@@ -203,7 +207,7 @@ void routeConsolidationDestroy(ALNSSolution& sol, std::mt19937&, const solver::S
 }
 
 void tripRemoval(ALNSSolution& sol, std::mt19937&, const solver::SolveRequest& req,
-                 double fixed, double km, int /*q*/)
+                 double fixed, double km, double weight_wait_time, int /*q*/)   // added
 {
     int best_vi = -1, best_ti = -1, best_size = 999999;
     for (int vi = 0; vi < (int)sol.vehicles.size(); ++vi) {
@@ -220,12 +224,12 @@ void tripRemoval(ALNSSolution& sol, std::mt19937&, const solver::SolveRequest& r
 
     auto nodes = sol.vehicles[best_vi].trips[best_ti].nodes;
     for (int ni : nodes) {
-        removeNode(sol, best_vi, best_ti, ni, req, fixed, km);
+        removeNode(sol, best_vi, best_ti, ni, req, fixed, km, weight_wait_time);
     }
 }
 
 void tagViolationRemoval(ALNSSolution& sol, std::mt19937&, const solver::SolveRequest& req,
-                          double fixed, double km, int /*q*/)
+                          double fixed, double km, double weight_wait_time, int /*q*/)   // added
 {
     struct Removal { int vi; int ti; int node_index; };
     std::vector<Removal> to_remove;
@@ -243,12 +247,12 @@ void tagViolationRemoval(ALNSSolution& sol, std::mt19937&, const solver::SolveRe
     }
 
     for (const auto& r : to_remove) {
-        removeNode(sol, r.vi, r.ti, r.node_index, req, fixed, km);
+        removeNode(sol, r.vi, r.ti, r.node_index, req, fixed, km, weight_wait_time);
     }
 }
 
 void lateCustomerRemoval(ALNSSolution& sol, std::mt19937&, const solver::SolveRequest& req,
-                          double fixed, double km, int q)
+                          double fixed, double km, double weight_wait_time, int q)   // added
 {
     struct Lateness { int vi; int ti; int node_index; int lateness; };
     std::vector<Lateness> late;
@@ -275,12 +279,13 @@ void lateCustomerRemoval(ALNSSolution& sol, std::mt19937&, const solver::SolveRe
 
     int count = std::min(q, (int)late.size());
     for (int i = 0; i < count; ++i) {
-        removeNode(sol, late[i].vi, late[i].ti, late[i].node_index, req, fixed, km);
+        removeNode(sol, late[i].vi, late[i].ti, late[i].node_index,
+                   req, fixed, km, weight_wait_time);
     }
 }
 
 void sectorRemoval(ALNSSolution& sol, std::mt19937& rng, const solver::SolveRequest& req,
-                   double fixed, double km, int q)
+                   double fixed, double km, double weight_wait_time, int q)   // added
 {
     if (q < 2) return;
 
@@ -309,7 +314,6 @@ void sectorRemoval(ALNSSolution& sol, std::mt19937& rng, const solver::SolveRequ
     std::uniform_int_distribution<int> pick(0, (int)all.size() - 1);
     double seed1 = all[pick(rng)].theta;
 
-    // Sector 1: remove q/2 nodes closest to seed1
     int k1 = q / 2;
     {
         struct Scored { int idx; double dist; };
@@ -321,12 +325,11 @@ void sectorRemoval(ALNSSolution& sol, std::mt19937& rng, const solver::SolveRequ
 
         for (int i = 0; i < std::min(k1, (int)scored.size()); ++i) {
             const auto& s = all[scored[i].idx];
-            removeNode(sol, s.vi, s.ti, s.node_index, req, fixed, km);
+            removeNode(sol, s.vi, s.ti, s.node_index, req, fixed, km, weight_wait_time);
         }
     }
 
-    // Sector 2: re-collect remaining, pick seed furthest from seed1
-    std::unordered_set<int> removed_hint; // empty — collect all remaining
+    std::unordered_set<int> removed_hint;
     auto remaining = collect(removed_hint);
     if (remaining.empty()) return;
 
@@ -339,7 +342,6 @@ void sectorRemoval(ALNSSolution& sol, std::mt19937& rng, const solver::SolveRequ
     if (seed2_idx < 0) return;
     double seed2 = remaining[seed2_idx].theta;
 
-    // Remove remaining q-k1 nodes closest to seed2
     int k2 = q - k1;
     {
         struct Scored { int idx; double dist; };
@@ -351,7 +353,7 @@ void sectorRemoval(ALNSSolution& sol, std::mt19937& rng, const solver::SolveRequ
 
         for (int i = 0; i < std::min(k2, (int)scored.size()); ++i) {
             const auto& s = remaining[scored[i].idx];
-            removeNode(sol, s.vi, s.ti, s.node_index, req, fixed, km);
+            removeNode(sol, s.vi, s.ti, s.node_index, req, fixed, km, weight_wait_time);
         }
     }
 }
