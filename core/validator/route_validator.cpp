@@ -1,5 +1,5 @@
 #include "validator/route_validator.h"
-#include <../config_manager.h>
+#include "config_manager.h"
 
 #include <sstream>
 #include <unordered_map>
@@ -188,6 +188,13 @@ RouteValidationResult validateTrips(
             cur = idx;
         }
 
+        if (!break_taken && vehicle.break_start() > 0) {
+            int return_arrival = time + (int)durAt(req, cur, 0);
+            if (return_arrival >= vehicle.break_start()) {
+                time = std::max(time, vehicle.break_end());
+                break_taken = true;
+            }
+        }
         out.total_distance_m += distAt(req, cur, 0);
         time += (int)durAt(req, cur, 0);
         if (trip_index + 1 < trips.size()) {
@@ -195,7 +202,7 @@ RouteValidationResult validateTrips(
         }
     }
 
-    if (!break_taken && !trips.empty()) {
+    if (!break_taken && !trips.empty() && time > vehicle.break_start()) {
         return fail("BREAK", "required break was not taken");
     }
     if (time > shift_end) {

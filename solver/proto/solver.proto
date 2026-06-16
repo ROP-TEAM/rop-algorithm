@@ -36,13 +36,18 @@ message Vehicle {
 }
 
 message SolveRequest {
-  Node             depot         = 1;
-  repeated Node    nodes         = 2;
-  repeated Vehicle vehicles      = 3;
-  repeated double  durations     = 4; // flattened n×n, row-major (minutes)
-  repeated double  distances     = 5; // flattened n×n, row-major (meters)
-  int32            matrix_size   = 6; // n (depot + nodes)
-  int32            time_limit_ms = 7;
+  Node             depot              = 1;
+  repeated Node    nodes              = 2;
+  repeated Vehicle vehicles           = 3;
+  repeated double  durations          = 4; // flattened n×n, row-major (minutes)
+  repeated double  distances          = 5; // flattened n×n, row-major (meters)
+  int32            matrix_size        = 6; // n (depot + nodes)
+  int32            time_limit_ms      = 7;
+  bool             enable_alns        = 8;
+  bool             enable_multi_trip  = 9;
+  int32            reload_min         = 10; // minutes; 0 = use server default (30)
+  uint32           seed               = 11; // 0 = non-deterministic
+  int32            multi_start_count  = 12; // 0 = use server default (2)
 }
 
 message DropReason {

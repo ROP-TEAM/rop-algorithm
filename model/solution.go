@@ -23,6 +23,7 @@ type Route struct {
 	TotalDistance float64 // meters
 	TotalDuration int     // minutes
 	TotalCost     float64
+	TripSizes     []int // stops per trip; nil = single trip
 }
 
 // DropReason explains why a node was left out of a plan.

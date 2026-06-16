@@ -123,7 +123,7 @@ Candidate bestSingleInsertion(
 {
     Candidate best;
 
-    auto smart_order = getSmartVehicleOrder(req, routes, default_fixed_cost, default_cost_per_km, isRouteStateEmpty);
+    auto smart_order = getSmartVehicleOrder(req, routes, weight_fixed_cost, weight_per_km, isRouteStateEmpty);
     for (int vi : smart_order) {
         const auto& current = routes[vi];
         for (int pos = 0; pos <= (int)current.nodes.size(); ++pos) {
@@ -182,7 +182,7 @@ Candidate bestMultiTripInsertion(
     int reload_min)
 {
     Candidate best;
-    auto smart_order = getSmartVehicleOrder(req, schedules, default_fixed_cost, default_cost_per_km, isScheduleStateEmpty);
+    auto smart_order = getSmartVehicleOrder(req, schedules, billing_fixed_cost, billing_cost_per_km, isScheduleStateEmpty);
     for (int vi : smart_order) {
         const auto& schedule = schedules[vi];
 

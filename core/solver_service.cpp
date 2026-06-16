@@ -303,14 +303,17 @@ grpc::Status SolverServiceImpl::Solve(grpc::ServerContext*,
 {
     SolveConfig dynamic_cfg = ConfigManager::loadMode(
         0.5f,  // w_dist
-        0.5f// w_cost
+        0.5f   // w_cost
     );
 
     dynamic_cfg.enableALNS      = cfg_.enableALNS;
     dynamic_cfg.enableMultiTrip = cfg_.enableMultiTrip;
-    // dynamic_cfg.reloadMin       = cfg_.reloadMin;
     dynamic_cfg.multiStartCount = cfg_.multiStartCount;
-    dynamic_cfg.seed            = std::random_device{}();
+    if (req->enable_alns())            dynamic_cfg.enableALNS      = true;
+    if (req->enable_multi_trip())      dynamic_cfg.enableMultiTrip = true;
+    if (req->reload_min() > 0)         dynamic_cfg.reloadMin       = req->reload_min();
+    if (req->multi_start_count() > 0)  dynamic_cfg.multiStartCount = req->multi_start_count();
+    dynamic_cfg.seed = (req->seed() != 0) ? req->seed() : std::random_device{}();
 
     return solveRequest(req, dynamic_cfg, resp);
 }

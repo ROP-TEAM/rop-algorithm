@@ -3,7 +3,9 @@ package process
 import (
 	"fmt"
 	"net"
+	"os"
 	"os/exec"
+	"runtime"
 	"time"
 
 	"google.golang.org/grpc"
@@ -24,25 +26,32 @@ func Start(binaryPath string) (*Handle, error) {
 	}
 	addr := fmt.Sprintf("127.0.0.1:%d", port)
 
+	env, err := solverEnv()
+	if err != nil {
+		return nil, err
+	}
 	cmd := exec.Command(binaryPath, addr)
+	cmd.Env = env
 	if err := cmd.Start(); err != nil {
 		return nil, fmt.Errorf("start solver binary: %w", err)
 	}
 
 	if err := waitForReady(addr, 10*time.Second); err != nil {
 		cmd.Process.Kill()
+		cmd.Wait()
 		return nil, err
 	}
 
 	conn, err := grpc.NewClient(addr, grpc.WithTransportCredentials(insecure.NewCredentials()))
 	if err != nil {
 		cmd.Process.Kill()
+		cmd.Wait()
 		return nil, fmt.Errorf("dial solver: %w", err)
 	}
 
 	return &Handle{
 		Conn: conn,
-		stop: func() { conn.Close(); cmd.Process.Kill() },
+		stop: func() { conn.Close(); cmd.Process.Kill(); cmd.Wait() },
 	}, nil
 }
 
@@ -61,6 +70,46 @@ func waitForReady(addr string, timeout time.Duration) error {
 		time.Sleep(50 * time.Millisecond)
 	}
 	return fmt.Errorf("solver not ready at %s after %s", addr, timeout)
+}
+
+// solverEnv returns the current environment, with MSYS2 mingw64 prepended on
+// Windows if found. Skipped silently when not found — release binaries ship
+// DLLs alongside solver.exe so Windows resolves them without PATH changes.
+// For locally-built binaries, set MSYS2_ROOT or install MSYS2 at a standard path.
+func solverEnv() ([]string, error) {
+	env := os.Environ()
+	if runtime.GOOS != "windows" {
+		return env, nil
+	}
+	msys2Bin, found := findMsys2Bin()
+	if !found {
+		return env, nil
+	}
+	for i, e := range env {
+		if len(e) >= 5 && e[:5] == "PATH=" {
+			env[i] = "PATH=" + msys2Bin + string(os.PathListSeparator) + e[5:]
+			return env, nil
+		}
+	}
+	return append(env, "PATH="+msys2Bin), nil
+}
+
+func findMsys2Bin() (string, bool) {
+	if root := os.Getenv("MSYS2_ROOT"); root != "" {
+		p := root + `\mingw64\bin`
+		if _, err := os.Stat(p); err == nil {
+			return p, true
+		}
+	}
+	for _, drive := range "CDEFGHIJKLMNOPQRSTUVWXYZ" {
+		for _, name := range []string{"msys64", "msys2"} {
+			p := fmt.Sprintf(`%c:\%s\mingw64\bin`, drive, name)
+			if _, err := os.Stat(p); err == nil {
+				return p, true
+			}
+		}
+	}
+	return "", false
 }
 
 func freePort() (int, error) {

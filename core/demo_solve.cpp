@@ -15,7 +15,7 @@
 
 // Helper for print time
 static std::string toHHMM(int m) {
-    char buf[16];
+    char buf[16]; // 8 was enough for valid minutes-from-midnight but GCC -Wformat-truncation sees full int range
     std::snprintf(buf, sizeof(buf), "%02d:%02d", m / 60, m % 60);
     return buf;
 }
