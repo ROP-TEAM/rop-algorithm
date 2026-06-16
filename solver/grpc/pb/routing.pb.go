@@ -2,7 +2,7 @@
 // versions:
 // 	protoc-gen-go v1.36.11
 // 	protoc        v7.34.1
-// source: solver.proto
+// source: routing.proto
 
 package pb
 
@@ -44,7 +44,7 @@ type Node struct {
 
 func (x *Node) Reset() {
 	*x = Node{}
-	mi := &file_solver_proto_msgTypes[0]
+	mi := &file_routing_proto_msgTypes[0]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -56,7 +56,7 @@ func (x *Node) String() string {
 func (*Node) ProtoMessage() {}
 
 func (x *Node) ProtoReflect() protoreflect.Message {
-	mi := &file_solver_proto_msgTypes[0]
+	mi := &file_routing_proto_msgTypes[0]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -69,7 +69,7 @@ func (x *Node) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use Node.ProtoReflect.Descriptor instead.
 func (*Node) Descriptor() ([]byte, []int) {
-	return file_solver_proto_rawDescGZIP(), []int{0}
+	return file_routing_proto_rawDescGZIP(), []int{0}
 }
 
 func (x *Node) GetId() string {
@@ -197,7 +197,7 @@ type Vehicle struct {
 
 func (x *Vehicle) Reset() {
 	*x = Vehicle{}
-	mi := &file_solver_proto_msgTypes[1]
+	mi := &file_routing_proto_msgTypes[1]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -209,7 +209,7 @@ func (x *Vehicle) String() string {
 func (*Vehicle) ProtoMessage() {}
 
 func (x *Vehicle) ProtoReflect() protoreflect.Message {
-	mi := &file_solver_proto_msgTypes[1]
+	mi := &file_routing_proto_msgTypes[1]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -222,7 +222,7 @@ func (x *Vehicle) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use Vehicle.ProtoReflect.Descriptor instead.
 func (*Vehicle) Descriptor() ([]byte, []int) {
-	return file_solver_proto_rawDescGZIP(), []int{1}
+	return file_routing_proto_rawDescGZIP(), []int{1}
 }
 
 func (x *Vehicle) GetId() string {
@@ -310,26 +310,28 @@ func (x *Vehicle) GetType() string {
 }
 
 type SolveRequest struct {
-	state           protoimpl.MessageState `protogen:"open.v1"`
-	Depot           *Node                  `protobuf:"bytes,1,opt,name=depot,proto3" json:"depot,omitempty"`
-	Nodes           []*Node                `protobuf:"bytes,2,rep,name=nodes,proto3" json:"nodes,omitempty"`
-	Vehicles        []*Vehicle             `protobuf:"bytes,3,rep,name=vehicles,proto3" json:"vehicles,omitempty"`
-	Durations       []float64              `protobuf:"fixed64,4,rep,packed,name=durations,proto3" json:"durations,omitempty"`             // flattened n×n, row-major (minutes)
-	Distances       []float64              `protobuf:"fixed64,5,rep,packed,name=distances,proto3" json:"distances,omitempty"`             // flattened n×n, row-major (meters)
-	MatrixSize      int32                  `protobuf:"varint,6,opt,name=matrix_size,json=matrixSize,proto3" json:"matrix_size,omitempty"` // n (depot + nodes)
-	TimeLimitMs     int32                  `protobuf:"varint,7,opt,name=time_limit_ms,json=timeLimitMs,proto3" json:"time_limit_ms,omitempty"`
-	EnableAlns      bool                   `protobuf:"varint,8,opt,name=enable_alns,json=enableAlns,proto3" json:"enable_alns,omitempty"`
-	EnableMultiTrip bool                   `protobuf:"varint,9,opt,name=enable_multi_trip,json=enableMultiTrip,proto3" json:"enable_multi_trip,omitempty"`
-	ReloadMin       int32                  `protobuf:"varint,10,opt,name=reload_min,json=reloadMin,proto3" json:"reload_min,omitempty"`                     // minutes; 0 = use server default (30)
-	Seed            uint32                 `protobuf:"varint,11,opt,name=seed,proto3" json:"seed,omitempty"`                                                // 0 = non-deterministic
-	MultiStartCount int32                  `protobuf:"varint,12,opt,name=multi_start_count,json=multiStartCount,proto3" json:"multi_start_count,omitempty"` // 0 = use server default (2)
-	unknownFields   protoimpl.UnknownFields
-	sizeCache       protoimpl.SizeCache
+	state             protoimpl.MessageState `protogen:"open.v1"`
+	Depot             *Node                  `protobuf:"bytes,1,opt,name=depot,proto3" json:"depot,omitempty"`
+	Nodes             []*Node                `protobuf:"bytes,2,rep,name=nodes,proto3" json:"nodes,omitempty"`
+	Vehicles          []*Vehicle             `protobuf:"bytes,3,rep,name=vehicles,proto3" json:"vehicles,omitempty"`
+	Durations         []float64              `protobuf:"fixed64,4,rep,packed,name=durations,proto3" json:"durations,omitempty"`             // flattened n×n, row-major (minutes)
+	Distances         []float64              `protobuf:"fixed64,5,rep,packed,name=distances,proto3" json:"distances,omitempty"`             // flattened n×n, row-major (meters)
+	MatrixSize        int32                  `protobuf:"varint,6,opt,name=matrix_size,json=matrixSize,proto3" json:"matrix_size,omitempty"` // n (depot + nodes)
+	TimeLimitMs       int32                  `protobuf:"varint,7,opt,name=time_limit_ms,json=timeLimitMs,proto3" json:"time_limit_ms,omitempty"`
+	EnableAlns        bool                   `protobuf:"varint,8,opt,name=enable_alns,json=enableAlns,proto3" json:"enable_alns,omitempty"`
+	EnableMultiTrip   bool                   `protobuf:"varint,9,opt,name=enable_multi_trip,json=enableMultiTrip,proto3" json:"enable_multi_trip,omitempty"`
+	ReloadMin         int32                  `protobuf:"varint,10,opt,name=reload_min,json=reloadMin,proto3" json:"reload_min,omitempty"`                     // minutes; 0 = use server default (30)
+	Seed              uint32                 `protobuf:"varint,11,opt,name=seed,proto3" json:"seed,omitempty"`                                                // 0 = non-deterministic
+	MultiStartCount   int32                  `protobuf:"varint,12,opt,name=multi_start_count,json=multiStartCount,proto3" json:"multi_start_count,omitempty"` // 0 = use server default (2)
+	DisableCapacity   bool                   `protobuf:"varint,13,opt,name=disable_capacity,json=disableCapacity,proto3" json:"disable_capacity,omitempty"`
+	DisableTimeWindow bool                   `protobuf:"varint,14,opt,name=disable_time_window,json=disableTimeWindow,proto3" json:"disable_time_window,omitempty"`
+	unknownFields     protoimpl.UnknownFields
+	sizeCache         protoimpl.SizeCache
 }
 
 func (x *SolveRequest) Reset() {
 	*x = SolveRequest{}
-	mi := &file_solver_proto_msgTypes[2]
+	mi := &file_routing_proto_msgTypes[2]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -341,7 +343,7 @@ func (x *SolveRequest) String() string {
 func (*SolveRequest) ProtoMessage() {}
 
 func (x *SolveRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_solver_proto_msgTypes[2]
+	mi := &file_routing_proto_msgTypes[2]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -354,7 +356,7 @@ func (x *SolveRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use SolveRequest.ProtoReflect.Descriptor instead.
 func (*SolveRequest) Descriptor() ([]byte, []int) {
-	return file_solver_proto_rawDescGZIP(), []int{2}
+	return file_routing_proto_rawDescGZIP(), []int{2}
 }
 
 func (x *SolveRequest) GetDepot() *Node {
@@ -441,6 +443,20 @@ func (x *SolveRequest) GetMultiStartCount() int32 {
 	return 0
 }
 
+func (x *SolveRequest) GetDisableCapacity() bool {
+	if x != nil {
+		return x.DisableCapacity
+	}
+	return false
+}
+
+func (x *SolveRequest) GetDisableTimeWindow() bool {
+	if x != nil {
+		return x.DisableTimeWindow
+	}
+	return false
+}
+
 type DropReason struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	NodeId        string                 `protobuf:"bytes,1,opt,name=node_id,json=nodeId,proto3" json:"node_id,omitempty"`
@@ -452,7 +468,7 @@ type DropReason struct {
 
 func (x *DropReason) Reset() {
 	*x = DropReason{}
-	mi := &file_solver_proto_msgTypes[3]
+	mi := &file_routing_proto_msgTypes[3]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -464,7 +480,7 @@ func (x *DropReason) String() string {
 func (*DropReason) ProtoMessage() {}
 
 func (x *DropReason) ProtoReflect() protoreflect.Message {
-	mi := &file_solver_proto_msgTypes[3]
+	mi := &file_routing_proto_msgTypes[3]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -477,7 +493,7 @@ func (x *DropReason) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use DropReason.ProtoReflect.Descriptor instead.
 func (*DropReason) Descriptor() ([]byte, []int) {
-	return file_solver_proto_rawDescGZIP(), []int{3}
+	return file_routing_proto_rawDescGZIP(), []int{3}
 }
 
 func (x *DropReason) GetNodeId() string {
@@ -512,7 +528,7 @@ type RouteStop struct {
 
 func (x *RouteStop) Reset() {
 	*x = RouteStop{}
-	mi := &file_solver_proto_msgTypes[4]
+	mi := &file_routing_proto_msgTypes[4]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -524,7 +540,7 @@ func (x *RouteStop) String() string {
 func (*RouteStop) ProtoMessage() {}
 
 func (x *RouteStop) ProtoReflect() protoreflect.Message {
-	mi := &file_solver_proto_msgTypes[4]
+	mi := &file_routing_proto_msgTypes[4]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -537,7 +553,7 @@ func (x *RouteStop) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use RouteStop.ProtoReflect.Descriptor instead.
 func (*RouteStop) Descriptor() ([]byte, []int) {
-	return file_solver_proto_rawDescGZIP(), []int{4}
+	return file_routing_proto_rawDescGZIP(), []int{4}
 }
 
 func (x *RouteStop) GetNodeId() string {
@@ -575,7 +591,7 @@ type Route struct {
 
 func (x *Route) Reset() {
 	*x = Route{}
-	mi := &file_solver_proto_msgTypes[5]
+	mi := &file_routing_proto_msgTypes[5]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -587,7 +603,7 @@ func (x *Route) String() string {
 func (*Route) ProtoMessage() {}
 
 func (x *Route) ProtoReflect() protoreflect.Message {
-	mi := &file_solver_proto_msgTypes[5]
+	mi := &file_routing_proto_msgTypes[5]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -600,7 +616,7 @@ func (x *Route) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use Route.ProtoReflect.Descriptor instead.
 func (*Route) Descriptor() ([]byte, []int) {
-	return file_solver_proto_rawDescGZIP(), []int{5}
+	return file_routing_proto_rawDescGZIP(), []int{5}
 }
 
 func (x *Route) GetVehicleId() string {
@@ -658,7 +674,7 @@ type SolveResponse struct {
 
 func (x *SolveResponse) Reset() {
 	*x = SolveResponse{}
-	mi := &file_solver_proto_msgTypes[6]
+	mi := &file_routing_proto_msgTypes[6]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -670,7 +686,7 @@ func (x *SolveResponse) String() string {
 func (*SolveResponse) ProtoMessage() {}
 
 func (x *SolveResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_solver_proto_msgTypes[6]
+	mi := &file_routing_proto_msgTypes[6]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -683,7 +699,7 @@ func (x *SolveResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use SolveResponse.ProtoReflect.Descriptor instead.
 func (*SolveResponse) Descriptor() ([]byte, []int) {
-	return file_solver_proto_rawDescGZIP(), []int{6}
+	return file_routing_proto_rawDescGZIP(), []int{6}
 }
 
 func (x *SolveResponse) GetRoutes() []*Route {
@@ -721,11 +737,11 @@ func (x *SolveResponse) GetDropReasons() []*DropReason {
 	return nil
 }
 
-var File_solver_proto protoreflect.FileDescriptor
+var File_routing_proto protoreflect.FileDescriptor
 
-const file_solver_proto_rawDesc = "" +
+const file_routing_proto_rawDesc = "" +
 	"\n" +
-	"\fsolver.proto\x12\x06solver\"\x98\x03\n" +
+	"\rrouting.proto\x12\x06solver\"\x98\x03\n" +
 	"\x04Node\x12\x0e\n" +
 	"\x02id\x18\x01 \x01(\tR\x02id\x12\x10\n" +
 	"\x03lat\x18\x02 \x01(\x01R\x03lat\x12\x10\n" +
@@ -760,7 +776,7 @@ const file_solver_proto_rawDesc = "" +
 	"fixed_cost\x18\n" +
 	" \x01(\x01R\tfixedCost\x12\x1e\n" +
 	"\vcost_per_km\x18\v \x01(\x01R\tcostPerKm\x12\x12\n" +
-	"\x04type\x18\f \x01(\tR\x04type\"\xb0\x03\n" +
+	"\x04type\x18\f \x01(\tR\x04type\"\x8b\x04\n" +
 	"\fSolveRequest\x12\"\n" +
 	"\x05depot\x18\x01 \x01(\v2\f.solver.NodeR\x05depot\x12\"\n" +
 	"\x05nodes\x18\x02 \x03(\v2\f.solver.NodeR\x05nodes\x12+\n" +
@@ -777,7 +793,9 @@ const file_solver_proto_rawDesc = "" +
 	"reload_min\x18\n" +
 	" \x01(\x05R\treloadMin\x12\x12\n" +
 	"\x04seed\x18\v \x01(\rR\x04seed\x12*\n" +
-	"\x11multi_start_count\x18\f \x01(\x05R\x0fmultiStartCount\"Q\n" +
+	"\x11multi_start_count\x18\f \x01(\x05R\x0fmultiStartCount\x12)\n" +
+	"\x10disable_capacity\x18\r \x01(\bR\x0fdisableCapacity\x12.\n" +
+	"\x13disable_time_window\x18\x0e \x01(\bR\x11disableTimeWindow\"Q\n" +
 	"\n" +
 	"DropReason\x12\x17\n" +
 	"\anode_id\x18\x01 \x01(\tR\x06nodeId\x12\x12\n" +
@@ -811,19 +829,19 @@ const file_solver_proto_rawDesc = "" +
 	"\x05Solve\x12\x14.solver.SolveRequest\x1a\x15.solver.SolveResponseB2Z0github.com/ROP-TEAM/rop-algorithm/solver/grpc/pbb\x06proto3"
 
 var (
-	file_solver_proto_rawDescOnce sync.Once
-	file_solver_proto_rawDescData []byte
+	file_routing_proto_rawDescOnce sync.Once
+	file_routing_proto_rawDescData []byte
 )
 
-func file_solver_proto_rawDescGZIP() []byte {
-	file_solver_proto_rawDescOnce.Do(func() {
-		file_solver_proto_rawDescData = protoimpl.X.CompressGZIP(unsafe.Slice(unsafe.StringData(file_solver_proto_rawDesc), len(file_solver_proto_rawDesc)))
+func file_routing_proto_rawDescGZIP() []byte {
+	file_routing_proto_rawDescOnce.Do(func() {
+		file_routing_proto_rawDescData = protoimpl.X.CompressGZIP(unsafe.Slice(unsafe.StringData(file_routing_proto_rawDesc), len(file_routing_proto_rawDesc)))
 	})
-	return file_solver_proto_rawDescData
+	return file_routing_proto_rawDescData
 }
 
-var file_solver_proto_msgTypes = make([]protoimpl.MessageInfo, 7)
-var file_solver_proto_goTypes = []any{
+var file_routing_proto_msgTypes = make([]protoimpl.MessageInfo, 7)
+var file_routing_proto_goTypes = []any{
 	(*Node)(nil),          // 0: solver.Node
 	(*Vehicle)(nil),       // 1: solver.Vehicle
 	(*SolveRequest)(nil),  // 2: solver.SolveRequest
@@ -832,7 +850,7 @@ var file_solver_proto_goTypes = []any{
 	(*Route)(nil),         // 5: solver.Route
 	(*SolveResponse)(nil), // 6: solver.SolveResponse
 }
-var file_solver_proto_depIdxs = []int32{
+var file_routing_proto_depIdxs = []int32{
 	0, // 0: solver.SolveRequest.depot:type_name -> solver.Node
 	0, // 1: solver.SolveRequest.nodes:type_name -> solver.Node
 	1, // 2: solver.SolveRequest.vehicles:type_name -> solver.Vehicle
@@ -848,26 +866,26 @@ var file_solver_proto_depIdxs = []int32{
 	0, // [0:6] is the sub-list for field type_name
 }
 
-func init() { file_solver_proto_init() }
-func file_solver_proto_init() {
-	if File_solver_proto != nil {
+func init() { file_routing_proto_init() }
+func file_routing_proto_init() {
+	if File_routing_proto != nil {
 		return
 	}
 	type x struct{}
 	out := protoimpl.TypeBuilder{
 		File: protoimpl.DescBuilder{
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
-			RawDescriptor: unsafe.Slice(unsafe.StringData(file_solver_proto_rawDesc), len(file_solver_proto_rawDesc)),
+			RawDescriptor: unsafe.Slice(unsafe.StringData(file_routing_proto_rawDesc), len(file_routing_proto_rawDesc)),
 			NumEnums:      0,
 			NumMessages:   7,
 			NumExtensions: 0,
 			NumServices:   1,
 		},
-		GoTypes:           file_solver_proto_goTypes,
-		DependencyIndexes: file_solver_proto_depIdxs,
-		MessageInfos:      file_solver_proto_msgTypes,
+		GoTypes:           file_routing_proto_goTypes,
+		DependencyIndexes: file_routing_proto_depIdxs,
+		MessageInfos:      file_routing_proto_msgTypes,
 	}.Build()
-	File_solver_proto = out.File
-	file_solver_proto_goTypes = nil
-	file_solver_proto_depIdxs = nil
+	File_routing_proto = out.File
+	file_routing_proto_goTypes = nil
+	file_routing_proto_depIdxs = nil
 }

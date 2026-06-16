@@ -29,7 +29,7 @@ The binary receives a single argument — the address to listen on (e.g. `127.0.
 
 ## Proto Contract
 
-File: [`solver/proto/solver.proto`](../proto/solver.proto)
+File: [`solver/proto/routing.proto`](../proto/routing.proto)
 
 ### Input — `SolveRequest`
 
@@ -167,8 +167,8 @@ The solver must enforce all 6 constraints on every route it produces:
 ```bash
 protoc --cpp_out=. --grpc_out=. \
        --plugin=protoc-gen-grpc=$(which grpc_cpp_plugin) \
-       solver.proto
-# Produces: solver.pb.h  solver.pb.cc  solver.grpc.pb.h  solver.grpc.pb.cc
+       routing.proto
+# Produces: routing.pb.h  routing.pb.cc  routing.grpc.pb.h  routing.grpc.pb.cc
 ```
 
 ### 2. Implement `SolverService`
@@ -236,7 +236,7 @@ SOLVER_BINARY_PATH=/path/to/solver_binary
 
 ## Regenerating Go Proto Code
 
-If you edit `solver.proto`, regenerate the Go bindings:
+If you edit `routing.proto`, regenerate the Go bindings:
 
 ```bash
 cd rop-algorithm
@@ -245,6 +245,6 @@ cd rop-algorithm
 export PATH="$PATH:/path/to/protoc/bin"
 
 go generate ./solver/proto/
-# Writes: solver/grpc/pb/solver.pb.go
-#         solver/grpc/pb/solver_grpc.pb.go
+# Writes: solver/grpc/pb/routing.pb.go
+#         solver/grpc/pb/routing_grpc.pb.go
 ```

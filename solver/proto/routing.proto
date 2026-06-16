@@ -48,6 +48,8 @@ message SolveRequest {
   int32            reload_min         = 10; // minutes; 0 = use server default (30)
   uint32           seed               = 11; // 0 = non-deterministic
   int32            multi_start_count  = 12; // 0 = use server default (2)
+  bool             disable_capacity    = 13;
+  bool             disable_time_window = 14;
 }
 
 message DropReason {

@@ -26,7 +26,9 @@ func problemToProto(p model.Problem) *pb.SolveRequest {
 		EnableMultiTrip:  p.EnableMultiTrip,
 		ReloadMin:        int32(p.ReloadMin),
 		Seed:             p.Seed,
-		MultiStartCount:  int32(p.MultiStartCount),
+		MultiStartCount:   int32(p.MultiStartCount),
+		DisableCapacity:   p.DisableCapacity,
+		DisableTimeWindow: p.DisableTimeWindow,
 	}
 }
 

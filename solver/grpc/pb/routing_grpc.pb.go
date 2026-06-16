@@ -2,7 +2,7 @@
 // versions:
 // - protoc-gen-go-grpc v1.6.1
 // - protoc             v7.34.1
-// source: solver.proto
+// source: routing.proto
 
 package pb
 
@@ -117,5 +117,5 @@ var SolverService_ServiceDesc = grpc.ServiceDesc{
 		},
 	},
 	Streams:  []grpc.StreamDesc{},
-	Metadata: "solver.proto",
+	Metadata: "routing.proto",
 }

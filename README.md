@@ -70,7 +70,7 @@ rop-algorithm/
 ├── solver/                       — Solver interface + implementations
 │   ├── main.go                   — Solver interface, StubSolver
 │   ├── proto/
-│   │   ├── solver.proto          — gRPC contract (SolverService.Solve)
+│   │   ├── routing.proto         — gRPC contract (SolverService.Solve)
 │   │   └── generate.go           — go:generate directive for protoc
 │   ├── grpc/
 │   │   ├── client.go             — GRPCSolver: wraps pb.SolverServiceClient

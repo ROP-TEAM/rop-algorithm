@@ -7,14 +7,14 @@ set(CMAKE_BUILD_TYPE Release)
 find_package(gRPC CONFIG REQUIRED)
 find_package(Protobuf REQUIRED)
 
-# Generate C++ code from solver.proto
-get_filename_component(PROTO_FILE "${CMAKE_CURRENT_SOURCE_DIR}/../solver/proto/solver.proto" ABSOLUTE)
+# Generate C++ code from routing.proto
+get_filename_component(PROTO_FILE "${CMAKE_CURRENT_SOURCE_DIR}/../solver/proto/routing.proto" ABSOLUTE)
 get_filename_component(PROTO_DIR  "${PROTO_FILE}" DIRECTORY)
 
-set(PROTO_SRCS "${CMAKE_CURRENT_BINARY_DIR}/solver.pb.cc")
-set(PROTO_HDRS "${CMAKE_CURRENT_BINARY_DIR}/solver.pb.h")
-set(GRPC_SRCS  "${CMAKE_CURRENT_BINARY_DIR}/solver.grpc.pb.cc")
-set(GRPC_HDRS  "${CMAKE_CURRENT_BINARY_DIR}/solver.grpc.pb.h")
+set(PROTO_SRCS "${CMAKE_CURRENT_BINARY_DIR}/routing.pb.cc")
+set(PROTO_HDRS "${CMAKE_CURRENT_BINARY_DIR}/routing.pb.h")
+set(GRPC_SRCS  "${CMAKE_CURRENT_BINARY_DIR}/routing.grpc.pb.cc")
+set(GRPC_HDRS  "${CMAKE_CURRENT_BINARY_DIR}/routing.grpc.pb.h")
 
 add_custom_command(
     OUTPUT ${PROTO_SRCS} ${PROTO_HDRS} ${GRPC_SRCS} ${GRPC_HDRS}

@@ -139,7 +139,7 @@ RouteValidationResult validateTrips(
             if (idx <= 0 || idx > req.nodes_size()) return fail("NODE_INDEX", "node index out of range");
             linehaul_load += linehaulDemand(req.nodes(idx - 1));
         }
-        if (linehaul_load > vehicle.capacity()) {
+        if (!req.disable_capacity() && linehaul_load > vehicle.capacity()) {
             return fail("CAPACITY", "initial linehaul load exceeds vehicle capacity");
         }
 
@@ -158,27 +158,31 @@ RouteValidationResult validateTrips(
                 break_taken = true;
                 arrival = time + travel;
             }
-            if (node.tw_start() > 0 && arrival < node.tw_start()) arrival = node.tw_start();
+            if (!req.disable_time_window()) {
+                if (node.tw_start() > 0 && arrival < node.tw_start()) arrival = node.tw_start();
 
-            if (node.tw_start() > 0 && arrival < node.tw_start()) {
-              total_wait += (node.tw_start() - arrival);
-              arrival = node.tw_start(); // arrival at tw_start
-            }
+                if (node.tw_start() > 0 && arrival < node.tw_start()) {
+                  total_wait += (node.tw_start() - arrival);
+                  arrival = node.tw_start(); // arrival at tw_start
+                }
 
-            const int latest = node.tw_end() > 0 ? node.tw_end() : 1440;
-            if (arrival > latest) {
-                std::ostringstream msg;
-                msg << node.id() << " arrival " << arrival << " > tw_end " << latest;
-                return fail("TIME_WINDOW", msg.str());
+                const int latest = node.tw_end() > 0 ? node.tw_end() : 1440;
+                if (arrival > latest) {
+                    std::ostringstream msg;
+                    msg << node.id() << " arrival " << arrival << " > tw_end " << latest;
+                    return fail("TIME_WINDOW", msg.str());
+                }
             }
 
             onboard -= linehaulDemand(node);
             onboard += backhaulDemand(node);
-            if (onboard > vehicle.capacity()) {
-                return fail("CAPACITY", "load exceeds capacity at node " + node.id());
-            }
-            if (onboard < 0) {
-                return fail("CAPACITY", "negative load at node " + node.id());
+            if (!req.disable_capacity()) {
+                if (onboard > vehicle.capacity()) {
+                    return fail("CAPACITY", "load exceeds capacity at node " + node.id());
+                }
+                if (onboard < 0) {
+                    return fail("CAPACITY", "negative load at node " + node.id());
+                }
             }
 
             const int depart = arrival + node.service_time();
