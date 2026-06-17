@@ -73,6 +73,55 @@ func gini(values []float64) float64 {
 	return 2*cumulative/(n*total) - (n+1)/n
 }
 
+// accumulator merges metrics across shift bands whose shift lengths differ, so
+// utilisation is measured against each route's own shift rather than one global
+// value.
+type accumulator struct {
+	m          Metrics
+	durations  []float64
+	utilisation []float64
+}
+
+func newAccumulator() *accumulator { return &accumulator{} }
+
+func (a *accumulator) add(sol model.Solution, serviceByUnit map[string]float64, shiftMinutes int) {
+	a.m.UnassignedUnits += len(sol.Unassigned)
+	for _, route := range sol.Routes {
+		if len(route.Stops) == 0 {
+			continue
+		}
+		a.m.TrucksUsed++
+		a.m.DeadheadM += route.TotalDistance
+		a.durations = append(a.durations, float64(route.TotalDuration))
+		if shiftMinutes > 0 {
+			a.utilisation = append(a.utilisation, float64(route.TotalDuration)/float64(shiftMinutes))
+		}
+		for _, stop := range route.Stops {
+			if length, ok := serviceByUnit[stop.NodeID]; ok {
+				a.m.ServiceM += length
+				a.m.AssignedUnits++
+			}
+		}
+	}
+}
+
+func (a *accumulator) metrics() Metrics {
+	a.m.MeanUtilisation = mean(a.utilisation)
+	a.m.LoadGini = gini(a.durations)
+	return a.m
+}
+
+func mean(values []float64) float64 {
+	if len(values) == 0 {
+		return 0
+	}
+	var sum float64
+	for _, v := range values {
+		sum += v
+	}
+	return sum / float64(len(values))
+}
+
 // ServiceByUnit indexes units by id for metric attribution.
 func ServiceByUnit(units []RouteUnit) map[string]float64 {
 	out := make(map[string]float64, len(units))
