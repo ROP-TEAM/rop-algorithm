@@ -20,6 +20,10 @@ func rad(deg float64) float64 { return deg * math.Pi / 180 }
 // depot followed by the given points. Index 0 is the depot. Distances are
 // straight-line metres; durations convert them at the driving speed. A real
 // deployment swaps these for OSRM matrices — the solver only sees the arrays.
+//
+// With cfg.NoDepot the depot's row and column are left at zero, making it a
+// virtual node: the solver pays nothing to enter or leave it, so route distance
+// reflects only travel between collected streets, not legs to an invented depot.
 func buildMatrices(depot LatLng, points []LatLng, cfg Config) (dist, dur [][]float64) {
 	all := append([]LatLng{depot}, points...)
 	n := len(all)
@@ -29,7 +33,7 @@ func buildMatrices(depot LatLng, points []LatLng, cfg Config) (dist, dur [][]flo
 		dist[i] = make([]float64, n)
 		dur[i] = make([]float64, n)
 		for j := range all {
-			if i == j {
+			if i == j || (cfg.NoDepot && (i == 0 || j == 0)) {
 				continue
 			}
 			d := haversineM(all[i], all[j])

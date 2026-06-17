@@ -17,6 +17,7 @@ type options struct {
 	maxShiftMin int
 	count       int
 	timeLimit   int
+	noDepot     bool
 	mode        waste.FleetMode
 	modeName    string
 }
@@ -33,6 +34,7 @@ func parseFlags() options {
 	mode := flag.String("mode", "min", "fleet mode: min (fewest trucks) or full (fixed count)")
 	count := flag.Int("count", 0, "truck count per cell for full mode")
 	timeLimit := flag.Int("time-limit-ms", 300, "solver budget per subproblem (ms)")
+	noDepot := flag.Bool("no-depot", true, "treat the depot as a zero-distance virtual node")
 	flag.Parse()
 
 	fleetMode := waste.MinimizeFleet
@@ -50,6 +52,7 @@ func parseFlags() options {
 		maxShiftMin: *maxShiftMin,
 		count:       *count,
 		timeLimit:   *timeLimit,
+		noDepot:     *noDepot,
 		mode:        fleetMode,
 		modeName:    *mode,
 	}
