@@ -15,6 +15,7 @@ type options struct {
 	shiftEnd   int
 	maxPerCell int
 	count      int
+	timeLimit  int
 	mode       waste.FleetMode
 	modeName   string
 }
@@ -29,6 +30,7 @@ func parseFlags() options {
 	maxPerCell := flag.Int("max-per-cell", 300, "max route units per subproblem")
 	mode := flag.String("mode", "min", "fleet mode: min (fewest trucks) or full (fixed count)")
 	count := flag.Int("count", 0, "truck count per cell for full mode")
+	timeLimit := flag.Int("time-limit-ms", 300, "solver budget per subproblem (ms)")
 	flag.Parse()
 
 	fleetMode := waste.MinimizeFleet
@@ -44,6 +46,7 @@ func parseFlags() options {
 		shiftEnd:   *shiftEnd,
 		maxPerCell: *maxPerCell,
 		count:      *count,
+		timeLimit:  *timeLimit,
 		mode:       fleetMode,
 		modeName:   *mode,
 	}

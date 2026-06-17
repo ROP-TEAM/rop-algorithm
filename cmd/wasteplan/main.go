@@ -42,7 +42,7 @@ func main() {
 
 	planner := waste.Planner{
 		Solver:     engine,
-		Config:     waste.Config{CollectKmh: opts.collectKmh, DriveKmh: opts.driveKmh},
+		Config:     waste.Config{CollectKmh: opts.collectKmh, DriveKmh: opts.driveKmh, TimeLimitMS: opts.timeLimit},
 		Fleet:      waste.Fleet{Mode: opts.mode, Count: opts.count, ShiftStart: opts.shiftStart, ShiftEnd: opts.shiftEnd},
 		MaxPerCell: opts.maxPerCell,
 	}

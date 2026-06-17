@@ -44,6 +44,7 @@ func BuildProblem(units []RouteUnit, fleet Fleet, cfg Config) (model.Problem, er
 		Vehicles:          vehicles,
 		Distances:         dist,
 		Durations:         dur,
+		TimeLimitMS:       cfg.TimeLimitMS,
 		EnableALNS:        true,
 		DisableCapacity:   fleet.Capacity == 0,
 		DisableTimeWindow: false,

@@ -4,8 +4,9 @@ package waste
 // speeds are unknown, so callers sweep them; see clean_trash/REPORT.md for the
 // sensitivity of the results to these values.
 type Config struct {
-	CollectKmh float64 // collection speed (slow, frequent stops)
-	DriveKmh   float64 // driving speed between routes (deadhead)
+	CollectKmh  float64 // collection speed (slow, frequent stops)
+	DriveKmh    float64 // driving speed between routes (deadhead)
+	TimeLimitMS int     // solver budget per subproblem; 0 = solver default
 }
 
 // DefaultConfig is the mid point of the speed sweep used in the Python proofs.
