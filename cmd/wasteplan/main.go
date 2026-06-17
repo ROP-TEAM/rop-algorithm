@@ -43,7 +43,7 @@ func main() {
 	planner := waste.Planner{
 		Solver:     engine,
 		Config:     waste.Config{CollectKmh: opts.collectKmh, DriveKmh: opts.driveKmh, TimeLimitMS: opts.timeLimit, NoDepot: opts.noDepot},
-		Fleet:       waste.Fleet{Mode: opts.mode, Count: opts.count, ShiftStart: opts.shiftStart, ShiftEnd: opts.shiftEnd},
+		Fleet:       waste.Fleet{Mode: opts.mode, Count: opts.count, ShiftStart: opts.shiftStart, ShiftEnd: opts.shiftEnd, FixedCost: opts.fixedCost},
 		MaxPerCell:  opts.maxPerCell,
 		MaxShiftMin: opts.maxShiftMin,
 	}
@@ -56,33 +56,32 @@ func main() {
 }
 
 func runWeek(planner waste.Planner, units []waste.RouteUnit, opts options) (map[string]any, error) {
-	perDay := make([]waste.DayPlan, 0, 7)
-	totals := struct {
-		Trucks, Assigned, Unassigned     int
-		DeadheadM, InterStopDeadheadM    float64
-	}{}
-	for weekday := range 7 {
-		plan, err := planner.PlanDay(context.Background(), units, weekday)
-		if err != nil {
-			return nil, fmt.Errorf("plan weekday %d: %w", weekday, err)
-		}
-		perDay = append(perDay, plan)
-		totals.Trucks += plan.Metrics.TrucksUsed
-		totals.Assigned += plan.Metrics.AssignedUnits
-		totals.Unassigned += plan.Metrics.UnassignedUnits
-		totals.DeadheadM += plan.Metrics.DeadheadM
-		totals.InterStopDeadheadM += plan.Metrics.InterStopDeadheadM
+	weekdays, err := parseDays(opts.days)
+	if err != nil {
+		return nil, err
 	}
+	report, err := planner.PlanDays(context.Background(), units, weekdays)
+	if err != nil {
+		return nil, err
+	}
+	t := report.Totals
 	return map[string]any{
 		"config":             map[string]any{"collect_kmh": opts.collectKmh, "drive_kmh": opts.driveKmh, "mode": opts.modeName, "max_per_cell": opts.maxPerCell},
 		"baseline_reference": baseline,
-		"per_day":            perDay,
+		"baseline_native": map[string]any{
+			"inter_stop_deadhead_km": round1(report.Baseline.InterStopDeadheadM / 1000),
+			"assigned_units":         report.Baseline.AssignedUnits,
+			"truck_groups":           report.Baseline.TruckGroups,
+			"note":                   "current current_vehicle_id grouping, NN-ordered; same method as the plan",
+		},
+		"per_day": report.PerDay,
 		"totals": map[string]any{
-			"truck_shifts":             totals.Trucks,
-			"deadhead_km_with_depot":   round1(totals.DeadheadM / 1000),
-			"inter_stop_deadhead_km":   round1(totals.InterStopDeadheadM / 1000),
-			"assigned_units":           totals.Assigned,
-			"unassigned":               totals.Unassigned,
+			"truck_shifts":                        t.TruckShifts,
+			"deadhead_km_with_depot":              round1(t.DeadheadM / 1000),
+			"inter_stop_deadhead_km":              round1(t.InterStopDeadheadM / 1000),
+			"assigned_units":                      t.AssignedUnits,
+			"unassigned":                          t.UnassignedUnits,
+			"inter_stop_deadhead_vs_baseline_pct": t.InterStopReductionPct,
 		},
 	}, nil
 }

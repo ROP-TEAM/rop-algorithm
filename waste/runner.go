@@ -87,12 +87,9 @@ func cellTruckCount(template Fleet, cellSize int) int {
 }
 
 func centroid(units []RouteUnit) LatLng {
-	var lat, lng float64
-	for _, u := range units {
-		mid := u.Midpoint()
-		lat += mid.Lat()
-		lng += mid.Lng()
+	points := make([]LatLng, len(units))
+	for i, u := range units {
+		points[i] = u.Midpoint()
 	}
-	n := float64(len(units))
-	return LatLng{lat / n, lng / n}
+	return centroidOf(points)
 }
