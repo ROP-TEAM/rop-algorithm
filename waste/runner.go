@@ -14,10 +14,11 @@ import (
 // with the shared VRPTW solver. The solver schedules stops sequentially inside
 // the shift, which is what the greedy prototype could not do.
 type Planner struct {
-	Solver     solver.Solver
-	Config     Config
-	Fleet      Fleet // template: Mode, capacity. Shift, Depot and Count are set per band/cell.
-	MaxPerCell int
+	Solver      solver.Solver
+	Config      Config
+	Fleet       Fleet // template: Mode, capacity. Shift, Depot and Count are set per band/cell.
+	MaxPerCell  int
+	MaxShiftMin int // cap on a merged shift band; 0 = DefaultMaxShiftMin
 }
 
 // DayPlan is the merged outcome for one weekday.
@@ -36,26 +37,26 @@ func (p Planner) PlanDay(ctx context.Context, units []RouteUnit, weekday int) (D
 	}
 
 	acc := newAccumulator()
-	bands := groupByWindow(due)
+	bands := MergeWindows(due, p.MaxShiftMin)
 	cellCount := 0
-	for window, bandUnits := range bands {
-		shift := window.EndMin - window.StartMin
-		for _, cell := range DecomposeGrid(bandUnits, p.MaxPerCell) {
+	for _, band := range bands {
+		shift := band.Shift.EndMin - band.Shift.StartMin
+		for _, cell := range DecomposeGrid(band.Units, p.MaxPerCell) {
 			cellCount++
-			sol, err := p.solveCell(ctx, cell, window)
+			sol, err := p.solveCell(ctx, cell, band.Shift)
 			if err != nil {
-				return DayPlan{}, fmt.Errorf("weekday %d window %d-%d: %w", weekday, window.StartMin, window.EndMin, err)
+				return DayPlan{}, fmt.Errorf("weekday %d band %d-%d: %w", weekday, band.Shift.StartMin, band.Shift.EndMin, err)
 			}
-			acc.add(sol, ServiceByUnit(cell), shift)
+			acc.add(sol, ServiceByUnit(cell), positionByUnit(cell), shift)
 		}
 	}
 	return DayPlan{Weekday: weekday, Cells: cellCount, Bands: len(bands), Metrics: acc.metrics()}, nil
 }
 
-func (p Planner) solveCell(ctx context.Context, cell []RouteUnit, window TimeWindow) (model.Solution, error) {
+func (p Planner) solveCell(ctx context.Context, cell []RouteUnit, shift TimeWindow) (model.Solution, error) {
 	fleet := p.Fleet
-	fleet.ShiftStart = window.StartMin
-	fleet.ShiftEnd = window.EndMin
+	fleet.ShiftStart = shift.StartMin
+	fleet.ShiftEnd = shift.EndMin
 	fleet.Depot = centroid(cell)
 	fleet.Count = cellTruckCount(p.Fleet, len(cell))
 
@@ -66,12 +67,14 @@ func (p Planner) solveCell(ctx context.Context, cell []RouteUnit, window TimeWin
 	return p.Solver.Solve(ctx, problem)
 }
 
-func groupByWindow(units []RouteUnit) map[TimeWindow][]RouteUnit {
-	bands := make(map[TimeWindow][]RouteUnit)
+// positionByUnit indexes unit midpoints by id so deadhead can be measured
+// between consecutive stops, excluding the artificial per-cell depot legs.
+func positionByUnit(units []RouteUnit) map[string]LatLng {
+	out := make(map[string]LatLng, len(units))
 	for _, u := range units {
-		bands[u.TimeWindow] = append(bands[u.TimeWindow], u)
+		out[u.UnitID] = u.Midpoint()
 	}
-	return bands
+	return out
 }
 
 // cellTruckCount caps the fleet per cell: an upper bound of one truck per unit

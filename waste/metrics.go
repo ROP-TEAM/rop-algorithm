@@ -10,13 +10,14 @@ import (
 // truck-shifts it used, how far trucks drove without collecting (deadhead), how
 // full each shift was, and how evenly work was spread.
 type Metrics struct {
-	TrucksUsed      int
-	AssignedUnits   int
-	UnassignedUnits int
-	DeadheadM       float64
-	ServiceM        float64
-	MeanUtilisation float64 // mean route duration / shift length
-	LoadGini        float64 // inequality of route durations across trucks
+	TrucksUsed         int
+	AssignedUnits      int
+	UnassignedUnits    int
+	DeadheadM          float64 // route distance incl. depot legs (solver objective)
+	InterStopDeadheadM float64 // between stops only; comparable to the baseline
+	ServiceM           float64
+	MeanUtilisation    float64 // mean route duration / shift length
+	LoadGini           float64 // inequality of route durations across trucks
 }
 
 // ComputeMetrics scores a solution. serviceByUnit maps a unit id to its
@@ -77,14 +78,14 @@ func gini(values []float64) float64 {
 // utilisation is measured against each route's own shift rather than one global
 // value.
 type accumulator struct {
-	m          Metrics
-	durations  []float64
+	m           Metrics
+	durations   []float64
 	utilisation []float64
 }
 
 func newAccumulator() *accumulator { return &accumulator{} }
 
-func (a *accumulator) add(sol model.Solution, serviceByUnit map[string]float64, shiftMinutes int) {
+func (a *accumulator) add(sol model.Solution, serviceByUnit map[string]float64, posByUnit map[string]LatLng, shiftMinutes int) {
 	a.m.UnassignedUnits += len(sol.Unassigned)
 	for _, route := range sol.Routes {
 		if len(route.Stops) == 0 {
@@ -92,6 +93,7 @@ func (a *accumulator) add(sol model.Solution, serviceByUnit map[string]float64, 
 		}
 		a.m.TrucksUsed++
 		a.m.DeadheadM += route.TotalDistance
+		a.m.InterStopDeadheadM += interStopDeadhead(route, posByUnit)
 		a.durations = append(a.durations, float64(route.TotalDuration))
 		if shiftMinutes > 0 {
 			a.utilisation = append(a.utilisation, float64(route.TotalDuration)/float64(shiftMinutes))
@@ -103,6 +105,21 @@ func (a *accumulator) add(sol model.Solution, serviceByUnit map[string]float64, 
 			}
 		}
 	}
+}
+
+// interStopDeadhead sums straight-line distance between consecutive stops only,
+// excluding the depot legs the VRP solver adds at each route's ends. This is the
+// figure comparable to the Python baseline's inter-route deadhead.
+func interStopDeadhead(route model.Route, posByUnit map[string]LatLng) float64 {
+	var total float64
+	for i := 1; i < len(route.Stops); i++ {
+		prev, ok1 := posByUnit[route.Stops[i-1].NodeID]
+		curr, ok2 := posByUnit[route.Stops[i].NodeID]
+		if ok1 && ok2 {
+			total += haversineM(prev, curr)
+		}
+	}
+	return total
 }
 
 func (a *accumulator) metrics() Metrics {

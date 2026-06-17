@@ -43,8 +43,9 @@ func main() {
 	planner := waste.Planner{
 		Solver:     engine,
 		Config:     waste.Config{CollectKmh: opts.collectKmh, DriveKmh: opts.driveKmh, TimeLimitMS: opts.timeLimit},
-		Fleet:      waste.Fleet{Mode: opts.mode, Count: opts.count, ShiftStart: opts.shiftStart, ShiftEnd: opts.shiftEnd},
-		MaxPerCell: opts.maxPerCell,
+		Fleet:       waste.Fleet{Mode: opts.mode, Count: opts.count, ShiftStart: opts.shiftStart, ShiftEnd: opts.shiftEnd},
+		MaxPerCell:  opts.maxPerCell,
+		MaxShiftMin: opts.maxShiftMin,
 	}
 
 	report, err := runWeek(planner, units, opts)
@@ -57,8 +58,8 @@ func main() {
 func runWeek(planner waste.Planner, units []waste.RouteUnit, opts options) (map[string]any, error) {
 	perDay := make([]waste.DayPlan, 0, 7)
 	totals := struct {
-		Trucks, Assigned, Unassigned int
-		DeadheadM                    float64
+		Trucks, Assigned, Unassigned     int
+		DeadheadM, InterStopDeadheadM    float64
 	}{}
 	for weekday := range 7 {
 		plan, err := planner.PlanDay(context.Background(), units, weekday)
@@ -70,16 +71,18 @@ func runWeek(planner waste.Planner, units []waste.RouteUnit, opts options) (map[
 		totals.Assigned += plan.Metrics.AssignedUnits
 		totals.Unassigned += plan.Metrics.UnassignedUnits
 		totals.DeadheadM += plan.Metrics.DeadheadM
+		totals.InterStopDeadheadM += plan.Metrics.InterStopDeadheadM
 	}
 	return map[string]any{
 		"config":             map[string]any{"collect_kmh": opts.collectKmh, "drive_kmh": opts.driveKmh, "mode": opts.modeName, "max_per_cell": opts.maxPerCell},
 		"baseline_reference": baseline,
 		"per_day":            perDay,
 		"totals": map[string]any{
-			"truck_shifts":   totals.Trucks,
-			"deadhead_km":    round1(totals.DeadheadM / 1000),
-			"assigned_units": totals.Assigned,
-			"unassigned":     totals.Unassigned,
+			"truck_shifts":             totals.Trucks,
+			"deadhead_km_with_depot":   round1(totals.DeadheadM / 1000),
+			"inter_stop_deadhead_km":   round1(totals.InterStopDeadheadM / 1000),
+			"assigned_units":           totals.Assigned,
+			"unassigned":               totals.Unassigned,
 		},
 	}, nil
 }
