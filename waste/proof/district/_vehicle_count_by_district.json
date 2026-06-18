@@ -1,0 +1,317 @@
+{
+  "note": "vehicles = truck-shifts per week, sorted ascending; stops = total stops in that district file",
+  "generatedAt": "2026-06-18",
+  "totals": {
+    "districts": 51,
+    "vehicles": 7129,
+    "stops": 40431
+  },
+  "districts": [
+    {
+      "district": "Department of Environment, Bangkok Metropolitan Administration",
+      "file": "Department_of_Environment_Bangkok_Metropolitan_Administration.json",
+      "vehicles": 40,
+      "stops": 341
+    },
+    {
+      "district": "Bang Kho Laem",
+      "file": "Bang_Kho_Laem.json",
+      "vehicles": 49,
+      "stops": 522
+    },
+    {
+      "district": "Yan Nawa",
+      "file": "Yan_Nawa.json",
+      "vehicles": 51,
+      "stops": 432
+    },
+    {
+      "district": "Samphanthawong",
+      "file": "Samphanthawong.json",
+      "vehicles": 56,
+      "stops": 259
+    },
+    {
+      "district": "Pom Prap Sattru Phai",
+      "file": "Pom_Prap_Sattru_Phai.json",
+      "vehicles": 56,
+      "stops": 301
+    },
+    {
+      "district": "Phra Khanong",
+      "file": "Phra_Khanong.json",
+      "vehicles": 65,
+      "stops": 528
+    },
+    {
+      "district": "Lak Si",
+      "file": "Lak_Si.json",
+      "vehicles": 67,
+      "stops": 343
+    },
+    {
+      "district": "Bueng Kum",
+      "file": "Bueng_Kum.json",
+      "vehicles": 68,
+      "stops": 1088
+    },
+    {
+      "district": "Khlong San",
+      "file": "Khlong_San.json",
+      "vehicles": 72,
+      "stops": 463
+    },
+    {
+      "district": "Bangkok Noi",
+      "file": "Bangkok_Noi.json",
+      "vehicles": 72,
+      "stops": 512
+    },
+    {
+      "district": "Thonburi",
+      "file": "Thonburi.json",
+      "vehicles": 77,
+      "stops": 833
+    },
+    {
+      "district": "Ratchathewi",
+      "file": "Ratchathewi.json",
+      "vehicles": 82,
+      "stops": 322
+    },
+    {
+      "district": "Pathumwan",
+      "file": "Pathumwan.json",
+      "vehicles": 88,
+      "stops": 600
+    },
+    {
+      "district": "Nong Khaem",
+      "file": "Nong_Khaem.json",
+      "vehicles": 89,
+      "stops": 496
+    },
+    {
+      "district": "Bang Kapi",
+      "file": "Bang_Kapi.json",
+      "vehicles": 91,
+      "stops": 817
+    },
+    {
+      "district": "Lat Phrao",
+      "file": "Lat_Phrao.json",
+      "vehicles": 93,
+      "stops": 1019
+    },
+    {
+      "district": "Chom Thong",
+      "file": "Chom_Thong.json",
+      "vehicles": 96,
+      "stops": 641
+    },
+    {
+      "district": "Bang Rak",
+      "file": "Bang_Rak.json",
+      "vehicles": 97,
+      "stops": 2092
+    },
+    {
+      "district": "Bang Bon",
+      "file": "Bang_Bon.json",
+      "vehicles": 102,
+      "stops": 1264
+    },
+    {
+      "district": "Suan Luang",
+      "file": "Suan_Luang.json",
+      "vehicles": 106,
+      "stops": 626
+    },
+    {
+      "district": "Sathorn",
+      "file": "Sathorn.json",
+      "vehicles": 110,
+      "stops": 607
+    },
+    {
+      "district": "Khan Na Yao",
+      "file": "Khan_Na_Yao.json",
+      "vehicles": 111,
+      "stops": 666
+    },
+    {
+      "district": "Phasi Charoen",
+      "file": "Phasi_Charoen.json",
+      "vehicles": 117,
+      "stops": 572
+    },
+    {
+      "district": "Bang Phlat",
+      "file": "Bang_Phlat.json",
+      "vehicles": 118,
+      "stops": 424
+    },
+    {
+      "district": "Khlong Sam Wa",
+      "file": "Khlong_Sam_Wa.json",
+      "vehicles": 122,
+      "stops": 734
+    },
+    {
+      "district": "Sai Mai",
+      "file": "Sai_Mai.json",
+      "vehicles": 122,
+      "stops": 1566
+    },
+    {
+      "district": "Dusit",
+      "file": "Dusit.json",
+      "vehicles": 123,
+      "stops": 607
+    },
+    {
+      "district": "Bang Sue",
+      "file": "Bang_Sue.json",
+      "vehicles": 130,
+      "stops": 1441
+    },
+    {
+      "district": "Minburi",
+      "file": "Minburi.json",
+      "vehicles": 132,
+      "stops": 340
+    },
+    {
+      "district": "Prawet",
+      "file": "Prawet.json",
+      "vehicles": 132,
+      "stops": 2052
+    },
+    {
+      "district": "Bangkok Yai",
+      "file": "Bangkok_Yai.json",
+      "vehicles": 134,
+      "stops": 646
+    },
+    {
+      "district": "Din Daeng",
+      "file": "Din_Daeng.json",
+      "vehicles": 134,
+      "stops": 1782
+    },
+    {
+      "district": "Lat Krabang",
+      "file": "Lat_Krabang.json",
+      "vehicles": 139,
+      "stops": 697
+    },
+    {
+      "district": "Bang Khae",
+      "file": "Bang_Khae.json",
+      "vehicles": 139,
+      "stops": 831
+    },
+    {
+      "district": "Saphan Sung",
+      "file": "Saphan_Sung.json",
+      "vehicles": 141,
+      "stops": 612
+    },
+    {
+      "district": "Thung Khru",
+      "file": "Thung_Khru.json",
+      "vehicles": 147,
+      "stops": 621
+    },
+    {
+      "district": "Nong Chok",
+      "file": "Nong_Chok.json",
+      "vehicles": 148,
+      "stops": 278
+    },
+    {
+      "district": "Phra Nakhon",
+      "file": "Phra_Nakhon.json",
+      "vehicles": 152,
+      "stops": 612
+    },
+    {
+      "district": "Bangna",
+      "file": "Bangna.json",
+      "vehicles": 161,
+      "stops": 469
+    },
+    {
+      "district": "Khlong Toei",
+      "file": "Khlong_Toei.json",
+      "vehicles": 169,
+      "stops": 591
+    },
+    {
+      "district": "Huai Khwang",
+      "file": "Huai_Khwang.json",
+      "vehicles": 174,
+      "stops": 1090
+    },
+    {
+      "district": "Rat Burana",
+      "file": "Rat_Burana.json",
+      "vehicles": 177,
+      "stops": 509
+    },
+    {
+      "district": "Phaya Thai",
+      "file": "Phaya_Thai.json",
+      "vehicles": 182,
+      "stops": 658
+    },
+    {
+      "district": "Don Mueang",
+      "file": "Don_Mueang.json",
+      "vehicles": 190,
+      "stops": 1207
+    },
+    {
+      "district": "Taling Chan",
+      "file": "Taling_Chan.json",
+      "vehicles": 197,
+      "stops": 477
+    },
+    {
+      "district": "Chatuchak",
+      "file": "Chatuchak.json",
+      "vehicles": 198,
+      "stops": 804
+    },
+    {
+      "district": "Bang Khun Thian",
+      "file": "Bang_Khun_Thian.json",
+      "vehicles": 271,
+      "stops": 834
+    },
+    {
+      "district": "Wang Thonglang",
+      "file": "Wang_Thonglang.json",
+      "vehicles": 286,
+      "stops": 1193
+    },
+    {
+      "district": "Watthana",
+      "file": "Watthana.json",
+      "vehicles": 322,
+      "stops": 1331
+    },
+    {
+      "district": "Bang Khen",
+      "file": "Bang_Khen.json",
+      "vehicles": 332,
+      "stops": 1813
+    },
+    {
+      "district": "Thawi Watthana",
+      "file": "Thawi_Watthana.json",
+      "vehicles": 602,
+      "stops": 868
+    }
+  ]
+}
