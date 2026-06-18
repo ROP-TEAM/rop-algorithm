@@ -1,0 +1,733 @@
+{
+  "note": "real OSRM-optimized per district vs current assignment, all distances OSRM road",
+  "totals": {
+    "districts": 51,
+    "stops": 40431,
+    "trucks": {
+      "baseline": 11922,
+      "optimized": 6737,
+      "reductionPct": 43.5
+    },
+    "deadheadKm": {
+      "baseline": 60257.2,
+      "optimized": 56344.0,
+      "reductionPct": 6.5
+    }
+  },
+  "districts": [
+    {
+      "district": "Department of Environment, Bangkok Metropolitan Administration",
+      "distance": "osrm-road-optimized",
+      "truckShifts": 38,
+      "routes": 38,
+      "stops": 341,
+      "deadheadKm": 3153.0,
+      "loadGini": 0.342,
+      "baseline": {
+        "truckShifts": 194,
+        "deadheadKm": 1630.5,
+        "loadGini": 0.73
+      }
+    },
+    {
+      "district": "Bang Kho Laem",
+      "distance": "osrm-road-optimized",
+      "truckShifts": 45,
+      "routes": 45,
+      "stops": 522,
+      "deadheadKm": 483.4,
+      "loadGini": 0.217,
+      "baseline": {
+        "truckShifts": 140,
+        "deadheadKm": 523.5,
+        "loadGini": 0.322
+      }
+    },
+    {
+      "district": "Pom Prap Sattru Phai",
+      "distance": "osrm-road-optimized",
+      "truckShifts": 49,
+      "routes": 49,
+      "stops": 301,
+      "deadheadKm": 165.3,
+      "loadGini": 0.236,
+      "baseline": {
+        "truckShifts": 112,
+        "deadheadKm": 221.4,
+        "loadGini": 0.324
+      }
+    },
+    {
+      "district": "Yan Nawa",
+      "distance": "osrm-road-optimized",
+      "truckShifts": 58,
+      "routes": 58,
+      "stops": 432,
+      "deadheadKm": 637.9,
+      "loadGini": 0.296,
+      "baseline": {
+        "truckShifts": 210,
+        "deadheadKm": 627.3,
+        "loadGini": 0.368
+      }
+    },
+    {
+      "district": "Samphanthawong",
+      "distance": "osrm-road-optimized",
+      "truckShifts": 63,
+      "routes": 63,
+      "stops": 259,
+      "deadheadKm": 253.7,
+      "loadGini": 0.207,
+      "baseline": {
+        "truckShifts": 84,
+        "deadheadKm": 275.2,
+        "loadGini": 0.326
+      }
+    },
+    {
+      "district": "Bueng Kum",
+      "distance": "osrm-road-optimized",
+      "truckShifts": 65,
+      "routes": 65,
+      "stops": 1088,
+      "deadheadKm": 1210.6,
+      "loadGini": 0.18,
+      "baseline": {
+        "truckShifts": 140,
+        "deadheadKm": 1636.3,
+        "loadGini": 0.323
+      }
+    },
+    {
+      "district": "Phra Khanong",
+      "distance": "osrm-road-optimized",
+      "truckShifts": 66,
+      "routes": 66,
+      "stops": 528,
+      "deadheadKm": 515.5,
+      "loadGini": 0.468,
+      "baseline": {
+        "truckShifts": 133,
+        "deadheadKm": 400.7,
+        "loadGini": 0.34
+      }
+    },
+    {
+      "district": "Khlong San",
+      "distance": "osrm-road-optimized",
+      "truckShifts": 70,
+      "routes": 70,
+      "stops": 463,
+      "deadheadKm": 380.9,
+      "loadGini": 0.357,
+      "baseline": {
+        "truckShifts": 133,
+        "deadheadKm": 427.9,
+        "loadGini": 0.479
+      }
+    },
+    {
+      "district": "Lak Si",
+      "distance": "osrm-road-optimized",
+      "truckShifts": 70,
+      "routes": 70,
+      "stops": 343,
+      "deadheadKm": 680.7,
+      "loadGini": 0.346,
+      "baseline": {
+        "truckShifts": 163,
+        "deadheadKm": 335.6,
+        "loadGini": 0.44
+      }
+    },
+    {
+      "district": "Bangkok Noi",
+      "distance": "osrm-road-optimized",
+      "truckShifts": 74,
+      "routes": 74,
+      "stops": 512,
+      "deadheadKm": 655.8,
+      "loadGini": 0.233,
+      "baseline": {
+        "truckShifts": 240,
+        "deadheadKm": 658.2,
+        "loadGini": 0.421
+      }
+    },
+    {
+      "district": "Ratchathewi",
+      "distance": "osrm-road-optimized",
+      "truckShifts": 76,
+      "routes": 76,
+      "stops": 322,
+      "deadheadKm": 401.1,
+      "loadGini": 0.242,
+      "baseline": {
+        "truckShifts": 273,
+        "deadheadKm": 65.2,
+        "loadGini": 0.392
+      }
+    },
+    {
+      "district": "Thonburi",
+      "distance": "osrm-road-optimized",
+      "truckShifts": 77,
+      "routes": 77,
+      "stops": 833,
+      "deadheadKm": 1231.8,
+      "loadGini": 0.214,
+      "baseline": {
+        "truckShifts": 259,
+        "deadheadKm": 1480.0,
+        "loadGini": 0.514
+      }
+    },
+    {
+      "district": "Nong Khaem",
+      "distance": "osrm-road-optimized",
+      "truckShifts": 81,
+      "routes": 81,
+      "stops": 496,
+      "deadheadKm": 707.4,
+      "loadGini": 0.222,
+      "baseline": {
+        "truckShifts": 175,
+        "deadheadKm": 728.4,
+        "loadGini": 0.428
+      }
+    },
+    {
+      "district": "Pathumwan",
+      "distance": "osrm-road-optimized",
+      "truckShifts": 81,
+      "routes": 81,
+      "stops": 600,
+      "deadheadKm": 609.3,
+      "loadGini": 0.273,
+      "baseline": {
+        "truckShifts": 321,
+        "deadheadKm": 499.4,
+        "loadGini": 0.573
+      }
+    },
+    {
+      "district": "Bang Rak",
+      "distance": "osrm-road-optimized",
+      "truckShifts": 87,
+      "routes": 87,
+      "stops": 2092,
+      "deadheadKm": 813.5,
+      "loadGini": 0.255,
+      "baseline": {
+        "truckShifts": 296,
+        "deadheadKm": 1347.4,
+        "loadGini": 0.506
+      }
+    },
+    {
+      "district": "Bang Kapi",
+      "distance": "osrm-road-optimized",
+      "truckShifts": 89,
+      "routes": 89,
+      "stops": 817,
+      "deadheadKm": 1364.4,
+      "loadGini": 0.179,
+      "baseline": {
+        "truckShifts": 347,
+        "deadheadKm": 1217.8,
+        "loadGini": 0.397
+      }
+    },
+    {
+      "district": "Lat Phrao",
+      "distance": "osrm-road-optimized",
+      "truckShifts": 89,
+      "routes": 89,
+      "stops": 1019,
+      "deadheadKm": 1156.3,
+      "loadGini": 0.264,
+      "baseline": {
+        "truckShifts": 198,
+        "deadheadKm": 1316.8,
+        "loadGini": 0.431
+      }
+    },
+    {
+      "district": "Chom Thong",
+      "distance": "osrm-road-optimized",
+      "truckShifts": 96,
+      "routes": 96,
+      "stops": 641,
+      "deadheadKm": 1051.7,
+      "loadGini": 0.289,
+      "baseline": {
+        "truckShifts": 188,
+        "deadheadKm": 1697.1,
+        "loadGini": 0.332
+      }
+    },
+    {
+      "district": "Bang Bon",
+      "distance": "osrm-road-optimized",
+      "truckShifts": 97,
+      "routes": 97,
+      "stops": 1264,
+      "deadheadKm": 1805.7,
+      "loadGini": 0.172,
+      "baseline": {
+        "truckShifts": 292,
+        "deadheadKm": 2403.0,
+        "loadGini": 0.449
+      }
+    },
+    {
+      "district": "Sathorn",
+      "distance": "osrm-road-optimized",
+      "truckShifts": 104,
+      "routes": 104,
+      "stops": 607,
+      "deadheadKm": 761.7,
+      "loadGini": 0.351,
+      "baseline": {
+        "truckShifts": 318,
+        "deadheadKm": 718.2,
+        "loadGini": 0.425
+      }
+    },
+    {
+      "district": "Sai Mai",
+      "distance": "osrm-road-optimized",
+      "truckShifts": 105,
+      "routes": 105,
+      "stops": 1566,
+      "deadheadKm": 1525.5,
+      "loadGini": 0.275,
+      "baseline": {
+        "truckShifts": 329,
+        "deadheadKm": 1265.8,
+        "loadGini": 0.442
+      }
+    },
+    {
+      "district": "Khan Na Yao",
+      "distance": "osrm-road-optimized",
+      "truckShifts": 108,
+      "routes": 108,
+      "stops": 666,
+      "deadheadKm": 1008.4,
+      "loadGini": 0.465,
+      "baseline": {
+        "truckShifts": 144,
+        "deadheadKm": 1121.3,
+        "loadGini": 0.419
+      }
+    },
+    {
+      "district": "Phasi Charoen",
+      "distance": "osrm-road-optimized",
+      "truckShifts": 108,
+      "routes": 108,
+      "stops": 572,
+      "deadheadKm": 1097.6,
+      "loadGini": 0.252,
+      "baseline": {
+        "truckShifts": 188,
+        "deadheadKm": 1115.2,
+        "loadGini": 0.467
+      }
+    },
+    {
+      "district": "Suan Luang",
+      "distance": "osrm-road-optimized",
+      "truckShifts": 108,
+      "routes": 108,
+      "stops": 626,
+      "deadheadKm": 1094.8,
+      "loadGini": 0.199,
+      "baseline": {
+        "truckShifts": 207,
+        "deadheadKm": 1007.6,
+        "loadGini": 0.367
+      }
+    },
+    {
+      "district": "Prawet",
+      "distance": "osrm-road-optimized",
+      "truckShifts": 112,
+      "routes": 112,
+      "stops": 2052,
+      "deadheadKm": 2369.7,
+      "loadGini": 0.257,
+      "baseline": {
+        "truckShifts": 254,
+        "deadheadKm": 3002.4,
+        "loadGini": 0.34
+      }
+    },
+    {
+      "district": "Din Daeng",
+      "distance": "osrm-road-optimized",
+      "truckShifts": 113,
+      "routes": 113,
+      "stops": 1782,
+      "deadheadKm": 1466.3,
+      "loadGini": 0.293,
+      "baseline": {
+        "truckShifts": 486,
+        "deadheadKm": 1648.9,
+        "loadGini": 0.452
+      }
+    },
+    {
+      "district": "Dusit",
+      "distance": "osrm-road-optimized",
+      "truckShifts": 114,
+      "routes": 114,
+      "stops": 607,
+      "deadheadKm": 643.9,
+      "loadGini": 0.273,
+      "baseline": {
+        "truckShifts": 581,
+        "deadheadKm": 33.5,
+        "loadGini": 0.334
+      }
+    },
+    {
+      "district": "Bang Sue",
+      "distance": "osrm-road-optimized",
+      "truckShifts": 115,
+      "routes": 115,
+      "stops": 1441,
+      "deadheadKm": 1216.3,
+      "loadGini": 0.338,
+      "baseline": {
+        "truckShifts": 224,
+        "deadheadKm": 1835.6,
+        "loadGini": 0.376
+      }
+    },
+    {
+      "district": "Bang Phlat",
+      "distance": "osrm-road-optimized",
+      "truckShifts": 118,
+      "routes": 118,
+      "stops": 424,
+      "deadheadKm": 656.4,
+      "loadGini": 0.545,
+      "baseline": {
+        "truckShifts": 170,
+        "deadheadKm": 750.8,
+        "loadGini": 0.38
+      }
+    },
+    {
+      "district": "Bangkok Yai",
+      "distance": "osrm-road-optimized",
+      "truckShifts": 120,
+      "routes": 120,
+      "stops": 646,
+      "deadheadKm": 547.7,
+      "loadGini": 0.372,
+      "baseline": {
+        "truckShifts": 181,
+        "deadheadKm": 731.6,
+        "loadGini": 0.438
+      }
+    },
+    {
+      "district": "Khlong Sam Wa",
+      "distance": "osrm-road-optimized",
+      "truckShifts": 120,
+      "routes": 120,
+      "stops": 734,
+      "deadheadKm": 1524.6,
+      "loadGini": 0.235,
+      "baseline": {
+        "truckShifts": 187,
+        "deadheadKm": 1556.7,
+        "loadGini": 0.335
+      }
+    },
+    {
+      "district": "Saphan Sung",
+      "distance": "osrm-road-optimized",
+      "truckShifts": 128,
+      "routes": 128,
+      "stops": 612,
+      "deadheadKm": 966.9,
+      "loadGini": 0.313,
+      "baseline": {
+        "truckShifts": 197,
+        "deadheadKm": 1050.3,
+        "loadGini": 0.392
+      }
+    },
+    {
+      "district": "Minburi",
+      "distance": "osrm-road-optimized",
+      "truckShifts": 131,
+      "routes": 131,
+      "stops": 340,
+      "deadheadKm": 672.0,
+      "loadGini": 0.18,
+      "baseline": {
+        "truckShifts": 140,
+        "deadheadKm": 859.0,
+        "loadGini": 0.316
+      }
+    },
+    {
+      "district": "Bang Khae",
+      "distance": "osrm-road-optimized",
+      "truckShifts": 133,
+      "routes": 133,
+      "stops": 831,
+      "deadheadKm": 1525.0,
+      "loadGini": 0.255,
+      "baseline": {
+        "truckShifts": 270,
+        "deadheadKm": 1316.7,
+        "loadGini": 0.395
+      }
+    },
+    {
+      "district": "Lat Krabang",
+      "distance": "osrm-road-optimized",
+      "truckShifts": 133,
+      "routes": 133,
+      "stops": 697,
+      "deadheadKm": 2082.1,
+      "loadGini": 0.266,
+      "baseline": {
+        "truckShifts": 216,
+        "deadheadKm": 2581.0,
+        "loadGini": 0.357
+      }
+    },
+    {
+      "district": "Phra Nakhon",
+      "distance": "osrm-road-optimized",
+      "truckShifts": 133,
+      "routes": 133,
+      "stops": 612,
+      "deadheadKm": 703.8,
+      "loadGini": 0.162,
+      "baseline": {
+        "truckShifts": 385,
+        "deadheadKm": 617.5,
+        "loadGini": 0.417
+      }
+    },
+    {
+      "district": "Thung Khru",
+      "distance": "osrm-road-optimized",
+      "truckShifts": 143,
+      "routes": 143,
+      "stops": 621,
+      "deadheadKm": 678.9,
+      "loadGini": 0.193,
+      "baseline": {
+        "truckShifts": 161,
+        "deadheadKm": 901.2,
+        "loadGini": 0.312
+      }
+    },
+    {
+      "district": "Nong Chok",
+      "distance": "osrm-road-optimized",
+      "truckShifts": 147,
+      "routes": 147,
+      "stops": 278,
+      "deadheadKm": 677.7,
+      "loadGini": 0.177,
+      "baseline": {
+        "truckShifts": 192,
+        "deadheadKm": 401.6,
+        "loadGini": 0.334
+      }
+    },
+    {
+      "district": "Bangna",
+      "distance": "osrm-road-optimized",
+      "truckShifts": 154,
+      "routes": 154,
+      "stops": 469,
+      "deadheadKm": 654.3,
+      "loadGini": 0.48,
+      "baseline": {
+        "truckShifts": 187,
+        "deadheadKm": 756.5,
+        "loadGini": 0.39
+      }
+    },
+    {
+      "district": "Khlong Toei",
+      "distance": "osrm-road-optimized",
+      "truckShifts": 158,
+      "routes": 158,
+      "stops": 591,
+      "deadheadKm": 723.7,
+      "loadGini": 0.251,
+      "baseline": {
+        "truckShifts": 352,
+        "deadheadKm": 620.8,
+        "loadGini": 0.55
+      }
+    },
+    {
+      "district": "Huai Khwang",
+      "distance": "osrm-road-optimized",
+      "truckShifts": 163,
+      "routes": 163,
+      "stops": 1090,
+      "deadheadKm": 1564.6,
+      "loadGini": 0.331,
+      "baseline": {
+        "truckShifts": 177,
+        "deadheadKm": 1978.7,
+        "loadGini": 0.35
+      }
+    },
+    {
+      "district": "Rat Burana",
+      "distance": "osrm-road-optimized",
+      "truckShifts": 166,
+      "routes": 166,
+      "stops": 509,
+      "deadheadKm": 757.7,
+      "loadGini": 0.267,
+      "baseline": {
+        "truckShifts": 126,
+        "deadheadKm": 949.0,
+        "loadGini": 0.395
+      }
+    },
+    {
+      "district": "Phaya Thai",
+      "distance": "osrm-road-optimized",
+      "truckShifts": 175,
+      "routes": 175,
+      "stops": 658,
+      "deadheadKm": 573.5,
+      "loadGini": 0.247,
+      "baseline": {
+        "truckShifts": 313,
+        "deadheadKm": 591.9,
+        "loadGini": 0.429
+      }
+    },
+    {
+      "district": "Don Mueang",
+      "distance": "osrm-road-optimized",
+      "truckShifts": 177,
+      "routes": 177,
+      "stops": 1207,
+      "deadheadKm": 2100.9,
+      "loadGini": 0.184,
+      "baseline": {
+        "truckShifts": 199,
+        "deadheadKm": 1978.5,
+        "loadGini": 0.385
+      }
+    },
+    {
+      "district": "Chatuchak",
+      "distance": "osrm-road-optimized",
+      "truckShifts": 181,
+      "routes": 181,
+      "stops": 804,
+      "deadheadKm": 1492.3,
+      "loadGini": 0.266,
+      "baseline": {
+        "truckShifts": 296,
+        "deadheadKm": 1742.5,
+        "loadGini": 0.333
+      }
+    },
+    {
+      "district": "Taling Chan",
+      "distance": "osrm-road-optimized",
+      "truckShifts": 196,
+      "routes": 196,
+      "stops": 477,
+      "deadheadKm": 1491.6,
+      "loadGini": 0.247,
+      "baseline": {
+        "truckShifts": 171,
+        "deadheadKm": 1866.0,
+        "loadGini": 0.435
+      }
+    },
+    {
+      "district": "Bang Khun Thian",
+      "distance": "osrm-road-optimized",
+      "truckShifts": 251,
+      "routes": 251,
+      "stops": 834,
+      "deadheadKm": 2198.7,
+      "loadGini": 0.264,
+      "baseline": {
+        "truckShifts": 478,
+        "deadheadKm": 1644.0,
+        "loadGini": 0.387
+      }
+    },
+    {
+      "district": "Wang Thonglang",
+      "distance": "osrm-road-optimized",
+      "truckShifts": 272,
+      "routes": 272,
+      "stops": 1193,
+      "deadheadKm": 1179.8,
+      "loadGini": 0.274,
+      "baseline": {
+        "truckShifts": 246,
+        "deadheadKm": 1857.0,
+        "loadGini": 0.305
+      }
+    },
+    {
+      "district": "Watthana",
+      "distance": "osrm-road-optimized",
+      "truckShifts": 300,
+      "routes": 300,
+      "stops": 1331,
+      "deadheadKm": 1384.1,
+      "loadGini": 0.413,
+      "baseline": {
+        "truckShifts": 302,
+        "deadheadKm": 1506.4,
+        "loadGini": 0.455
+      }
+    },
+    {
+      "district": "Bang Khen",
+      "distance": "osrm-road-optimized",
+      "truckShifts": 303,
+      "routes": 303,
+      "stops": 1813,
+      "deadheadKm": 2317.0,
+      "loadGini": 0.538,
+      "baseline": {
+        "truckShifts": 240,
+        "deadheadKm": 2142.9,
+        "loadGini": 0.343
+      }
+    },
+    {
+      "district": "Thawi Watthana",
+      "distance": "osrm-road-optimized",
+      "truckShifts": 577,
+      "routes": 577,
+      "stops": 868,
+      "deadheadKm": 1408.5,
+      "loadGini": 0.193,
+      "baseline": {
+        "truckShifts": 107,
+        "deadheadKm": 2616.4,
+        "loadGini": 0.363
+      }
+    }
+  ]
+}

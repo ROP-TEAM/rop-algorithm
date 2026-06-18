@@ -1,0 +1,6496 @@
+{
+  "createdAt": "2026-06-18T00:00:00Z",
+  "message": "Nong Chok: FULL-FLEET (truck count kept = today's fleet), re-clustered + OSRM-sequenced. trucks 192->192, deadhead 401.6->381.5 km, Gini 0.334->0.358.",
+  "summary": {
+    "district": "Nong Chok",
+    "distance": "osrm-road-fullfleet",
+    "truckShifts": 192,
+    "routes": 192,
+    "stops": 278,
+    "deadheadKm": 381.5,
+    "loadGini": 0.358,
+    "baseline": {
+      "truckShifts": 192,
+      "deadheadKm": 401.6,
+      "loadGini": 0.334
+    }
+  },
+  "routes": [
+    {
+      "totalDistance": 0.0,
+      "totalDuration": 95.0,
+      "name": "WASTE-Sun-truck-0",
+      "capacity": 7905,
+      "workTimeStart": 1200,
+      "workTimeEnd": 1680,
+      "id": 0,
+      "stops": [
+        {
+          "name": "67-6592",
+          "arrivalMin": 1200,
+          "distanceFromPrevious": 0.0,
+          "durationFromPrevious": 0,
+          "capacity": 7905,
+          "timeWindowStart": 1200,
+          "timeWindowEnd": 1680,
+          "desLatitude": 13.8058,
+          "desLongitude": 100.82485,
+          "serviceTime": 95,
+          "type": 0,
+          "priority": 0,
+          "id": 0
+        }
+      ],
+      "stopCount": 1
+    },
+    {
+      "totalDistance": 2472.5,
+      "totalDuration": 466.0,
+      "name": "WASTE-Sun-truck-1",
+      "capacity": 38610,
+      "workTimeStart": 180,
+      "workTimeEnd": 1440,
+      "id": 1,
+      "stops": [
+        {
+          "name": "67-6592",
+          "arrivalMin": 180,
+          "distanceFromPrevious": 0.0,
+          "durationFromPrevious": 0,
+          "capacity": 25588,
+          "timeWindowStart": 180,
+          "timeWindowEnd": 720,
+          "desLatitude": 13.84545,
+          "desLongitude": 100.85755,
+          "serviceTime": 307,
+          "type": 0,
+          "priority": 0,
+          "id": 0
+        },
+        {
+          "name": "67-6598",
+          "arrivalMin": 490,
+          "distanceFromPrevious": 2472.5,
+          "durationFromPrevious": 3,
+          "capacity": 13022,
+          "timeWindowStart": 488,
+          "timeWindowEnd": 1440,
+          "desLatitude": 13.84545,
+          "desLongitude": 100.8575,
+          "serviceTime": 156,
+          "type": 0,
+          "priority": 0,
+          "id": 1
+        }
+      ],
+      "stopCount": 2
+    },
+    {
+      "totalDistance": 2423.0,
+      "totalDuration": 278.0,
+      "name": "WASTE-Sun-truck-2",
+      "capacity": 22894,
+      "workTimeStart": 1200,
+      "workTimeEnd": 1680,
+      "id": 2,
+      "stops": [
+        {
+          "name": "67-6591 (split 1/2)",
+          "arrivalMin": 1200,
+          "distanceFromPrevious": 0.0,
+          "durationFromPrevious": 0,
+          "capacity": 10460,
+          "timeWindowStart": 1200,
+          "timeWindowEnd": 1410,
+          "desLatitude": 13.85495,
+          "desLongitude": 100.8519,
+          "serviceTime": 126,
+          "type": 0,
+          "priority": 0,
+          "id": 0
+        },
+        {
+          "name": "67-6593",
+          "arrivalMin": 1329,
+          "distanceFromPrevious": 2423,
+          "durationFromPrevious": 3,
+          "capacity": 12434,
+          "timeWindowStart": 1200,
+          "timeWindowEnd": 1680,
+          "desLatitude": 13.8547,
+          "desLongitude": 100.84845,
+          "serviceTime": 149,
+          "type": 0,
+          "priority": 0,
+          "id": 1
+        }
+      ],
+      "stopCount": 2
+    },
+    {
+      "totalDistance": 10542.6,
+      "totalDuration": 425.0,
+      "name": "WASTE-Sun-truck-3",
+      "capacity": 34489,
+      "workTimeStart": 60,
+      "workTimeEnd": 1680,
+      "id": 3,
+      "stops": [
+        {
+          "name": "67-6591 (split 2/2)",
+          "arrivalMin": 1200,
+          "distanceFromPrevious": 0.0,
+          "durationFromPrevious": 0,
+          "capacity": 10460,
+          "timeWindowStart": 1200,
+          "timeWindowEnd": 1410,
+          "desLatitude": 13.85405,
+          "desLongitude": 100.8347,
+          "serviceTime": 126,
+          "type": 0,
+          "priority": 0,
+          "id": 0
+        },
+        {
+          "name": "67-9814",
+          "arrivalMin": 1330,
+          "distanceFromPrevious": 3996.2,
+          "durationFromPrevious": 4,
+          "capacity": 8330,
+          "timeWindowStart": 1200,
+          "timeWindowEnd": 1680,
+          "desLatitude": 13.85495,
+          "desLongitude": 100.8363,
+          "serviceTime": 100,
+          "type": 0,
+          "priority": 0,
+          "id": 1
+        },
+        {
+          "name": "67-8262",
+          "arrivalMin": 1437,
+          "distanceFromPrevious": 6546.4,
+          "durationFromPrevious": 7,
+          "capacity": 15699,
+          "timeWindowStart": 60,
+          "timeWindowEnd": 480,
+          "desLatitude": 13.85125,
+          "desLongitude": 100.83285,
+          "serviceTime": 188,
+          "type": 0,
+          "priority": 0,
+          "id": 2
+        }
+      ],
+      "stopCount": 3
+    },
+    {
+      "totalDistance": 7067.8,
+      "totalDuration": 303.0,
+      "name": "WASTE-Sun-truck-4",
+      "capacity": 24575,
+      "workTimeStart": 240,
+      "workTimeEnd": 1680,
+      "id": 4,
+      "stops": [
+        {
+          "name": "67-6597",
+          "arrivalMin": 1200,
+          "distanceFromPrevious": 0.0,
+          "durationFromPrevious": 0,
+          "capacity": 11411,
+          "timeWindowStart": 1200,
+          "timeWindowEnd": 1680,
+          "desLatitude": 13.82635,
+          "desLongitude": 100.84775,
+          "serviceTime": 137,
+          "type": 0,
+          "priority": 0,
+          "id": 0
+        },
+        {
+          "name": "67-9816",
+          "arrivalMin": 1345,
+          "distanceFromPrevious": 7067.8,
+          "durationFromPrevious": 8,
+          "capacity": 13164,
+          "timeWindowStart": 240,
+          "timeWindowEnd": 720,
+          "desLatitude": 13.82155,
+          "desLongitude": 100.8452,
+          "serviceTime": 158,
+          "type": 0,
+          "priority": 0,
+          "id": 1
+        }
+      ],
+      "stopCount": 2
+    },
+    {
+      "totalDistance": 0.0,
+      "totalDuration": 150.0,
+      "name": "WASTE-Sun-truck-5",
+      "capacity": 12495,
+      "workTimeStart": 240,
+      "workTimeEnd": 720,
+      "id": 5,
+      "stops": [
+        {
+          "name": "67-9811",
+          "arrivalMin": 240,
+          "distanceFromPrevious": 0.0,
+          "durationFromPrevious": 0,
+          "capacity": 12495,
+          "timeWindowStart": 240,
+          "timeWindowEnd": 720,
+          "desLatitude": 13.78825,
+          "desLongitude": 100.83555,
+          "serviceTime": 150,
+          "type": 0,
+          "priority": 0,
+          "id": 0
+        }
+      ],
+      "stopCount": 1
+    },
+    {
+      "totalDistance": 0.0,
+      "totalDuration": 50.0,
+      "name": "WASTE-Sun-truck-6",
+      "capacity": 4177,
+      "workTimeStart": 240,
+      "workTimeEnd": 720,
+      "id": 6,
+      "stops": [
+        {
+          "name": "67-6595",
+          "arrivalMin": 240,
+          "distanceFromPrevious": 0.0,
+          "durationFromPrevious": 0,
+          "capacity": 4177,
+          "timeWindowStart": 240,
+          "timeWindowEnd": 720,
+          "desLatitude": 13.8247,
+          "desLongitude": 100.86835,
+          "serviceTime": 50,
+          "type": 0,
+          "priority": 0,
+          "id": 0
+        }
+      ],
+      "stopCount": 1
+    },
+    {
+      "totalDistance": 1008.5,
+      "totalDuration": 189.0,
+      "name": "WASTE-Sun-truck-7",
+      "capacity": 15622,
+      "workTimeStart": 1200,
+      "workTimeEnd": 1680,
+      "id": 7,
+      "stops": [
+        {
+          "name": "67-6595",
+          "arrivalMin": 1200,
+          "distanceFromPrevious": 0.0,
+          "durationFromPrevious": 0,
+          "capacity": 9453,
+          "timeWindowStart": 1200,
+          "timeWindowEnd": 1680,
+          "desLatitude": 13.85715,
+          "desLongitude": 100.8555,
+          "serviceTime": 113,
+          "type": 0,
+          "priority": 0,
+          "id": 0
+        },
+        {
+          "name": "65-5608",
+          "arrivalMin": 1315,
+          "distanceFromPrevious": 1008.5,
+          "durationFromPrevious": 2,
+          "capacity": 6169,
+          "timeWindowStart": 1200,
+          "timeWindowEnd": 1680,
+          "desLatitude": 13.8594,
+          "desLongitude": 100.8576,
+          "serviceTime": 74,
+          "type": 0,
+          "priority": 0,
+          "id": 1
+        }
+      ],
+      "stopCount": 2
+    },
+    {
+      "totalDistance": 2186.6,
+      "totalDuration": 694.0,
+      "name": "WASTE-Sun-truck-8",
+      "capacity": 57550,
+      "workTimeStart": 240,
+      "workTimeEnd": 1680,
+      "id": 8,
+      "stops": [
+        {
+          "name": "67-9820",
+          "arrivalMin": 1200,
+          "distanceFromPrevious": 0.0,
+          "durationFromPrevious": 0,
+          "capacity": 13723,
+          "timeWindowStart": 1200,
+          "timeWindowEnd": 1680,
+          "desLatitude": 13.85525,
+          "desLongitude": 100.8626,
+          "serviceTime": 165,
+          "type": 0,
+          "priority": 0,
+          "id": 0
+        },
+        {
+          "name": "67-9815",
+          "arrivalMin": 1366,
+          "distanceFromPrevious": 293.9,
+          "durationFromPrevious": 1,
+          "capacity": 12959,
+          "timeWindowStart": 1200,
+          "timeWindowEnd": 1680,
+          "desLatitude": 13.85565,
+          "desLongitude": 100.86015,
+          "serviceTime": 156,
+          "type": 0,
+          "priority": 0,
+          "id": 1
+        },
+        {
+          "name": "67-8261",
+          "arrivalMin": 1524,
+          "distanceFromPrevious": 1892.7,
+          "durationFromPrevious": 2,
+          "capacity": 30868,
+          "timeWindowStart": 240,
+          "timeWindowEnd": 720,
+          "desLatitude": 13.8566,
+          "desLongitude": 100.8639,
+          "serviceTime": 370,
+          "type": 0,
+          "priority": 0,
+          "id": 2
+        }
+      ],
+      "stopCount": 3
+    },
+    {
+      "totalDistance": 57.4,
+      "totalDuration": 360.0,
+      "name": "WASTE-Sun-truck-9",
+      "capacity": 29949,
+      "workTimeStart": 240,
+      "workTimeEnd": 1680,
+      "id": 9,
+      "stops": [
+        {
+          "name": "ุึ67-6596",
+          "arrivalMin": 1200,
+          "distanceFromPrevious": 0.0,
+          "durationFromPrevious": 0,
+          "capacity": 10362,
+          "timeWindowStart": 1200,
+          "timeWindowEnd": 1680,
+          "desLatitude": 13.85505,
+          "desLongitude": 100.814,
+          "serviceTime": 124,
+          "type": 0,
+          "priority": 0,
+          "id": 0
+        },
+        {
+          "name": "67-9813 (split 1/2)",
+          "arrivalMin": 1325,
+          "distanceFromPrevious": 57.4,
+          "durationFromPrevious": 1,
+          "capacity": 19587,
+          "timeWindowStart": 240,
+          "timeWindowEnd": 720,
+          "desLatitude": 13.8565,
+          "desLongitude": 100.820725,
+          "serviceTime": 235,
+          "type": 0,
+          "priority": 0,
+          "id": 1
+        }
+      ],
+      "stopCount": 2
+    },
+    {
+      "totalDistance": 3223.3,
+      "totalDuration": 200.0,
+      "name": "WASTE-Sun-truck-10",
+      "capacity": 16277,
+      "workTimeStart": 240,
+      "workTimeEnd": 720,
+      "id": 10,
+      "stops": [
+        {
+          "name": "67-6598",
+          "arrivalMin": 240,
+          "distanceFromPrevious": 0.0,
+          "durationFromPrevious": 0,
+          "capacity": 5064,
+          "timeWindowStart": 240,
+          "timeWindowEnd": 720,
+          "desLatitude": 13.8213,
+          "desLongitude": 100.84145,
+          "serviceTime": 61,
+          "type": 0,
+          "priority": 0,
+          "id": 0
+        },
+        {
+          "name": "67-8264",
+          "arrivalMin": 305,
+          "distanceFromPrevious": 3223.3,
+          "durationFromPrevious": 4,
+          "capacity": 11213,
+          "timeWindowStart": 240,
+          "timeWindowEnd": 720,
+          "desLatitude": 13.8239,
+          "desLongitude": 100.8343,
+          "serviceTime": 135,
+          "type": 0,
+          "priority": 0,
+          "id": 1
+        }
+      ],
+      "stopCount": 2
+    },
+    {
+      "totalDistance": 0.0,
+      "totalDuration": 192.0,
+      "name": "WASTE-Sun-truck-11",
+      "capacity": 15994,
+      "workTimeStart": 960,
+      "workTimeEnd": 1380,
+      "id": 11,
+      "stops": [
+        {
+          "name": "67-6598 (split 1/2)",
+          "arrivalMin": 960,
+          "distanceFromPrevious": 0.0,
+          "durationFromPrevious": 0,
+          "capacity": 15994,
+          "timeWindowStart": 960,
+          "timeWindowEnd": 1380,
+          "desLatitude": 13.8365,
+          "desLongitude": 100.832975,
+          "serviceTime": 192,
+          "type": 0,
+          "priority": 0,
+          "id": 0
+        }
+      ],
+      "stopCount": 1
+    },
+    {
+      "totalDistance": 0.0,
+      "totalDuration": 192.0,
+      "name": "WASTE-Sun-truck-12",
+      "capacity": 15994,
+      "workTimeStart": 960,
+      "workTimeEnd": 1380,
+      "id": 12,
+      "stops": [
+        {
+          "name": "67-6598 (split 2/2)",
+          "arrivalMin": 960,
+          "distanceFromPrevious": 0.0,
+          "durationFromPrevious": 0,
+          "capacity": 15994,
+          "timeWindowStart": 960,
+          "timeWindowEnd": 1380,
+          "desLatitude": 13.8053,
+          "desLongitude": 100.811525,
+          "serviceTime": 192,
+          "type": 0,
+          "priority": 0,
+          "id": 0
+        }
+      ],
+      "stopCount": 1
+    },
+    {
+      "totalDistance": 9192.3,
+      "totalDuration": 738.0,
+      "name": "WASTE-Sun-truck-13",
+      "capacity": 60565,
+      "workTimeStart": 1020,
+      "workTimeEnd": 1680,
+      "id": 13,
+      "stops": [
+        {
+          "name": "67-9812",
+          "arrivalMin": 1020,
+          "distanceFromPrevious": 0.0,
+          "durationFromPrevious": 0,
+          "capacity": 29200,
+          "timeWindowStart": 1020,
+          "timeWindowEnd": 1680,
+          "desLatitude": 13.80705,
+          "desLongitude": 100.83775,
+          "serviceTime": 350,
+          "type": 0,
+          "priority": 0,
+          "id": 0
+        },
+        {
+          "name": "67-8263",
+          "arrivalMin": 1382,
+          "distanceFromPrevious": 9192.3,
+          "durationFromPrevious": 12,
+          "capacity": 31365,
+          "timeWindowStart": 1200,
+          "timeWindowEnd": 1680,
+          "desLatitude": 13.8071,
+          "desLongitude": 100.8378,
+          "serviceTime": 376,
+          "type": 0,
+          "priority": 0,
+          "id": 1
+        }
+      ],
+      "stopCount": 2
+    },
+    {
+      "totalDistance": 3438.1,
+      "totalDuration": 356.0,
+      "name": "WASTE-Sun-truck-14",
+      "capacity": 29183,
+      "workTimeStart": 240,
+      "workTimeEnd": 720,
+      "id": 14,
+      "stops": [
+        {
+          "name": "67-9813 (split 2/2)",
+          "arrivalMin": 240,
+          "distanceFromPrevious": 0.0,
+          "durationFromPrevious": 0,
+          "capacity": 19587,
+          "timeWindowStart": 240,
+          "timeWindowEnd": 720,
+          "desLatitude": 13.8605,
+          "desLongitude": 100.847375,
+          "serviceTime": 235,
+          "type": 0,
+          "priority": 0,
+          "id": 0
+        },
+        {
+          "name": "67-9815",
+          "arrivalMin": 478,
+          "distanceFromPrevious": 1890,
+          "durationFromPrevious": 3,
+          "capacity": 2271,
+          "timeWindowStart": 240,
+          "timeWindowEnd": 720,
+          "desLatitude": 13.86335,
+          "desLongitude": 100.8473,
+          "serviceTime": 27,
+          "type": 0,
+          "priority": 0,
+          "id": 1
+        },
+        {
+          "name": "67-8263",
+          "arrivalMin": 508,
+          "distanceFromPrevious": 1548.1,
+          "durationFromPrevious": 3,
+          "capacity": 7325,
+          "timeWindowStart": 240,
+          "timeWindowEnd": 720,
+          "desLatitude": 13.859,
+          "desLongitude": 100.84825,
+          "serviceTime": 88,
+          "type": 0,
+          "priority": 0,
+          "id": 2
+        }
+      ],
+      "stopCount": 3
+    },
+    {
+      "totalDistance": 8934.3,
+      "totalDuration": 361.0,
+      "name": "WASTE-Sun-truck-15",
+      "capacity": 29497,
+      "workTimeStart": 240,
+      "workTimeEnd": 1680,
+      "id": 15,
+      "stops": [
+        {
+          "name": "67-9814",
+          "arrivalMin": 240,
+          "distanceFromPrevious": 0.0,
+          "durationFromPrevious": 0,
+          "capacity": 11707,
+          "timeWindowStart": 240,
+          "timeWindowEnd": 720,
+          "desLatitude": 13.82995,
+          "desLongitude": 100.8592,
+          "serviceTime": 140,
+          "type": 0,
+          "priority": 0,
+          "id": 0
+        },
+        {
+          "name": "67-9752",
+          "arrivalMin": 1200,
+          "distanceFromPrevious": 8934.3,
+          "durationFromPrevious": 8,
+          "capacity": 17790,
+          "timeWindowStart": 1200,
+          "timeWindowEnd": 1680,
+          "desLatitude": 13.83515,
+          "desLongitude": 100.85795,
+          "serviceTime": 213,
+          "type": 0,
+          "priority": 0,
+          "id": 1
+        }
+      ],
+      "stopCount": 2
+    },
+    {
+      "totalDistance": 0.0,
+      "totalDuration": 151.0,
+      "name": "WASTE-Sun-truck-16",
+      "capacity": 12597,
+      "workTimeStart": 1200,
+      "workTimeEnd": 1680,
+      "id": 16,
+      "stops": [
+        {
+          "name": "67-9816",
+          "arrivalMin": 1200,
+          "distanceFromPrevious": 0.0,
+          "durationFromPrevious": 0,
+          "capacity": 12597,
+          "timeWindowStart": 1200,
+          "timeWindowEnd": 1680,
+          "desLatitude": 13.79865,
+          "desLongitude": 100.8117,
+          "serviceTime": 151,
+          "type": 0,
+          "priority": 0,
+          "id": 0
+        }
+      ],
+      "stopCount": 1
+    },
+    {
+      "totalDistance": 0.0,
+      "totalDuration": 281.0,
+      "name": "WASTE-Sun-truck-17",
+      "capacity": 23389,
+      "workTimeStart": 240,
+      "workTimeEnd": 720,
+      "id": 17,
+      "stops": [
+        {
+          "name": "67-9817",
+          "arrivalMin": 240,
+          "distanceFromPrevious": 0.0,
+          "durationFromPrevious": 0,
+          "capacity": 23389,
+          "timeWindowStart": 240,
+          "timeWindowEnd": 720,
+          "desLatitude": 13.8789,
+          "desLongitude": 100.85555,
+          "serviceTime": 281,
+          "type": 0,
+          "priority": 0,
+          "id": 0
+        }
+      ],
+      "stopCount": 1
+    },
+    {
+      "totalDistance": 0.0,
+      "totalDuration": 252.0,
+      "name": "WASTE-Sun-truck-18",
+      "capacity": 20966,
+      "workTimeStart": 240,
+      "workTimeEnd": 720,
+      "id": 18,
+      "stops": [
+        {
+          "name": "67-9818 (split 1/2)",
+          "arrivalMin": 240,
+          "distanceFromPrevious": 0.0,
+          "durationFromPrevious": 0,
+          "capacity": 20966,
+          "timeWindowStart": 240,
+          "timeWindowEnd": 720,
+          "desLatitude": 13.9405,
+          "desLongitude": 100.87235,
+          "serviceTime": 252,
+          "type": 0,
+          "priority": 0,
+          "id": 0
+        }
+      ],
+      "stopCount": 1
+    },
+    {
+      "totalDistance": 0.0,
+      "totalDuration": 252.0,
+      "name": "WASTE-Sun-truck-19",
+      "capacity": 20966,
+      "workTimeStart": 240,
+      "workTimeEnd": 720,
+      "id": 19,
+      "stops": [
+        {
+          "name": "67-9818 (split 2/2)",
+          "arrivalMin": 240,
+          "distanceFromPrevious": 0.0,
+          "durationFromPrevious": 0,
+          "capacity": 20966,
+          "timeWindowStart": 240,
+          "timeWindowEnd": 720,
+          "desLatitude": 13.9425,
+          "desLongitude": 100.88725,
+          "serviceTime": 252,
+          "type": 0,
+          "priority": 0,
+          "id": 0
+        }
+      ],
+      "stopCount": 1
+    },
+    {
+      "totalDistance": 0.0,
+      "totalDuration": 207.0,
+      "name": "WASTE-Sun-truck-20",
+      "capacity": 17248,
+      "workTimeStart": 960,
+      "workTimeEnd": 1200,
+      "id": 20,
+      "stops": [
+        {
+          "name": "67-9819 (split 1/2)",
+          "arrivalMin": 960,
+          "distanceFromPrevious": 0.0,
+          "durationFromPrevious": 0,
+          "capacity": 17248,
+          "timeWindowStart": 960,
+          "timeWindowEnd": 1200,
+          "desLatitude": 13.878825,
+          "desLongitude": 100.874625,
+          "serviceTime": 207,
+          "type": 0,
+          "priority": 0,
+          "id": 0
+        }
+      ],
+      "stopCount": 1
+    },
+    {
+      "totalDistance": 0.0,
+      "totalDuration": 207.0,
+      "name": "WASTE-Sun-truck-21",
+      "capacity": 17248,
+      "workTimeStart": 960,
+      "workTimeEnd": 1200,
+      "id": 21,
+      "stops": [
+        {
+          "name": "67-9819 (split 2/2)",
+          "arrivalMin": 960,
+          "distanceFromPrevious": 0.0,
+          "durationFromPrevious": 0,
+          "capacity": 17248,
+          "timeWindowStart": 960,
+          "timeWindowEnd": 1200,
+          "desLatitude": 13.916675,
+          "desLongitude": 100.894675,
+          "serviceTime": 207,
+          "type": 0,
+          "priority": 0,
+          "id": 0
+        }
+      ],
+      "stopCount": 1
+    },
+    {
+      "totalDistance": 0.0,
+      "totalDuration": 213.0,
+      "name": "WASTE-Sun-truck-22",
+      "capacity": 17715,
+      "workTimeStart": 60,
+      "workTimeEnd": 360,
+      "id": 22,
+      "stops": [
+        {
+          "name": "67-8247",
+          "arrivalMin": 60,
+          "distanceFromPrevious": 0.0,
+          "durationFromPrevious": 0,
+          "capacity": 17715,
+          "timeWindowStart": 60,
+          "timeWindowEnd": 360,
+          "desLatitude": 13.79465,
+          "desLongitude": 100.8644,
+          "serviceTime": 213,
+          "type": 0,
+          "priority": 0,
+          "id": 0
+        }
+      ],
+      "stopCount": 1
+    },
+    {
+      "totalDistance": 0.0,
+      "totalDuration": 73.0,
+      "name": "WASTE-Sun-truck-23",
+      "capacity": 6083,
+      "workTimeStart": 1200,
+      "workTimeEnd": 1680,
+      "id": 23,
+      "stops": [
+        {
+          "name": "67-8248",
+          "arrivalMin": 1200,
+          "distanceFromPrevious": 0.0,
+          "durationFromPrevious": 0,
+          "capacity": 6083,
+          "timeWindowStart": 1200,
+          "timeWindowEnd": 1680,
+          "desLatitude": 13.8489,
+          "desLongitude": 100.87935,
+          "serviceTime": 73,
+          "type": 0,
+          "priority": 0,
+          "id": 0
+        }
+      ],
+      "stopCount": 1
+    },
+    {
+      "totalDistance": 12751.4,
+      "totalDuration": 318.0,
+      "name": "WASTE-Sun-truck-24",
+      "capacity": 25510,
+      "workTimeStart": 150,
+      "workTimeEnd": 720,
+      "id": 24,
+      "stops": [
+        {
+          "name": "67-8249",
+          "arrivalMin": 150,
+          "distanceFromPrevious": 0.0,
+          "durationFromPrevious": 0,
+          "capacity": 13273,
+          "timeWindowStart": 150,
+          "timeWindowEnd": 720,
+          "desLatitude": 13.81975,
+          "desLongitude": 100.86215,
+          "serviceTime": 159,
+          "type": 0,
+          "priority": 0,
+          "id": 0
+        },
+        {
+          "name": "65-5608",
+          "arrivalMin": 321,
+          "distanceFromPrevious": 12751.4,
+          "durationFromPrevious": 12,
+          "capacity": 12237,
+          "timeWindowStart": 240,
+          "timeWindowEnd": 720,
+          "desLatitude": 13.8248,
+          "desLongitude": 100.8647,
+          "serviceTime": 147,
+          "type": 0,
+          "priority": 0,
+          "id": 1
+        }
+      ],
+      "stopCount": 2
+    },
+    {
+      "totalDistance": 0.0,
+      "totalDuration": 125.0,
+      "name": "WASTE-Sun-truck-25",
+      "capacity": 10391,
+      "workTimeStart": 240,
+      "workTimeEnd": 720,
+      "id": 25,
+      "stops": [
+        {
+          "name": "65-5608",
+          "arrivalMin": 240,
+          "distanceFromPrevious": 0.0,
+          "durationFromPrevious": 0,
+          "capacity": 10391,
+          "timeWindowStart": 240,
+          "timeWindowEnd": 720,
+          "desLatitude": 13.85185,
+          "desLongitude": 100.8711,
+          "serviceTime": 125,
+          "type": 0,
+          "priority": 0,
+          "id": 0
+        }
+      ],
+      "stopCount": 1
+    },
+    {
+      "totalDistance": 0.0,
+      "totalDuration": 235.0,
+      "name": "WASTE-Sun-truck-26",
+      "capacity": 19550,
+      "workTimeStart": 1200,
+      "workTimeEnd": 1680,
+      "id": 26,
+      "stops": [
+        {
+          "name": "67-9021",
+          "arrivalMin": 1200,
+          "distanceFromPrevious": 0.0,
+          "durationFromPrevious": 0,
+          "capacity": 19550,
+          "timeWindowStart": 1200,
+          "timeWindowEnd": 1680,
+          "desLatitude": 13.85395,
+          "desLongitude": 100.8423,
+          "serviceTime": 235,
+          "type": 0,
+          "priority": 0,
+          "id": 0
+        }
+      ],
+      "stopCount": 1
+    },
+    {
+      "totalDistance": 0.0,
+      "totalDuration": 224.0,
+      "name": "WASTE-Mon-truck-0",
+      "capacity": 18668,
+      "workTimeStart": 1200,
+      "workTimeEnd": 1680,
+      "id": 0,
+      "stops": [
+        {
+          "name": "67-6592",
+          "arrivalMin": 1200,
+          "distanceFromPrevious": 0.0,
+          "durationFromPrevious": 0,
+          "capacity": 18668,
+          "timeWindowStart": 1200,
+          "timeWindowEnd": 1680,
+          "desLatitude": 13.8074,
+          "desLongitude": 100.8379,
+          "serviceTime": 224,
+          "type": 0,
+          "priority": 0,
+          "id": 0
+        }
+      ],
+      "stopCount": 1
+    },
+    {
+      "totalDistance": 0.0,
+      "totalDuration": 366.0,
+      "name": "WASTE-Mon-truck-1",
+      "capacity": 30505,
+      "workTimeStart": 180,
+      "workTimeEnd": 720,
+      "id": 1,
+      "stops": [
+        {
+          "name": "67-6592",
+          "arrivalMin": 180,
+          "distanceFromPrevious": 0.0,
+          "durationFromPrevious": 0,
+          "capacity": 30505,
+          "timeWindowStart": 180,
+          "timeWindowEnd": 720,
+          "desLatitude": 13.83255,
+          "desLongitude": 100.8509,
+          "serviceTime": 366,
+          "type": 0,
+          "priority": 0,
+          "id": 0
+        }
+      ],
+      "stopCount": 1
+    },
+    {
+      "totalDistance": 12493.0,
+      "totalDuration": 400.0,
+      "name": "WASTE-Mon-truck-2",
+      "capacity": 32282,
+      "workTimeStart": 60,
+      "workTimeEnd": 1680,
+      "id": 2,
+      "stops": [
+        {
+          "name": "67-6591",
+          "arrivalMin": 1200,
+          "distanceFromPrevious": 0.0,
+          "durationFromPrevious": 0,
+          "capacity": 13096,
+          "timeWindowStart": 1200,
+          "timeWindowEnd": 1680,
+          "desLatitude": 13.8535,
+          "desLongitude": 100.83525,
+          "serviceTime": 157,
+          "type": 0,
+          "priority": 0,
+          "id": 0
+        },
+        {
+          "name": "67-9814",
+          "arrivalMin": 1363,
+          "distanceFromPrevious": 5984.6,
+          "durationFromPrevious": 6,
+          "capacity": 8330,
+          "timeWindowStart": 1200,
+          "timeWindowEnd": 1680,
+          "desLatitude": 13.85495,
+          "desLongitude": 100.8363,
+          "serviceTime": 100,
+          "type": 0,
+          "priority": 0,
+          "id": 1
+        },
+        {
+          "name": "67-8262",
+          "arrivalMin": 1470,
+          "distanceFromPrevious": 6508.4,
+          "durationFromPrevious": 7,
+          "capacity": 10856,
+          "timeWindowStart": 60,
+          "timeWindowEnd": 480,
+          "desLatitude": 13.8541,
+          "desLongitude": 100.84165,
+          "serviceTime": 130,
+          "type": 0,
+          "priority": 0,
+          "id": 2
+        }
+      ],
+      "stopCount": 3
+    },
+    {
+      "totalDistance": 0.0,
+      "totalDuration": 164.0,
+      "name": "WASTE-Mon-truck-3",
+      "capacity": 13706,
+      "workTimeStart": 1200,
+      "workTimeEnd": 1680,
+      "id": 3,
+      "stops": [
+        {
+          "name": "67-6597",
+          "arrivalMin": 1200,
+          "distanceFromPrevious": 0.0,
+          "durationFromPrevious": 0,
+          "capacity": 13706,
+          "timeWindowStart": 1200,
+          "timeWindowEnd": 1680,
+          "desLatitude": 13.8264,
+          "desLongitude": 100.8478,
+          "serviceTime": 164,
+          "type": 0,
+          "priority": 0,
+          "id": 0
+        }
+      ],
+      "stopCount": 1
+    },
+    {
+      "totalDistance": 22990.6,
+      "totalDuration": 553.0,
+      "name": "WASTE-Mon-truck-4",
+      "capacity": 43529,
+      "workTimeStart": 240,
+      "workTimeEnd": 720,
+      "id": 4,
+      "stops": [
+        {
+          "name": "67-9811",
+          "arrivalMin": 240,
+          "distanceFromPrevious": 0.0,
+          "durationFromPrevious": 0,
+          "capacity": 14307,
+          "timeWindowStart": 240,
+          "timeWindowEnd": 720,
+          "desLatitude": 13.81025,
+          "desLongitude": 100.85095,
+          "serviceTime": 172,
+          "type": 0,
+          "priority": 0,
+          "id": 0
+        },
+        {
+          "name": "67-9814",
+          "arrivalMin": 431,
+          "distanceFromPrevious": 12674.2,
+          "durationFromPrevious": 19,
+          "capacity": 14987,
+          "timeWindowStart": 240,
+          "timeWindowEnd": 720,
+          "desLatitude": 13.8056,
+          "desLongitude": 100.85465,
+          "serviceTime": 180,
+          "type": 0,
+          "priority": 0,
+          "id": 1
+        },
+        {
+          "name": "67-9815",
+          "arrivalMin": 622,
+          "distanceFromPrevious": 10316.4,
+          "durationFromPrevious": 11,
+          "capacity": 14235,
+          "timeWindowStart": 240,
+          "timeWindowEnd": 720,
+          "desLatitude": 13.80885,
+          "desLongitude": 100.85015,
+          "serviceTime": 171,
+          "type": 0,
+          "priority": 0,
+          "id": 2
+        }
+      ],
+      "stopCount": 3
+    },
+    {
+      "totalDistance": 4187.2,
+      "totalDuration": 311.0,
+      "name": "WASTE-Mon-truck-5",
+      "capacity": 25481,
+      "workTimeStart": 960,
+      "workTimeEnd": 1680,
+      "id": 5,
+      "stops": [
+        {
+          "name": "67-6593",
+          "arrivalMin": 1200,
+          "distanceFromPrevious": 0.0,
+          "durationFromPrevious": 0,
+          "capacity": 9348,
+          "timeWindowStart": 1200,
+          "timeWindowEnd": 1680,
+          "desLatitude": 13.8547,
+          "desLongitude": 100.84845,
+          "serviceTime": 112,
+          "type": 0,
+          "priority": 0,
+          "id": 0
+        },
+        {
+          "name": "67-6598 (split 1/2)",
+          "arrivalMin": 1317,
+          "distanceFromPrevious": 4187.2,
+          "durationFromPrevious": 5,
+          "capacity": 16133,
+          "timeWindowStart": 960,
+          "timeWindowEnd": 1380,
+          "desLatitude": 13.85825,
+          "desLongitude": 100.85035,
+          "serviceTime": 194,
+          "type": 0,
+          "priority": 0,
+          "id": 1
+        }
+      ],
+      "stopCount": 2
+    },
+    {
+      "totalDistance": 0.0,
+      "totalDuration": 88.0,
+      "name": "WASTE-Mon-truck-6",
+      "capacity": 7365,
+      "workTimeStart": 240,
+      "workTimeEnd": 720,
+      "id": 6,
+      "stops": [
+        {
+          "name": "67-6595",
+          "arrivalMin": 240,
+          "distanceFromPrevious": 0.0,
+          "durationFromPrevious": 0,
+          "capacity": 7365,
+          "timeWindowStart": 240,
+          "timeWindowEnd": 720,
+          "desLatitude": 13.8243,
+          "desLongitude": 100.8706,
+          "serviceTime": 88,
+          "type": 0,
+          "priority": 0,
+          "id": 0
+        }
+      ],
+      "stopCount": 1
+    },
+    {
+      "totalDistance": 0.0,
+      "totalDuration": 301.0,
+      "name": "WASTE-Mon-truck-7",
+      "capacity": 25116,
+      "workTimeStart": 1200,
+      "workTimeEnd": 1680,
+      "id": 7,
+      "stops": [
+        {
+          "name": "67-6595",
+          "arrivalMin": 1200,
+          "distanceFromPrevious": 0.0,
+          "durationFromPrevious": 0,
+          "capacity": 25116,
+          "timeWindowStart": 1200,
+          "timeWindowEnd": 1680,
+          "desLatitude": 13.88185,
+          "desLongitude": 100.85835,
+          "serviceTime": 301,
+          "type": 0,
+          "priority": 0,
+          "id": 0
+        }
+      ],
+      "stopCount": 1
+    },
+    {
+      "totalDistance": 3434.2,
+      "totalDuration": 579.0,
+      "name": "WASTE-Mon-truck-8",
+      "capacity": 47786,
+      "workTimeStart": 240,
+      "workTimeEnd": 1680,
+      "id": 8,
+      "stops": [
+        {
+          "name": "67-9820",
+          "arrivalMin": 1200,
+          "distanceFromPrevious": 0.0,
+          "durationFromPrevious": 0,
+          "capacity": 13723,
+          "timeWindowStart": 1200,
+          "timeWindowEnd": 1680,
+          "desLatitude": 13.85525,
+          "desLongitude": 100.8626,
+          "serviceTime": 165,
+          "type": 0,
+          "priority": 0,
+          "id": 0
+        },
+        {
+          "name": "67-8261",
+          "arrivalMin": 1366,
+          "distanceFromPrevious": 663.6,
+          "durationFromPrevious": 1,
+          "capacity": 17930,
+          "timeWindowStart": 240,
+          "timeWindowEnd": 720,
+          "desLatitude": 13.85465,
+          "desLongitude": 100.86255,
+          "serviceTime": 215,
+          "type": 0,
+          "priority": 0,
+          "id": 1
+        },
+        {
+          "name": "67-6598 (split 2/2)",
+          "arrivalMin": 1585,
+          "distanceFromPrevious": 2770.6,
+          "durationFromPrevious": 4,
+          "capacity": 16133,
+          "timeWindowStart": 960,
+          "timeWindowEnd": 1380,
+          "desLatitude": 13.85695,
+          "desLongitude": 100.85885,
+          "serviceTime": 194,
+          "type": 0,
+          "priority": 0,
+          "id": 2
+        }
+      ],
+      "stopCount": 3
+    },
+    {
+      "totalDistance": 0.0,
+      "totalDuration": 185.0,
+      "name": "WASTE-Mon-truck-9",
+      "capacity": 15389,
+      "workTimeStart": 1200,
+      "workTimeEnd": 1680,
+      "id": 9,
+      "stops": [
+        {
+          "name": "67-6596",
+          "arrivalMin": 1200,
+          "distanceFromPrevious": 0.0,
+          "durationFromPrevious": 0,
+          "capacity": 15389,
+          "timeWindowStart": 1200,
+          "timeWindowEnd": 1680,
+          "desLatitude": 13.8558,
+          "desLongitude": 100.83105,
+          "serviceTime": 185,
+          "type": 0,
+          "priority": 0,
+          "id": 0
+        }
+      ],
+      "stopCount": 1
+    },
+    {
+      "totalDistance": 3927.2,
+      "totalDuration": 210.0,
+      "name": "WASTE-Mon-truck-10",
+      "capacity": 17102,
+      "workTimeStart": 240,
+      "workTimeEnd": 720,
+      "id": 10,
+      "stops": [
+        {
+          "name": "67-6598",
+          "arrivalMin": 240,
+          "distanceFromPrevious": 0.0,
+          "durationFromPrevious": 0,
+          "capacity": 5064,
+          "timeWindowStart": 240,
+          "timeWindowEnd": 720,
+          "desLatitude": 13.8213,
+          "desLongitude": 100.84145,
+          "serviceTime": 61,
+          "type": 0,
+          "priority": 0,
+          "id": 0
+        },
+        {
+          "name": "67-9816",
+          "arrivalMin": 306,
+          "distanceFromPrevious": 3927.2,
+          "durationFromPrevious": 5,
+          "capacity": 12038,
+          "timeWindowStart": 240,
+          "timeWindowEnd": 720,
+          "desLatitude": 13.8203,
+          "desLongitude": 100.84165,
+          "serviceTime": 144,
+          "type": 0,
+          "priority": 0,
+          "id": 1
+        }
+      ],
+      "stopCount": 2
+    },
+    {
+      "totalDistance": 1678.8,
+      "totalDuration": 404.0,
+      "name": "WASTE-Mon-truck-11",
+      "capacity": 33519,
+      "workTimeStart": 240,
+      "workTimeEnd": 1440,
+      "id": 11,
+      "stops": [
+        {
+          "name": "67-6598",
+          "arrivalMin": 488,
+          "distanceFromPrevious": 0.0,
+          "durationFromPrevious": 0,
+          "capacity": 13022,
+          "timeWindowStart": 488,
+          "timeWindowEnd": 1440,
+          "desLatitude": 13.84545,
+          "desLongitude": 100.8575,
+          "serviceTime": 156,
+          "type": 0,
+          "priority": 0,
+          "id": 0
+        },
+        {
+          "name": "65-5608",
+          "arrivalMin": 646,
+          "distanceFromPrevious": 1678.8,
+          "durationFromPrevious": 2,
+          "capacity": 20497,
+          "timeWindowStart": 240,
+          "timeWindowEnd": 720,
+          "desLatitude": 13.85025,
+          "desLongitude": 100.86015,
+          "serviceTime": 246,
+          "type": 0,
+          "priority": 0,
+          "id": 1
+        }
+      ],
+      "stopCount": 2
+    },
+    {
+      "totalDistance": 5807.7,
+      "totalDuration": 308.0,
+      "name": "WASTE-Mon-truck-12",
+      "capacity": 25128,
+      "workTimeStart": 240,
+      "workTimeEnd": 1680,
+      "id": 12,
+      "stops": [
+        {
+          "name": "67-9812",
+          "arrivalMin": 1020,
+          "distanceFromPrevious": 0.0,
+          "durationFromPrevious": 0,
+          "capacity": 14180,
+          "timeWindowStart": 1020,
+          "timeWindowEnd": 1680,
+          "desLatitude": 13.80555,
+          "desLongitude": 100.84225,
+          "serviceTime": 170,
+          "type": 0,
+          "priority": 0,
+          "id": 0
+        },
+        {
+          "name": null,
+          "arrivalMin": 1197,
+          "distanceFromPrevious": 5807.7,
+          "durationFromPrevious": 7,
+          "capacity": 10948,
+          "timeWindowStart": 240,
+          "timeWindowEnd": 720,
+          "desLatitude": 13.80205,
+          "desLongitude": 100.8453,
+          "serviceTime": 131,
+          "type": 0,
+          "priority": 0,
+          "id": 1
+        }
+      ],
+      "stopCount": 2
+    },
+    {
+      "totalDistance": 0.0,
+      "totalDuration": 314.0,
+      "name": "WASTE-Mon-truck-13",
+      "capacity": 26185,
+      "workTimeStart": 240,
+      "workTimeEnd": 720,
+      "id": 13,
+      "stops": [
+        {
+          "name": "67-9813 (split 1/2)",
+          "arrivalMin": 240,
+          "distanceFromPrevious": 0.0,
+          "durationFromPrevious": 0,
+          "capacity": 26185,
+          "timeWindowStart": 240,
+          "timeWindowEnd": 720,
+          "desLatitude": 13.862325,
+          "desLongitude": 100.808,
+          "serviceTime": 314,
+          "type": 0,
+          "priority": 0,
+          "id": 0
+        }
+      ],
+      "stopCount": 1
+    },
+    {
+      "totalDistance": 0.0,
+      "totalDuration": 314.0,
+      "name": "WASTE-Mon-truck-14",
+      "capacity": 26185,
+      "workTimeStart": 240,
+      "workTimeEnd": 720,
+      "id": 14,
+      "stops": [
+        {
+          "name": "67-9813 (split 2/2)",
+          "arrivalMin": 240,
+          "distanceFromPrevious": 0.0,
+          "durationFromPrevious": 0,
+          "capacity": 26185,
+          "timeWindowStart": 240,
+          "timeWindowEnd": 720,
+          "desLatitude": 13.877975,
+          "desLongitude": 100.8092,
+          "serviceTime": 314,
+          "type": 0,
+          "priority": 0,
+          "id": 0
+        }
+      ],
+      "stopCount": 1
+    },
+    {
+      "totalDistance": 0.0,
+      "totalDuration": 69.0,
+      "name": "WASTE-Mon-truck-15",
+      "capacity": 5764,
+      "workTimeStart": 1200,
+      "workTimeEnd": 1680,
+      "id": 15,
+      "stops": [
+        {
+          "name": "67-9815",
+          "arrivalMin": 1200,
+          "distanceFromPrevious": 0.0,
+          "durationFromPrevious": 0,
+          "capacity": 5764,
+          "timeWindowStart": 1200,
+          "timeWindowEnd": 1680,
+          "desLatitude": 13.8519,
+          "desLongitude": 100.8764,
+          "serviceTime": 69,
+          "type": 0,
+          "priority": 0,
+          "id": 0
+        }
+      ],
+      "stopCount": 1
+    },
+    {
+      "totalDistance": 0.0,
+      "totalDuration": 156.0,
+      "name": "WASTE-Mon-truck-16",
+      "capacity": 13039,
+      "workTimeStart": 1200,
+      "workTimeEnd": 1680,
+      "id": 16,
+      "stops": [
+        {
+          "name": "67-9816",
+          "arrivalMin": 1200,
+          "distanceFromPrevious": 0.0,
+          "durationFromPrevious": 0,
+          "capacity": 13039,
+          "timeWindowStart": 1200,
+          "timeWindowEnd": 1680,
+          "desLatitude": 13.79675,
+          "desLongitude": 100.8313,
+          "serviceTime": 156,
+          "type": 0,
+          "priority": 0,
+          "id": 0
+        }
+      ],
+      "stopCount": 1
+    },
+    {
+      "totalDistance": 10447.0,
+      "totalDuration": 618.0,
+      "name": "WASTE-Mon-truck-17",
+      "capacity": 50193,
+      "workTimeStart": 240,
+      "workTimeEnd": 1680,
+      "id": 17,
+      "stops": [
+        {
+          "name": "67-9817",
+          "arrivalMin": 240,
+          "distanceFromPrevious": 0.0,
+          "durationFromPrevious": 0,
+          "capacity": 28998,
+          "timeWindowStart": 240,
+          "timeWindowEnd": 720,
+          "desLatitude": 13.812,
+          "desLongitude": 100.8314,
+          "serviceTime": 348,
+          "type": 0,
+          "priority": 0,
+          "id": 0
+        },
+        {
+          "name": "67-8263",
+          "arrivalMin": 1140,
+          "distanceFromPrevious": 10447,
+          "durationFromPrevious": 16,
+          "capacity": 21195,
+          "timeWindowStart": 1140,
+          "timeWindowEnd": 1680,
+          "desLatitude": 13.81115,
+          "desLongitude": 100.8267,
+          "serviceTime": 254,
+          "type": 0,
+          "priority": 0,
+          "id": 1
+        }
+      ],
+      "stopCount": 2
+    },
+    {
+      "totalDistance": 0.0,
+      "totalDuration": 342.0,
+      "name": "WASTE-Mon-truck-18",
+      "capacity": 28495,
+      "workTimeStart": 240,
+      "workTimeEnd": 720,
+      "id": 18,
+      "stops": [
+        {
+          "name": "67-9818",
+          "arrivalMin": 240,
+          "distanceFromPrevious": 0.0,
+          "durationFromPrevious": 0,
+          "capacity": 28495,
+          "timeWindowStart": 240,
+          "timeWindowEnd": 720,
+          "desLatitude": 13.86125,
+          "desLongitude": 100.861,
+          "serviceTime": 342,
+          "type": 0,
+          "priority": 0,
+          "id": 0
+        }
+      ],
+      "stopCount": 1
+    },
+    {
+      "totalDistance": 0.0,
+      "totalDuration": 149.0,
+      "name": "WASTE-Mon-truck-19",
+      "capacity": 12412,
+      "workTimeStart": 960,
+      "workTimeEnd": 1200,
+      "id": 19,
+      "stops": [
+        {
+          "name": "67-9819",
+          "arrivalMin": 960,
+          "distanceFromPrevious": 0.0,
+          "durationFromPrevious": 0,
+          "capacity": 12412,
+          "timeWindowStart": 960,
+          "timeWindowEnd": 1200,
+          "desLatitude": 13.8585,
+          "desLongitude": 100.8687,
+          "serviceTime": 149,
+          "type": 0,
+          "priority": 0,
+          "id": 0
+        }
+      ],
+      "stopCount": 1
+    },
+    {
+      "totalDistance": 0.0,
+      "totalDuration": 139.0,
+      "name": "WASTE-Mon-truck-20",
+      "capacity": 11584,
+      "workTimeStart": 60,
+      "workTimeEnd": 360,
+      "id": 20,
+      "stops": [
+        {
+          "name": "67-8247",
+          "arrivalMin": 60,
+          "distanceFromPrevious": 0.0,
+          "durationFromPrevious": 0,
+          "capacity": 11584,
+          "timeWindowStart": 60,
+          "timeWindowEnd": 360,
+          "desLatitude": 13.791,
+          "desLongitude": 100.8712,
+          "serviceTime": 139,
+          "type": 0,
+          "priority": 0,
+          "id": 0
+        }
+      ],
+      "stopCount": 1
+    },
+    {
+      "totalDistance": 0.0,
+      "totalDuration": 228.0,
+      "name": "WASTE-Mon-truck-21",
+      "capacity": 19037,
+      "workTimeStart": 1200,
+      "workTimeEnd": 1680,
+      "id": 21,
+      "stops": [
+        {
+          "name": "67-8248",
+          "arrivalMin": 1200,
+          "distanceFromPrevious": 0.0,
+          "durationFromPrevious": 0,
+          "capacity": 19037,
+          "timeWindowStart": 1200,
+          "timeWindowEnd": 1680,
+          "desLatitude": 13.81755,
+          "desLongitude": 100.83605,
+          "serviceTime": 228,
+          "type": 0,
+          "priority": 0,
+          "id": 0
+        }
+      ],
+      "stopCount": 1
+    },
+    {
+      "totalDistance": 0.0,
+      "totalDuration": 185.0,
+      "name": "WASTE-Mon-truck-22",
+      "capacity": 15382,
+      "workTimeStart": 150,
+      "workTimeEnd": 720,
+      "id": 22,
+      "stops": [
+        {
+          "name": "67-8249",
+          "arrivalMin": 150,
+          "distanceFromPrevious": 0.0,
+          "durationFromPrevious": 0,
+          "capacity": 15382,
+          "timeWindowStart": 150,
+          "timeWindowEnd": 720,
+          "desLatitude": 13.8297,
+          "desLongitude": 100.86435,
+          "serviceTime": 185,
+          "type": 0,
+          "priority": 0,
+          "id": 0
+        }
+      ],
+      "stopCount": 1
+    },
+    {
+      "totalDistance": 0.0,
+      "totalDuration": 285.0,
+      "name": "WASTE-Mon-truck-23",
+      "capacity": 23773,
+      "workTimeStart": 240,
+      "workTimeEnd": 720,
+      "id": 23,
+      "stops": [
+        {
+          "name": "67-8263",
+          "arrivalMin": 240,
+          "distanceFromPrevious": 0.0,
+          "durationFromPrevious": 0,
+          "capacity": 23773,
+          "timeWindowStart": 240,
+          "timeWindowEnd": 720,
+          "desLatitude": 13.86805,
+          "desLongitude": 100.83395,
+          "serviceTime": 285,
+          "type": 0,
+          "priority": 0,
+          "id": 0
+        }
+      ],
+      "stopCount": 1
+    },
+    {
+      "totalDistance": 885.8,
+      "totalDuration": 182.0,
+      "name": "WASTE-Mon-truck-24",
+      "capacity": 15053,
+      "workTimeStart": 0,
+      "workTimeEnd": 1680,
+      "id": 24,
+      "stops": [
+        {
+          "name": "65-5608",
+          "arrivalMin": 1200,
+          "distanceFromPrevious": 0.0,
+          "durationFromPrevious": 0,
+          "capacity": 9634,
+          "timeWindowStart": 1200,
+          "timeWindowEnd": 1680,
+          "desLatitude": 13.8595,
+          "desLongitude": 100.8542,
+          "serviceTime": 116,
+          "type": 0,
+          "priority": 0,
+          "id": 0
+        },
+        {
+          "name": "65-5339",
+          "arrivalMin": 1317,
+          "distanceFromPrevious": 885.8,
+          "durationFromPrevious": 1,
+          "capacity": 5419,
+          "timeWindowStart": 0,
+          "timeWindowEnd": 240,
+          "desLatitude": 13.8611,
+          "desLongitude": 100.8546,
+          "serviceTime": 65,
+          "type": 0,
+          "priority": 0,
+          "id": 1
+        }
+      ],
+      "stopCount": 2
+    },
+    {
+      "totalDistance": 0.0,
+      "totalDuration": 147.0,
+      "name": "WASTE-Mon-truck-25",
+      "capacity": 12237,
+      "workTimeStart": 240,
+      "workTimeEnd": 720,
+      "id": 25,
+      "stops": [
+        {
+          "name": "65-5608",
+          "arrivalMin": 240,
+          "distanceFromPrevious": 0.0,
+          "durationFromPrevious": 0,
+          "capacity": 12237,
+          "timeWindowStart": 240,
+          "timeWindowEnd": 720,
+          "desLatitude": 13.8248,
+          "desLongitude": 100.8647,
+          "serviceTime": 147,
+          "type": 0,
+          "priority": 0,
+          "id": 0
+        }
+      ],
+      "stopCount": 1
+    },
+    {
+      "totalDistance": 0.0,
+      "totalDuration": 70.0,
+      "name": "WASTE-Mon-truck-26",
+      "capacity": 5860,
+      "workTimeStart": 1200,
+      "workTimeEnd": 1680,
+      "id": 26,
+      "stops": [
+        {
+          "name": "67-9021",
+          "arrivalMin": 1200,
+          "distanceFromPrevious": 0.0,
+          "durationFromPrevious": 0,
+          "capacity": 5860,
+          "timeWindowStart": 1200,
+          "timeWindowEnd": 1680,
+          "desLatitude": 13.84425,
+          "desLongitude": 100.8525,
+          "serviceTime": 70,
+          "type": 0,
+          "priority": 0,
+          "id": 0
+        }
+      ],
+      "stopCount": 1
+    },
+    {
+      "totalDistance": 0.0,
+      "totalDuration": 213.0,
+      "name": "WASTE-Mon-truck-27",
+      "capacity": 17790,
+      "workTimeStart": 1200,
+      "workTimeEnd": 1680,
+      "id": 27,
+      "stops": [
+        {
+          "name": "67-9752",
+          "arrivalMin": 1200,
+          "distanceFromPrevious": 0.0,
+          "durationFromPrevious": 0,
+          "capacity": 17790,
+          "timeWindowStart": 1200,
+          "timeWindowEnd": 1680,
+          "desLatitude": 13.83515,
+          "desLongitude": 100.85795,
+          "serviceTime": 213,
+          "type": 0,
+          "priority": 0,
+          "id": 0
+        }
+      ],
+      "stopCount": 1
+    },
+    {
+      "totalDistance": 2223.8,
+      "totalDuration": 372.0,
+      "name": "WASTE-Tue-truck-0",
+      "capacity": 30854,
+      "workTimeStart": 240,
+      "workTimeEnd": 1680,
+      "id": 0,
+      "stops": [
+        {
+          "name": "67-6592",
+          "arrivalMin": 1200,
+          "distanceFromPrevious": 0.0,
+          "durationFromPrevious": 0,
+          "capacity": 17411,
+          "timeWindowStart": 1200,
+          "timeWindowEnd": 1680,
+          "desLatitude": 13.80815,
+          "desLongitude": 100.82795,
+          "serviceTime": 209,
+          "type": 0,
+          "priority": 0,
+          "id": 0
+        },
+        {
+          "name": "67-8264",
+          "arrivalMin": 1411,
+          "distanceFromPrevious": 2223.8,
+          "durationFromPrevious": 2,
+          "capacity": 13443,
+          "timeWindowStart": 240,
+          "timeWindowEnd": 720,
+          "desLatitude": 13.80715,
+          "desLongitude": 100.8236,
+          "serviceTime": 161,
+          "type": 0,
+          "priority": 0,
+          "id": 1
+        }
+      ],
+      "stopCount": 2
+    },
+    {
+      "totalDistance": 4270.2,
+      "totalDuration": 599.0,
+      "name": "WASTE-Tue-truck-1",
+      "capacity": 49486,
+      "workTimeStart": 180,
+      "workTimeEnd": 1680,
+      "id": 1,
+      "stops": [
+        {
+          "name": "67-6592",
+          "arrivalMin": 180,
+          "distanceFromPrevious": 0.0,
+          "durationFromPrevious": 0,
+          "capacity": 28988,
+          "timeWindowStart": 180,
+          "timeWindowEnd": 720,
+          "desLatitude": 13.84545,
+          "desLongitude": 100.8576,
+          "serviceTime": 348,
+          "type": 0,
+          "priority": 0,
+          "id": 0
+        },
+        {
+          "name": "67-6597",
+          "arrivalMin": 1200,
+          "distanceFromPrevious": 2472.5,
+          "durationFromPrevious": 3,
+          "capacity": 7476,
+          "timeWindowStart": 1200,
+          "timeWindowEnd": 1680,
+          "desLatitude": 13.8416,
+          "desLongitude": 100.85565,
+          "serviceTime": 90,
+          "type": 0,
+          "priority": 0,
+          "id": 1
+        },
+        {
+          "name": "67-6598",
+          "arrivalMin": 1292,
+          "distanceFromPrevious": 1797.7,
+          "durationFromPrevious": 2,
+          "capacity": 13022,
+          "timeWindowStart": 488,
+          "timeWindowEnd": 1440,
+          "desLatitude": 13.84545,
+          "desLongitude": 100.8575,
+          "serviceTime": 156,
+          "type": 0,
+          "priority": 0,
+          "id": 2
+        }
+      ],
+      "stopCount": 3
+    },
+    {
+      "totalDistance": 15529.5,
+      "totalDuration": 509.0,
+      "name": "WASTE-Tue-truck-2",
+      "capacity": 41100,
+      "workTimeStart": 60,
+      "workTimeEnd": 1680,
+      "id": 2,
+      "stops": [
+        {
+          "name": "67-6591",
+          "arrivalMin": 1200,
+          "distanceFromPrevious": 0.0,
+          "durationFromPrevious": 0,
+          "capacity": 23778,
+          "timeWindowStart": 1200,
+          "timeWindowEnd": 1680,
+          "desLatitude": 13.8514,
+          "desLongitude": 100.83785,
+          "serviceTime": 285,
+          "type": 0,
+          "priority": 0,
+          "id": 0
+        },
+        {
+          "name": "67-9814",
+          "arrivalMin": 1494,
+          "distanceFromPrevious": 9021.1,
+          "durationFromPrevious": 9,
+          "capacity": 8330,
+          "timeWindowStart": 1200,
+          "timeWindowEnd": 1680,
+          "desLatitude": 13.85495,
+          "desLongitude": 100.8363,
+          "serviceTime": 100,
+          "type": 0,
+          "priority": 0,
+          "id": 1
+        },
+        {
+          "name": "67-8262",
+          "arrivalMin": 1601,
+          "distanceFromPrevious": 6508.4,
+          "durationFromPrevious": 7,
+          "capacity": 8992,
+          "timeWindowStart": 60,
+          "timeWindowEnd": 480,
+          "desLatitude": 13.8541,
+          "desLongitude": 100.8413,
+          "serviceTime": 108,
+          "type": 0,
+          "priority": 0,
+          "id": 2
+        }
+      ],
+      "stopCount": 3
+    },
+    {
+      "totalDistance": 0.0,
+      "totalDuration": 72.0,
+      "name": "WASTE-Tue-truck-3",
+      "capacity": 5995,
+      "workTimeStart": 240,
+      "workTimeEnd": 720,
+      "id": 3,
+      "stops": [
+        {
+          "name": "67-9811",
+          "arrivalMin": 240,
+          "distanceFromPrevious": 0.0,
+          "durationFromPrevious": 0,
+          "capacity": 5995,
+          "timeWindowStart": 240,
+          "timeWindowEnd": 720,
+          "desLatitude": 13.78255,
+          "desLongitude": 100.83465,
+          "serviceTime": 72,
+          "type": 0,
+          "priority": 0,
+          "id": 0
+        }
+      ],
+      "stopCount": 1
+    },
+    {
+      "totalDistance": 0.0,
+      "totalDuration": 123.0,
+      "name": "WASTE-Tue-truck-4",
+      "capacity": 10228,
+      "workTimeStart": 1200,
+      "workTimeEnd": 1680,
+      "id": 4,
+      "stops": [
+        {
+          "name": "67-6593",
+          "arrivalMin": 1200,
+          "distanceFromPrevious": 0.0,
+          "durationFromPrevious": 0,
+          "capacity": 10228,
+          "timeWindowStart": 1200,
+          "timeWindowEnd": 1680,
+          "desLatitude": 13.8545,
+          "desLongitude": 100.8461,
+          "serviceTime": 123,
+          "type": 0,
+          "priority": 0,
+          "id": 0
+        }
+      ],
+      "stopCount": 1
+    },
+    {
+      "totalDistance": 0.0,
+      "totalDuration": 66.0,
+      "name": "WASTE-Tue-truck-5",
+      "capacity": 5526,
+      "workTimeStart": 240,
+      "workTimeEnd": 720,
+      "id": 5,
+      "stops": [
+        {
+          "name": "67-6595",
+          "arrivalMin": 240,
+          "distanceFromPrevious": 0.0,
+          "durationFromPrevious": 0,
+          "capacity": 5526,
+          "timeWindowStart": 240,
+          "timeWindowEnd": 720,
+          "desLatitude": 13.82455,
+          "desLongitude": 100.86835,
+          "serviceTime": 66,
+          "type": 0,
+          "priority": 0,
+          "id": 0
+        }
+      ],
+      "stopCount": 1
+    },
+    {
+      "totalDistance": 0.0,
+      "totalDuration": 130.0,
+      "name": "WASTE-Tue-truck-6",
+      "capacity": 10832,
+      "workTimeStart": 1200,
+      "workTimeEnd": 1680,
+      "id": 6,
+      "stops": [
+        {
+          "name": "67-6595",
+          "arrivalMin": 1200,
+          "distanceFromPrevious": 0.0,
+          "durationFromPrevious": 0,
+          "capacity": 10832,
+          "timeWindowStart": 1200,
+          "timeWindowEnd": 1680,
+          "desLatitude": 13.85365,
+          "desLongitude": 100.8579,
+          "serviceTime": 130,
+          "type": 0,
+          "priority": 0,
+          "id": 0
+        }
+      ],
+      "stopCount": 1
+    },
+    {
+      "totalDistance": 808.0,
+      "totalDuration": 366.0,
+      "name": "WASTE-Tue-truck-7",
+      "capacity": 30429,
+      "workTimeStart": 240,
+      "workTimeEnd": 1680,
+      "id": 7,
+      "stops": [
+        {
+          "name": "67-9820",
+          "arrivalMin": 1200,
+          "distanceFromPrevious": 0.0,
+          "durationFromPrevious": 0,
+          "capacity": 13723,
+          "timeWindowStart": 1200,
+          "timeWindowEnd": 1680,
+          "desLatitude": 13.85525,
+          "desLongitude": 100.8626,
+          "serviceTime": 165,
+          "type": 0,
+          "priority": 0,
+          "id": 0
+        },
+        {
+          "name": "67-9817",
+          "arrivalMin": 1366,
+          "distanceFromPrevious": 808,
+          "durationFromPrevious": 1,
+          "capacity": 16706,
+          "timeWindowStart": 240,
+          "timeWindowEnd": 720,
+          "desLatitude": 13.8607,
+          "desLongitude": 100.8624,
+          "serviceTime": 200,
+          "type": 0,
+          "priority": 0,
+          "id": 1
+        }
+      ],
+      "stopCount": 2
+    },
+    {
+      "totalDistance": 153.2,
+      "totalDuration": 468.0,
+      "name": "WASTE-Tue-truck-8",
+      "capacity": 38851,
+      "workTimeStart": 240,
+      "workTimeEnd": 1680,
+      "id": 8,
+      "stops": [
+        {
+          "name": "67-6596",
+          "arrivalMin": 1200,
+          "distanceFromPrevious": 0.0,
+          "durationFromPrevious": 0,
+          "capacity": 12059,
+          "timeWindowStart": 1200,
+          "timeWindowEnd": 1680,
+          "desLatitude": 13.8551,
+          "desLongitude": 100.81445,
+          "serviceTime": 145,
+          "type": 0,
+          "priority": 0,
+          "id": 0
+        },
+        {
+          "name": "67-9813",
+          "arrivalMin": 1346,
+          "distanceFromPrevious": 153.2,
+          "durationFromPrevious": 1,
+          "capacity": 26792,
+          "timeWindowStart": 240,
+          "timeWindowEnd": 720,
+          "desLatitude": 13.8545,
+          "desLongitude": 100.80735,
+          "serviceTime": 322,
+          "type": 0,
+          "priority": 0,
+          "id": 1
+        }
+      ],
+      "stopCount": 2
+    },
+    {
+      "totalDistance": 0.0,
+      "totalDuration": 61.0,
+      "name": "WASTE-Tue-truck-9",
+      "capacity": 5064,
+      "workTimeStart": 240,
+      "workTimeEnd": 720,
+      "id": 9,
+      "stops": [
+        {
+          "name": "67-6598",
+          "arrivalMin": 240,
+          "distanceFromPrevious": 0.0,
+          "durationFromPrevious": 0,
+          "capacity": 5064,
+          "timeWindowStart": 240,
+          "timeWindowEnd": 720,
+          "desLatitude": 13.8213,
+          "desLongitude": 100.84145,
+          "serviceTime": 61,
+          "type": 0,
+          "priority": 0,
+          "id": 0
+        }
+      ],
+      "stopCount": 1
+    },
+    {
+      "totalDistance": 7669.6,
+      "totalDuration": 471.0,
+      "name": "WASTE-Tue-truck-10",
+      "capacity": 38433,
+      "workTimeStart": 240,
+      "workTimeEnd": 1380,
+      "id": 10,
+      "stops": [
+        {
+          "name": "67-6598",
+          "arrivalMin": 960,
+          "distanceFromPrevious": 0.0,
+          "durationFromPrevious": 0,
+          "capacity": 23998,
+          "timeWindowStart": 960,
+          "timeWindowEnd": 1380,
+          "desLatitude": 13.8162,
+          "desLongitude": 100.84155,
+          "serviceTime": 288,
+          "type": 0,
+          "priority": 0,
+          "id": 0
+        },
+        {
+          "name": "67-9816",
+          "arrivalMin": 1258,
+          "distanceFromPrevious": 7669.6,
+          "durationFromPrevious": 10,
+          "capacity": 14435,
+          "timeWindowStart": 240,
+          "timeWindowEnd": 720,
+          "desLatitude": 13.8173,
+          "desLongitude": 100.8423,
+          "serviceTime": 173,
+          "type": 0,
+          "priority": 0,
+          "id": 1
+        }
+      ],
+      "stopCount": 2
+    },
+    {
+      "totalDistance": 0.0,
+      "totalDuration": 153.0,
+      "name": "WASTE-Tue-truck-11",
+      "capacity": 12726,
+      "workTimeStart": 1020,
+      "workTimeEnd": 1680,
+      "id": 11,
+      "stops": [
+        {
+          "name": "67-9812",
+          "arrivalMin": 1020,
+          "distanceFromPrevious": 0.0,
+          "durationFromPrevious": 0,
+          "capacity": 12726,
+          "timeWindowStart": 1020,
+          "timeWindowEnd": 1680,
+          "desLatitude": 13.80185,
+          "desLongitude": 100.8395,
+          "serviceTime": 153,
+          "type": 0,
+          "priority": 0,
+          "id": 0
+        }
+      ],
+      "stopCount": 1
+    },
+    {
+      "totalDistance": 0.0,
+      "totalDuration": 117.0,
+      "name": "WASTE-Tue-truck-12",
+      "capacity": 9772,
+      "workTimeStart": 240,
+      "workTimeEnd": 720,
+      "id": 12,
+      "stops": [
+        {
+          "name": "67-9814",
+          "arrivalMin": 240,
+          "distanceFromPrevious": 0.0,
+          "durationFromPrevious": 0,
+          "capacity": 9772,
+          "timeWindowStart": 240,
+          "timeWindowEnd": 720,
+          "desLatitude": 13.82895,
+          "desLongitude": 100.87015,
+          "serviceTime": 117,
+          "type": 0,
+          "priority": 0,
+          "id": 0
+        }
+      ],
+      "stopCount": 1
+    },
+    {
+      "totalDistance": 0.0,
+      "totalDuration": 79.0,
+      "name": "WASTE-Tue-truck-13",
+      "capacity": 6596,
+      "workTimeStart": 1200,
+      "workTimeEnd": 1680,
+      "id": 13,
+      "stops": [
+        {
+          "name": "67-9815",
+          "arrivalMin": 1200,
+          "distanceFromPrevious": 0.0,
+          "durationFromPrevious": 0,
+          "capacity": 6596,
+          "timeWindowStart": 1200,
+          "timeWindowEnd": 1680,
+          "desLatitude": 13.85495,
+          "desLongitude": 100.8507,
+          "serviceTime": 79,
+          "type": 0,
+          "priority": 0,
+          "id": 0
+        }
+      ],
+      "stopCount": 1
+    },
+    {
+      "totalDistance": 0.0,
+      "totalDuration": 162.0,
+      "name": "WASTE-Tue-truck-14",
+      "capacity": 13519,
+      "workTimeStart": 240,
+      "workTimeEnd": 720,
+      "id": 14,
+      "stops": [
+        {
+          "name": "67-9815",
+          "arrivalMin": 240,
+          "distanceFromPrevious": 0.0,
+          "durationFromPrevious": 0,
+          "capacity": 13519,
+          "timeWindowStart": 240,
+          "timeWindowEnd": 720,
+          "desLatitude": 13.8443,
+          "desLongitude": 100.8289,
+          "serviceTime": 162,
+          "type": 0,
+          "priority": 0,
+          "id": 0
+        }
+      ],
+      "stopCount": 1
+    },
+    {
+      "totalDistance": 0.0,
+      "totalDuration": 137.0,
+      "name": "WASTE-Tue-truck-15",
+      "capacity": 11416,
+      "workTimeStart": 1200,
+      "workTimeEnd": 1680,
+      "id": 15,
+      "stops": [
+        {
+          "name": "67-9816",
+          "arrivalMin": 1200,
+          "distanceFromPrevious": 0.0,
+          "durationFromPrevious": 0,
+          "capacity": 11416,
+          "timeWindowStart": 1200,
+          "timeWindowEnd": 1680,
+          "desLatitude": 13.79675,
+          "desLongitude": 100.8313,
+          "serviceTime": 137,
+          "type": 0,
+          "priority": 0,
+          "id": 0
+        }
+      ],
+      "stopCount": 1
+    },
+    {
+      "totalDistance": 0.0,
+      "totalDuration": 216.0,
+      "name": "WASTE-Tue-truck-16",
+      "capacity": 18011,
+      "workTimeStart": 240,
+      "workTimeEnd": 720,
+      "id": 16,
+      "stops": [
+        {
+          "name": "67-9818",
+          "arrivalMin": 240,
+          "distanceFromPrevious": 0.0,
+          "durationFromPrevious": 0,
+          "capacity": 18011,
+          "timeWindowStart": 240,
+          "timeWindowEnd": 720,
+          "desLatitude": 13.89405,
+          "desLongitude": 100.86315,
+          "serviceTime": 216,
+          "type": 0,
+          "priority": 0,
+          "id": 0
+        }
+      ],
+      "stopCount": 1
+    },
+    {
+      "totalDistance": 3046.8,
+      "totalDuration": 421.0,
+      "name": "WASTE-Tue-truck-17",
+      "capacity": 34665,
+      "workTimeStart": 240,
+      "workTimeEnd": 1200,
+      "id": 17,
+      "stops": [
+        {
+          "name": "67-9819 (split 1/2)",
+          "arrivalMin": 960,
+          "distanceFromPrevious": 0.0,
+          "durationFromPrevious": 0,
+          "capacity": 14168,
+          "timeWindowStart": 960,
+          "timeWindowEnd": 1200,
+          "desLatitude": 13.8485,
+          "desLongitude": 100.861425,
+          "serviceTime": 170,
+          "type": 0,
+          "priority": 0,
+          "id": 0
+        },
+        {
+          "name": "65-5608",
+          "arrivalMin": 1135,
+          "distanceFromPrevious": 3046.8,
+          "durationFromPrevious": 5,
+          "capacity": 20497,
+          "timeWindowStart": 240,
+          "timeWindowEnd": 720,
+          "desLatitude": 13.85025,
+          "desLongitude": 100.86015,
+          "serviceTime": 246,
+          "type": 0,
+          "priority": 0,
+          "id": 1
+        }
+      ],
+      "stopCount": 2
+    },
+    {
+      "totalDistance": 0.0,
+      "totalDuration": 170.0,
+      "name": "WASTE-Tue-truck-18",
+      "capacity": 14168,
+      "workTimeStart": 960,
+      "workTimeEnd": 1200,
+      "id": 18,
+      "stops": [
+        {
+          "name": "67-9819 (split 2/2)",
+          "arrivalMin": 960,
+          "distanceFromPrevious": 0.0,
+          "durationFromPrevious": 0,
+          "capacity": 14168,
+          "timeWindowStart": 960,
+          "timeWindowEnd": 1200,
+          "desLatitude": 13.8625,
+          "desLongitude": 100.873275,
+          "serviceTime": 170,
+          "type": 0,
+          "priority": 0,
+          "id": 0
+        }
+      ],
+      "stopCount": 1
+    },
+    {
+      "totalDistance": 0.0,
+      "totalDuration": 149.0,
+      "name": "WASTE-Tue-truck-19",
+      "capacity": 12395,
+      "workTimeStart": 60,
+      "workTimeEnd": 360,
+      "id": 19,
+      "stops": [
+        {
+          "name": "67-8247",
+          "arrivalMin": 60,
+          "distanceFromPrevious": 0.0,
+          "durationFromPrevious": 0,
+          "capacity": 12395,
+          "timeWindowStart": 60,
+          "timeWindowEnd": 360,
+          "desLatitude": 13.78245,
+          "desLongitude": 100.87695,
+          "serviceTime": 149,
+          "type": 0,
+          "priority": 0,
+          "id": 0
+        }
+      ],
+      "stopCount": 1
+    },
+    {
+      "totalDistance": 0.0,
+      "totalDuration": 117.0,
+      "name": "WASTE-Tue-truck-20",
+      "capacity": 9729,
+      "workTimeStart": 1200,
+      "workTimeEnd": 1680,
+      "id": 20,
+      "stops": [
+        {
+          "name": "67-8248",
+          "arrivalMin": 1200,
+          "distanceFromPrevious": 0.0,
+          "durationFromPrevious": 0,
+          "capacity": 9729,
+          "timeWindowStart": 1200,
+          "timeWindowEnd": 1680,
+          "desLatitude": 13.84655,
+          "desLongitude": 100.8898,
+          "serviceTime": 117,
+          "type": 0,
+          "priority": 0,
+          "id": 0
+        }
+      ],
+      "stopCount": 1
+    },
+    {
+      "totalDistance": 0.0,
+      "totalDuration": 223.0,
+      "name": "WASTE-Tue-truck-21",
+      "capacity": 18547,
+      "workTimeStart": 150,
+      "workTimeEnd": 720,
+      "id": 21,
+      "stops": [
+        {
+          "name": "67-8249",
+          "arrivalMin": 150,
+          "distanceFromPrevious": 0.0,
+          "durationFromPrevious": 0,
+          "capacity": 18547,
+          "timeWindowStart": 150,
+          "timeWindowEnd": 720,
+          "desLatitude": 13.821,
+          "desLongitude": 100.86275,
+          "serviceTime": 223,
+          "type": 0,
+          "priority": 0,
+          "id": 0
+        }
+      ],
+      "stopCount": 1
+    },
+    {
+      "totalDistance": 2705.4,
+      "totalDuration": 470.0,
+      "name": "WASTE-Tue-truck-22",
+      "capacity": 38811,
+      "workTimeStart": 240,
+      "workTimeEnd": 1680,
+      "id": 22,
+      "stops": [
+        {
+          "name": "67-8261",
+          "arrivalMin": 240,
+          "distanceFromPrevious": 0.0,
+          "durationFromPrevious": 0,
+          "capacity": 17848,
+          "timeWindowStart": 240,
+          "timeWindowEnd": 720,
+          "desLatitude": 13.83575,
+          "desLongitude": 100.85135,
+          "serviceTime": 214,
+          "type": 0,
+          "priority": 0,
+          "id": 0
+        },
+        {
+          "name": "67-8263",
+          "arrivalMin": 1200,
+          "distanceFromPrevious": 2705.4,
+          "durationFromPrevious": 4,
+          "capacity": 20963,
+          "timeWindowStart": 1200,
+          "timeWindowEnd": 1680,
+          "desLatitude": 13.83115,
+          "desLongitude": 100.85015,
+          "serviceTime": 252,
+          "type": 0,
+          "priority": 0,
+          "id": 1
+        }
+      ],
+      "stopCount": 2
+    },
+    {
+      "totalDistance": 0.0,
+      "totalDuration": 345.0,
+      "name": "WASTE-Tue-truck-23",
+      "capacity": 28787,
+      "workTimeStart": 240,
+      "workTimeEnd": 720,
+      "id": 23,
+      "stops": [
+        {
+          "name": "67-8263",
+          "arrivalMin": 240,
+          "distanceFromPrevious": 0.0,
+          "durationFromPrevious": 0,
+          "capacity": 28787,
+          "timeWindowStart": 240,
+          "timeWindowEnd": 720,
+          "desLatitude": 13.8789,
+          "desLongitude": 100.835,
+          "serviceTime": 345,
+          "type": 0,
+          "priority": 0,
+          "id": 0
+        }
+      ],
+      "stopCount": 1
+    },
+    {
+      "totalDistance": 1278.1,
+      "totalDuration": 397.0,
+      "name": "WASTE-Tue-truck-24",
+      "capacity": 32849,
+      "workTimeStart": 240,
+      "workTimeEnd": 1680,
+      "id": 24,
+      "stops": [
+        {
+          "name": "67-8263",
+          "arrivalMin": 240,
+          "distanceFromPrevious": 0.0,
+          "durationFromPrevious": 0,
+          "capacity": 28357,
+          "timeWindowStart": 240,
+          "timeWindowEnd": 720,
+          "desLatitude": 13.8626,
+          "desLongitude": 100.85785,
+          "serviceTime": 340,
+          "type": 0,
+          "priority": 0,
+          "id": 0
+        },
+        {
+          "name": "65-5608",
+          "arrivalMin": 1218,
+          "distanceFromPrevious": 1278.1,
+          "durationFromPrevious": 3,
+          "capacity": 4492,
+          "timeWindowStart": 1218,
+          "timeWindowEnd": 1680,
+          "desLatitude": 13.8595,
+          "desLongitude": 100.8542,
+          "serviceTime": 54,
+          "type": 0,
+          "priority": 0,
+          "id": 1
+        }
+      ],
+      "stopCount": 2
+    },
+    {
+      "totalDistance": 0.0,
+      "totalDuration": 71.0,
+      "name": "WASTE-Tue-truck-25",
+      "capacity": 5933,
+      "workTimeStart": 1200,
+      "workTimeEnd": 1680,
+      "id": 25,
+      "stops": [
+        {
+          "name": "67-9021",
+          "arrivalMin": 1200,
+          "distanceFromPrevious": 0.0,
+          "durationFromPrevious": 0,
+          "capacity": 5933,
+          "timeWindowStart": 1200,
+          "timeWindowEnd": 1680,
+          "desLatitude": 13.8467,
+          "desLongitude": 100.85395,
+          "serviceTime": 71,
+          "type": 0,
+          "priority": 0,
+          "id": 0
+        }
+      ],
+      "stopCount": 1
+    },
+    {
+      "totalDistance": 0.0,
+      "totalDuration": 280.0,
+      "name": "WASTE-Tue-truck-26",
+      "capacity": 23332,
+      "workTimeStart": 1200,
+      "workTimeEnd": 1680,
+      "id": 26,
+      "stops": [
+        {
+          "name": "67-9752",
+          "arrivalMin": 1200,
+          "distanceFromPrevious": 0.0,
+          "durationFromPrevious": 0,
+          "capacity": 23332,
+          "timeWindowStart": 1200,
+          "timeWindowEnd": 1680,
+          "desLatitude": 13.81345,
+          "desLongitude": 100.85805,
+          "serviceTime": 280,
+          "type": 0,
+          "priority": 0,
+          "id": 0
+        }
+      ],
+      "stopCount": 1
+    },
+    {
+      "totalDistance": 15000.2,
+      "totalDuration": 1157.0,
+      "name": "WASTE-Wed-truck-0",
+      "capacity": 94840,
+      "workTimeStart": 240,
+      "workTimeEnd": 1680,
+      "id": 0,
+      "stops": [
+        {
+          "name": "67-6592",
+          "arrivalMin": 1200,
+          "distanceFromPrevious": 0.0,
+          "durationFromPrevious": 0,
+          "capacity": 18387,
+          "timeWindowStart": 1200,
+          "timeWindowEnd": 1680,
+          "desLatitude": 13.8073,
+          "desLongitude": 100.8381,
+          "serviceTime": 221,
+          "type": 0,
+          "priority": 0,
+          "id": 0
+        },
+        {
+          "name": "67-9814",
+          "arrivalMin": 1422,
+          "distanceFromPrevious": 1588.4,
+          "durationFromPrevious": 1,
+          "capacity": 15888,
+          "timeWindowStart": 240,
+          "timeWindowEnd": 720,
+          "desLatitude": 13.8071,
+          "desLongitude": 100.83805,
+          "serviceTime": 191,
+          "type": 0,
+          "priority": 0,
+          "id": 1
+        },
+        {
+          "name": "67-9812",
+          "arrivalMin": 1619,
+          "distanceFromPrevious": 4219.5,
+          "durationFromPrevious": 6,
+          "capacity": 29200,
+          "timeWindowStart": 1020,
+          "timeWindowEnd": 1680,
+          "desLatitude": 13.80705,
+          "desLongitude": 100.83775,
+          "serviceTime": 350,
+          "type": 0,
+          "priority": 0,
+          "id": 2
+        },
+        {
+          "name": "67-8263",
+          "arrivalMin": 1981,
+          "distanceFromPrevious": 9192.3,
+          "durationFromPrevious": 12,
+          "capacity": 31365,
+          "timeWindowStart": 1200,
+          "timeWindowEnd": 1680,
+          "desLatitude": 13.8071,
+          "desLongitude": 100.8378,
+          "serviceTime": 376,
+          "type": 0,
+          "priority": 0,
+          "id": 3
+        }
+      ],
+      "stopCount": 4
+    },
+    {
+      "totalDistance": 2472.5,
+      "totalDuration": 466.0,
+      "name": "WASTE-Wed-truck-1",
+      "capacity": 38610,
+      "workTimeStart": 180,
+      "workTimeEnd": 1440,
+      "id": 1,
+      "stops": [
+        {
+          "name": "67-6592",
+          "arrivalMin": 180,
+          "distanceFromPrevious": 0.0,
+          "durationFromPrevious": 0,
+          "capacity": 25588,
+          "timeWindowStart": 180,
+          "timeWindowEnd": 720,
+          "desLatitude": 13.84545,
+          "desLongitude": 100.85755,
+          "serviceTime": 307,
+          "type": 0,
+          "priority": 0,
+          "id": 0
+        },
+        {
+          "name": "67-6598",
+          "arrivalMin": 490,
+          "distanceFromPrevious": 2472.5,
+          "durationFromPrevious": 3,
+          "capacity": 13022,
+          "timeWindowStart": 488,
+          "timeWindowEnd": 1440,
+          "desLatitude": 13.84545,
+          "desLongitude": 100.8575,
+          "serviceTime": 156,
+          "type": 0,
+          "priority": 0,
+          "id": 1
+        }
+      ],
+      "stopCount": 2
+    },
+    {
+      "totalDistance": 6657.0,
+      "totalDuration": 592.0,
+      "name": "WASTE-Wed-truck-2",
+      "capacity": 48672,
+      "workTimeStart": 240,
+      "workTimeEnd": 1680,
+      "id": 2,
+      "stops": [
+        {
+          "name": "67-6591 (split 1/2)",
+          "arrivalMin": 1200,
+          "distanceFromPrevious": 0.0,
+          "durationFromPrevious": 0,
+          "capacity": 10460,
+          "timeWindowStart": 1200,
+          "timeWindowEnd": 1410,
+          "desLatitude": 13.85495,
+          "desLongitude": 100.8519,
+          "serviceTime": 126,
+          "type": 0,
+          "priority": 0,
+          "id": 0
+        },
+        {
+          "name": "67-6593",
+          "arrivalMin": 1329,
+          "distanceFromPrevious": 2423,
+          "durationFromPrevious": 3,
+          "capacity": 12434,
+          "timeWindowStart": 1200,
+          "timeWindowEnd": 1680,
+          "desLatitude": 13.8547,
+          "desLongitude": 100.84845,
+          "serviceTime": 149,
+          "type": 0,
+          "priority": 0,
+          "id": 1
+        },
+        {
+          "name": "67-9817",
+          "arrivalMin": 1483,
+          "distanceFromPrevious": 4234,
+          "durationFromPrevious": 5,
+          "capacity": 25778,
+          "timeWindowStart": 240,
+          "timeWindowEnd": 720,
+          "desLatitude": 13.85435,
+          "desLongitude": 100.84975,
+          "serviceTime": 309,
+          "type": 0,
+          "priority": 0,
+          "id": 2
+        }
+      ],
+      "stopCount": 3
+    },
+    {
+      "totalDistance": 10504.6,
+      "totalDuration": 373.0,
+      "name": "WASTE-Wed-truck-3",
+      "capacity": 30122,
+      "workTimeStart": 60,
+      "workTimeEnd": 1680,
+      "id": 3,
+      "stops": [
+        {
+          "name": "67-6591 (split 2/2)",
+          "arrivalMin": 1200,
+          "distanceFromPrevious": 0.0,
+          "durationFromPrevious": 0,
+          "capacity": 10460,
+          "timeWindowStart": 1200,
+          "timeWindowEnd": 1410,
+          "desLatitude": 13.85405,
+          "desLongitude": 100.8347,
+          "serviceTime": 126,
+          "type": 0,
+          "priority": 0,
+          "id": 0
+        },
+        {
+          "name": "67-9814",
+          "arrivalMin": 1330,
+          "distanceFromPrevious": 3996.2,
+          "durationFromPrevious": 4,
+          "capacity": 8330,
+          "timeWindowStart": 1200,
+          "timeWindowEnd": 1680,
+          "desLatitude": 13.85495,
+          "desLongitude": 100.8363,
+          "serviceTime": 100,
+          "type": 0,
+          "priority": 0,
+          "id": 1
+        },
+        {
+          "name": "67-8262",
+          "arrivalMin": 1437,
+          "distanceFromPrevious": 6508.4,
+          "durationFromPrevious": 7,
+          "capacity": 11332,
+          "timeWindowStart": 60,
+          "timeWindowEnd": 480,
+          "desLatitude": 13.85225,
+          "desLongitude": 100.83265,
+          "serviceTime": 136,
+          "type": 0,
+          "priority": 0,
+          "id": 2
+        }
+      ],
+      "stopCount": 3
+    },
+    {
+      "totalDistance": 3397.7,
+      "totalDuration": 388.0,
+      "name": "WASTE-Wed-truck-4",
+      "capacity": 31988,
+      "workTimeStart": 1200,
+      "workTimeEnd": 1680,
+      "id": 4,
+      "stops": [
+        {
+          "name": "67-6597",
+          "arrivalMin": 1200,
+          "distanceFromPrevious": 0.0,
+          "durationFromPrevious": 0,
+          "capacity": 11411,
+          "timeWindowStart": 1200,
+          "timeWindowEnd": 1680,
+          "desLatitude": 13.82635,
+          "desLongitude": 100.84775,
+          "serviceTime": 137,
+          "type": 0,
+          "priority": 0,
+          "id": 0
+        },
+        {
+          "name": "67-8263",
+          "arrivalMin": 1341,
+          "distanceFromPrevious": 3397.7,
+          "durationFromPrevious": 4,
+          "capacity": 20577,
+          "timeWindowStart": 1200,
+          "timeWindowEnd": 1680,
+          "desLatitude": 13.8245,
+          "desLongitude": 100.8531,
+          "serviceTime": 247,
+          "type": 0,
+          "priority": 0,
+          "id": 1
+        }
+      ],
+      "stopCount": 2
+    },
+    {
+      "totalDistance": 0.0,
+      "totalDuration": 116.0,
+      "name": "WASTE-Wed-truck-5",
+      "capacity": 9675,
+      "workTimeStart": 240,
+      "workTimeEnd": 720,
+      "id": 5,
+      "stops": [
+        {
+          "name": "67-9811",
+          "arrivalMin": 240,
+          "distanceFromPrevious": 0.0,
+          "durationFromPrevious": 0,
+          "capacity": 9675,
+          "timeWindowStart": 240,
+          "timeWindowEnd": 720,
+          "desLatitude": 13.7897,
+          "desLongitude": 100.84175,
+          "serviceTime": 116,
+          "type": 0,
+          "priority": 0,
+          "id": 0
+        }
+      ],
+      "stopCount": 1
+    },
+    {
+      "totalDistance": 0.0,
+      "totalDuration": 34.0,
+      "name": "WASTE-Wed-truck-6",
+      "capacity": 2814,
+      "workTimeStart": 240,
+      "workTimeEnd": 720,
+      "id": 6,
+      "stops": [
+        {
+          "name": "67-6595",
+          "arrivalMin": 240,
+          "distanceFromPrevious": 0.0,
+          "durationFromPrevious": 0,
+          "capacity": 2814,
+          "timeWindowStart": 240,
+          "timeWindowEnd": 720,
+          "desLatitude": 13.8233,
+          "desLongitude": 100.86935,
+          "serviceTime": 34,
+          "type": 0,
+          "priority": 0,
+          "id": 0
+        }
+      ],
+      "stopCount": 1
+    },
+    {
+      "totalDistance": 0.0,
+      "totalDuration": 220.0,
+      "name": "WASTE-Wed-truck-7",
+      "capacity": 18366,
+      "workTimeStart": 1200,
+      "workTimeEnd": 1680,
+      "id": 7,
+      "stops": [
+        {
+          "name": "67-6595",
+          "arrivalMin": 1200,
+          "distanceFromPrevious": 0.0,
+          "durationFromPrevious": 0,
+          "capacity": 18366,
+          "timeWindowStart": 1200,
+          "timeWindowEnd": 1680,
+          "desLatitude": 13.83815,
+          "desLongitude": 100.8522,
+          "serviceTime": 220,
+          "type": 0,
+          "priority": 0,
+          "id": 0
+        }
+      ],
+      "stopCount": 1
+    },
+    {
+      "totalDistance": 1446.4,
+      "totalDuration": 306.0,
+      "name": "WASTE-Wed-truck-8",
+      "capacity": 25311,
+      "workTimeStart": 240,
+      "workTimeEnd": 1680,
+      "id": 8,
+      "stops": [
+        {
+          "name": "67-9820",
+          "arrivalMin": 1200,
+          "distanceFromPrevious": 0.0,
+          "durationFromPrevious": 0,
+          "capacity": 13723,
+          "timeWindowStart": 1200,
+          "timeWindowEnd": 1680,
+          "desLatitude": 13.85525,
+          "desLongitude": 100.8626,
+          "serviceTime": 165,
+          "type": 0,
+          "priority": 0,
+          "id": 0
+        },
+        {
+          "name": "67-8263",
+          "arrivalMin": 1367,
+          "distanceFromPrevious": 1446.4,
+          "durationFromPrevious": 2,
+          "capacity": 11588,
+          "timeWindowStart": 240,
+          "timeWindowEnd": 720,
+          "desLatitude": 13.85205,
+          "desLongitude": 100.86015,
+          "serviceTime": 139,
+          "type": 0,
+          "priority": 0,
+          "id": 1
+        }
+      ],
+      "stopCount": 2
+    },
+    {
+      "totalDistance": 0.0,
+      "totalDuration": 124.0,
+      "name": "WASTE-Wed-truck-9",
+      "capacity": 10362,
+      "workTimeStart": 1200,
+      "workTimeEnd": 1680,
+      "id": 9,
+      "stops": [
+        {
+          "name": "ุึ67-6596",
+          "arrivalMin": 1200,
+          "distanceFromPrevious": 0.0,
+          "durationFromPrevious": 0,
+          "capacity": 10362,
+          "timeWindowStart": 1200,
+          "timeWindowEnd": 1680,
+          "desLatitude": 13.85505,
+          "desLongitude": 100.814,
+          "serviceTime": 124,
+          "type": 0,
+          "priority": 0,
+          "id": 0
+        }
+      ],
+      "stopCount": 1
+    },
+    {
+      "totalDistance": 0.0,
+      "totalDuration": 61.0,
+      "name": "WASTE-Wed-truck-10",
+      "capacity": 5064,
+      "workTimeStart": 240,
+      "workTimeEnd": 720,
+      "id": 10,
+      "stops": [
+        {
+          "name": "67-6598",
+          "arrivalMin": 240,
+          "distanceFromPrevious": 0.0,
+          "durationFromPrevious": 0,
+          "capacity": 5064,
+          "timeWindowStart": 240,
+          "timeWindowEnd": 720,
+          "desLatitude": 13.8213,
+          "desLongitude": 100.84145,
+          "serviceTime": 61,
+          "type": 0,
+          "priority": 0,
+          "id": 0
+        }
+      ],
+      "stopCount": 1
+    },
+    {
+      "totalDistance": 9741.1,
+      "totalDuration": 522.0,
+      "name": "WASTE-Wed-truck-11",
+      "capacity": 42180,
+      "workTimeStart": 240,
+      "workTimeEnd": 1380,
+      "id": 11,
+      "stops": [
+        {
+          "name": "67-6598",
+          "arrivalMin": 960,
+          "distanceFromPrevious": 0.0,
+          "durationFromPrevious": 0,
+          "capacity": 21074,
+          "timeWindowStart": 960,
+          "timeWindowEnd": 1380,
+          "desLatitude": 13.8192,
+          "desLongitude": 100.83445,
+          "serviceTime": 253,
+          "type": 0,
+          "priority": 0,
+          "id": 0
+        },
+        {
+          "name": "67-8264 (split 1/2)",
+          "arrivalMin": 1229,
+          "distanceFromPrevious": 9741.1,
+          "durationFromPrevious": 16,
+          "capacity": 21106,
+          "timeWindowStart": 240,
+          "timeWindowEnd": 720,
+          "desLatitude": 13.817575,
+          "desLongitude": 100.835975,
+          "serviceTime": 253,
+          "type": 0,
+          "priority": 0,
+          "id": 1
+        }
+      ],
+      "stopCount": 2
+    },
+    {
+      "totalDistance": 0.0,
+      "totalDuration": 419.0,
+      "name": "WASTE-Wed-truck-12",
+      "capacity": 34896,
+      "workTimeStart": 240,
+      "workTimeEnd": 720,
+      "id": 12,
+      "stops": [
+        {
+          "name": "67-9813",
+          "arrivalMin": 240,
+          "distanceFromPrevious": 0.0,
+          "durationFromPrevious": 0,
+          "capacity": 34896,
+          "timeWindowStart": 240,
+          "timeWindowEnd": 720,
+          "desLatitude": 13.85455,
+          "desLongitude": 100.8074,
+          "serviceTime": 419,
+          "type": 0,
+          "priority": 0,
+          "id": 0
+        }
+      ],
+      "stopCount": 1
+    },
+    {
+      "totalDistance": 0.0,
+      "totalDuration": 72.0,
+      "name": "WASTE-Wed-truck-13",
+      "capacity": 5959,
+      "workTimeStart": 1200,
+      "workTimeEnd": 1680,
+      "id": 13,
+      "stops": [
+        {
+          "name": "67-9815",
+          "arrivalMin": 1200,
+          "distanceFromPrevious": 0.0,
+          "durationFromPrevious": 0,
+          "capacity": 5959,
+          "timeWindowStart": 1200,
+          "timeWindowEnd": 1680,
+          "desLatitude": 13.84755,
+          "desLongitude": 100.87115,
+          "serviceTime": 72,
+          "type": 0,
+          "priority": 0,
+          "id": 0
+        }
+      ],
+      "stopCount": 1
+    },
+    {
+      "totalDistance": 2478.9,
+      "totalDuration": 297.0,
+      "name": "WASTE-Wed-truck-14",
+      "capacity": 24452,
+      "workTimeStart": 240,
+      "workTimeEnd": 720,
+      "id": 14,
+      "stops": [
+        {
+          "name": "67-9815",
+          "arrivalMin": 240,
+          "distanceFromPrevious": 0.0,
+          "durationFromPrevious": 0,
+          "capacity": 3955,
+          "timeWindowStart": 240,
+          "timeWindowEnd": 720,
+          "desLatitude": 13.8521,
+          "desLongitude": 100.8558,
+          "serviceTime": 47,
+          "type": 0,
+          "priority": 0,
+          "id": 0
+        },
+        {
+          "name": "65-5608",
+          "arrivalMin": 291,
+          "distanceFromPrevious": 2478.9,
+          "durationFromPrevious": 4,
+          "capacity": 20497,
+          "timeWindowStart": 240,
+          "timeWindowEnd": 720,
+          "desLatitude": 13.85025,
+          "desLongitude": 100.86015,
+          "serviceTime": 246,
+          "type": 0,
+          "priority": 0,
+          "id": 1
+        }
+      ],
+      "stopCount": 2
+    },
+    {
+      "totalDistance": 4637.7,
+      "totalDuration": 398.0,
+      "name": "WASTE-Wed-truck-15",
+      "capacity": 32703,
+      "workTimeStart": 240,
+      "workTimeEnd": 720,
+      "id": 15,
+      "stops": [
+        {
+          "name": "67-9816",
+          "arrivalMin": 240,
+          "distanceFromPrevious": 0.0,
+          "durationFromPrevious": 0,
+          "capacity": 14539,
+          "timeWindowStart": 240,
+          "timeWindowEnd": 720,
+          "desLatitude": 13.8301,
+          "desLongitude": 100.8498,
+          "serviceTime": 174,
+          "type": 0,
+          "priority": 0,
+          "id": 0
+        },
+        {
+          "name": "67-8261",
+          "arrivalMin": 420,
+          "distanceFromPrevious": 4637.7,
+          "durationFromPrevious": 6,
+          "capacity": 18164,
+          "timeWindowStart": 240,
+          "timeWindowEnd": 720,
+          "desLatitude": 13.83305,
+          "desLongitude": 100.8518,
+          "serviceTime": 218,
+          "type": 0,
+          "priority": 0,
+          "id": 1
+        }
+      ],
+      "stopCount": 2
+    },
+    {
+      "totalDistance": 0.0,
+      "totalDuration": 153.0,
+      "name": "WASTE-Wed-truck-16",
+      "capacity": 12787,
+      "workTimeStart": 1200,
+      "workTimeEnd": 1680,
+      "id": 16,
+      "stops": [
+        {
+          "name": "67-9816",
+          "arrivalMin": 1200,
+          "distanceFromPrevious": 0.0,
+          "durationFromPrevious": 0,
+          "capacity": 12787,
+          "timeWindowStart": 1200,
+          "timeWindowEnd": 1680,
+          "desLatitude": 13.79675,
+          "desLongitude": 100.8313,
+          "serviceTime": 153,
+          "type": 0,
+          "priority": 0,
+          "id": 0
+        }
+      ],
+      "stopCount": 1
+    },
+    {
+      "totalDistance": 0.0,
+      "totalDuration": 195.0,
+      "name": "WASTE-Wed-truck-17",
+      "capacity": 16234,
+      "workTimeStart": 240,
+      "workTimeEnd": 720,
+      "id": 17,
+      "stops": [
+        {
+          "name": "67-9818",
+          "arrivalMin": 240,
+          "distanceFromPrevious": 0.0,
+          "durationFromPrevious": 0,
+          "capacity": 16234,
+          "timeWindowStart": 240,
+          "timeWindowEnd": 720,
+          "desLatitude": 13.8894,
+          "desLongitude": 100.8649,
+          "serviceTime": 195,
+          "type": 0,
+          "priority": 0,
+          "id": 0
+        }
+      ],
+      "stopCount": 1
+    },
+    {
+      "totalDistance": 0.0,
+      "totalDuration": 112.0,
+      "name": "WASTE-Wed-truck-18",
+      "capacity": 9341,
+      "workTimeStart": 960,
+      "workTimeEnd": 1200,
+      "id": 18,
+      "stops": [
+        {
+          "name": "67-9819",
+          "arrivalMin": 960,
+          "distanceFromPrevious": 0.0,
+          "durationFromPrevious": 0,
+          "capacity": 9341,
+          "timeWindowStart": 960,
+          "timeWindowEnd": 1200,
+          "desLatitude": 13.86,
+          "desLongitude": 100.8645,
+          "serviceTime": 112,
+          "type": 0,
+          "priority": 0,
+          "id": 0
+        }
+      ],
+      "stopCount": 1
+    },
+    {
+      "totalDistance": 0.0,
+      "totalDuration": 153.0,
+      "name": "WASTE-Wed-truck-19",
+      "capacity": 12757,
+      "workTimeStart": 60,
+      "workTimeEnd": 360,
+      "id": 19,
+      "stops": [
+        {
+          "name": "67-8247",
+          "arrivalMin": 60,
+          "distanceFromPrevious": 0.0,
+          "durationFromPrevious": 0,
+          "capacity": 12757,
+          "timeWindowStart": 60,
+          "timeWindowEnd": 360,
+          "desLatitude": 13.7917,
+          "desLongitude": 100.87125,
+          "serviceTime": 153,
+          "type": 0,
+          "priority": 0,
+          "id": 0
+        }
+      ],
+      "stopCount": 1
+    },
+    {
+      "totalDistance": 0.0,
+      "totalDuration": 101.0,
+      "name": "WASTE-Wed-truck-20",
+      "capacity": 8389,
+      "workTimeStart": 1200,
+      "workTimeEnd": 1680,
+      "id": 20,
+      "stops": [
+        {
+          "name": "67-8248",
+          "arrivalMin": 1200,
+          "distanceFromPrevious": 0.0,
+          "durationFromPrevious": 0,
+          "capacity": 8389,
+          "timeWindowStart": 1200,
+          "timeWindowEnd": 1680,
+          "desLatitude": 13.8452,
+          "desLongitude": 100.88545,
+          "serviceTime": 101,
+          "type": 0,
+          "priority": 0,
+          "id": 0
+        }
+      ],
+      "stopCount": 1
+    },
+    {
+      "totalDistance": 0.0,
+      "totalDuration": 253.0,
+      "name": "WASTE-Wed-truck-21",
+      "capacity": 21085,
+      "workTimeStart": 150,
+      "workTimeEnd": 720,
+      "id": 21,
+      "stops": [
+        {
+          "name": "67-8249",
+          "arrivalMin": 150,
+          "distanceFromPrevious": 0.0,
+          "durationFromPrevious": 0,
+          "capacity": 21085,
+          "timeWindowStart": 150,
+          "timeWindowEnd": 720,
+          "desLatitude": 13.81975,
+          "desLongitude": 100.8621,
+          "serviceTime": 253,
+          "type": 0,
+          "priority": 0,
+          "id": 0
+        }
+      ],
+      "stopCount": 1
+    },
+    {
+      "totalDistance": 0.0,
+      "totalDuration": 253.0,
+      "name": "WASTE-Wed-truck-22",
+      "capacity": 21106,
+      "workTimeStart": 240,
+      "workTimeEnd": 720,
+      "id": 22,
+      "stops": [
+        {
+          "name": "67-8264 (split 2/2)",
+          "arrivalMin": 240,
+          "distanceFromPrevious": 0.0,
+          "durationFromPrevious": 0,
+          "capacity": 21106,
+          "timeWindowStart": 240,
+          "timeWindowEnd": 720,
+          "desLatitude": 13.816925,
+          "desLongitude": 100.812925,
+          "serviceTime": 253,
+          "type": 0,
+          "priority": 0,
+          "id": 0
+        }
+      ],
+      "stopCount": 1
+    },
+    {
+      "totalDistance": 0.0,
+      "totalDuration": 147.0,
+      "name": "WASTE-Wed-truck-23",
+      "capacity": 12237,
+      "workTimeStart": 240,
+      "workTimeEnd": 720,
+      "id": 23,
+      "stops": [
+        {
+          "name": "65-5608",
+          "arrivalMin": 240,
+          "distanceFromPrevious": 0.0,
+          "durationFromPrevious": 0,
+          "capacity": 12237,
+          "timeWindowStart": 240,
+          "timeWindowEnd": 720,
+          "desLatitude": 13.8248,
+          "desLongitude": 100.8647,
+          "serviceTime": 147,
+          "type": 0,
+          "priority": 0,
+          "id": 0
+        }
+      ],
+      "stopCount": 1
+    },
+    {
+      "totalDistance": 0.0,
+      "totalDuration": 98.0,
+      "name": "WASTE-Wed-truck-24",
+      "capacity": 8184,
+      "workTimeStart": 1200,
+      "workTimeEnd": 1680,
+      "id": 24,
+      "stops": [
+        {
+          "name": "65-5608",
+          "arrivalMin": 1200,
+          "distanceFromPrevious": 0.0,
+          "durationFromPrevious": 0,
+          "capacity": 8184,
+          "timeWindowStart": 1200,
+          "timeWindowEnd": 1680,
+          "desLatitude": 13.86775,
+          "desLongitude": 100.8419,
+          "serviceTime": 98,
+          "type": 0,
+          "priority": 0,
+          "id": 0
+        }
+      ],
+      "stopCount": 1
+    },
+    {
+      "totalDistance": 0.0,
+      "totalDuration": 70.0,
+      "name": "WASTE-Wed-truck-25",
+      "capacity": 5850,
+      "workTimeStart": 1200,
+      "workTimeEnd": 1680,
+      "id": 25,
+      "stops": [
+        {
+          "name": "67-9021",
+          "arrivalMin": 1200,
+          "distanceFromPrevious": 0.0,
+          "durationFromPrevious": 0,
+          "capacity": 5850,
+          "timeWindowStart": 1200,
+          "timeWindowEnd": 1680,
+          "desLatitude": 13.84515,
+          "desLongitude": 100.86035,
+          "serviceTime": 70,
+          "type": 0,
+          "priority": 0,
+          "id": 0
+        }
+      ],
+      "stopCount": 1
+    },
+    {
+      "totalDistance": 0.0,
+      "totalDuration": 160.0,
+      "name": "WASTE-Wed-truck-26",
+      "capacity": 13323,
+      "workTimeStart": 1200,
+      "workTimeEnd": 1680,
+      "id": 26,
+      "stops": [
+        {
+          "name": "67-9752",
+          "arrivalMin": 1200,
+          "distanceFromPrevious": 0.0,
+          "durationFromPrevious": 0,
+          "capacity": 13323,
+          "timeWindowStart": 1200,
+          "timeWindowEnd": 1680,
+          "desLatitude": 13.80585,
+          "desLongitude": 100.8521,
+          "serviceTime": 160,
+          "type": 0,
+          "priority": 0,
+          "id": 0
+        }
+      ],
+      "stopCount": 1
+    },
+    {
+      "totalDistance": 0.0,
+      "totalDuration": 69.0,
+      "name": "WASTE-Wed-truck-27",
+      "capacity": 5774,
+      "workTimeStart": 300,
+      "workTimeEnd": 480,
+      "id": 27,
+      "stops": [
+        {
+          "name": "65-5339",
+          "arrivalMin": 300,
+          "distanceFromPrevious": 0.0,
+          "durationFromPrevious": 0,
+          "capacity": 5774,
+          "timeWindowStart": 300,
+          "timeWindowEnd": 480,
+          "desLatitude": 13.8463,
+          "desLongitude": 100.8178,
+          "serviceTime": 69,
+          "type": 0,
+          "priority": 0,
+          "id": 0
+        }
+      ],
+      "stopCount": 1
+    },
+    {
+      "totalDistance": 0.0,
+      "totalDuration": 224.0,
+      "name": "WASTE-Thu-truck-0",
+      "capacity": 18668,
+      "workTimeStart": 1200,
+      "workTimeEnd": 1680,
+      "id": 0,
+      "stops": [
+        {
+          "name": "67-6592",
+          "arrivalMin": 1200,
+          "distanceFromPrevious": 0.0,
+          "durationFromPrevious": 0,
+          "capacity": 18668,
+          "timeWindowStart": 1200,
+          "timeWindowEnd": 1680,
+          "desLatitude": 13.8074,
+          "desLongitude": 100.8379,
+          "serviceTime": 224,
+          "type": 0,
+          "priority": 0,
+          "id": 0
+        }
+      ],
+      "stopCount": 1
+    },
+    {
+      "totalDistance": 0.0,
+      "totalDuration": 366.0,
+      "name": "WASTE-Thu-truck-1",
+      "capacity": 30505,
+      "workTimeStart": 180,
+      "workTimeEnd": 720,
+      "id": 1,
+      "stops": [
+        {
+          "name": "67-6592",
+          "arrivalMin": 180,
+          "distanceFromPrevious": 0.0,
+          "durationFromPrevious": 0,
+          "capacity": 30505,
+          "timeWindowStart": 180,
+          "timeWindowEnd": 720,
+          "desLatitude": 13.83255,
+          "desLongitude": 100.8509,
+          "serviceTime": 366,
+          "type": 0,
+          "priority": 0,
+          "id": 0
+        }
+      ],
+      "stopCount": 1
+    },
+    {
+      "totalDistance": 22568.9,
+      "totalDuration": 653.0,
+      "name": "WASTE-Thu-truck-2",
+      "capacity": 52290,
+      "workTimeStart": 60,
+      "workTimeEnd": 1680,
+      "id": 2,
+      "stops": [
+        {
+          "name": "67-6591",
+          "arrivalMin": 1200,
+          "distanceFromPrevious": 0.0,
+          "durationFromPrevious": 0,
+          "capacity": 17520,
+          "timeWindowStart": 1200,
+          "timeWindowEnd": 1680,
+          "desLatitude": 13.85335,
+          "desLongitude": 100.83,
+          "serviceTime": 210,
+          "type": 0,
+          "priority": 0,
+          "id": 0
+        },
+        {
+          "name": "67-9814",
+          "arrivalMin": 1418,
+          "distanceFromPrevious": 7226.3,
+          "durationFromPrevious": 8,
+          "capacity": 8330,
+          "timeWindowStart": 1200,
+          "timeWindowEnd": 1680,
+          "desLatitude": 13.85495,
+          "desLongitude": 100.8363,
+          "serviceTime": 100,
+          "type": 0,
+          "priority": 0,
+          "id": 1
+        },
+        {
+          "name": "67-8262",
+          "arrivalMin": 1525,
+          "distanceFromPrevious": 6508.4,
+          "durationFromPrevious": 7,
+          "capacity": 11051,
+          "timeWindowStart": 60,
+          "timeWindowEnd": 480,
+          "desLatitude": 13.8524,
+          "desLongitude": 100.83645,
+          "serviceTime": 133,
+          "type": 0,
+          "priority": 0,
+          "id": 2
+        },
+        {
+          "name": "67-6596",
+          "arrivalMin": 1668,
+          "distanceFromPrevious": 8834.2,
+          "durationFromPrevious": 10,
+          "capacity": 15389,
+          "timeWindowStart": 1200,
+          "timeWindowEnd": 1680,
+          "desLatitude": 13.8558,
+          "desLongitude": 100.83105,
+          "serviceTime": 185,
+          "type": 0,
+          "priority": 0,
+          "id": 3
+        }
+      ],
+      "stopCount": 4
+    },
+    {
+      "totalDistance": 0.0,
+      "totalDuration": 164.0,
+      "name": "WASTE-Thu-truck-3",
+      "capacity": 13706,
+      "workTimeStart": 1200,
+      "workTimeEnd": 1680,
+      "id": 3,
+      "stops": [
+        {
+          "name": "67-6597",
+          "arrivalMin": 1200,
+          "distanceFromPrevious": 0.0,
+          "durationFromPrevious": 0,
+          "capacity": 13706,
+          "timeWindowStart": 1200,
+          "timeWindowEnd": 1680,
+          "desLatitude": 13.8264,
+          "desLongitude": 100.8478,
+          "serviceTime": 164,
+          "type": 0,
+          "priority": 0,
+          "id": 0
+        }
+      ],
+      "stopCount": 1
+    },
+    {
+      "totalDistance": 22990.6,
+      "totalDuration": 553.0,
+      "name": "WASTE-Thu-truck-4",
+      "capacity": 43529,
+      "workTimeStart": 240,
+      "workTimeEnd": 720,
+      "id": 4,
+      "stops": [
+        {
+          "name": "67-9811",
+          "arrivalMin": 240,
+          "distanceFromPrevious": 0.0,
+          "durationFromPrevious": 0,
+          "capacity": 14307,
+          "timeWindowStart": 240,
+          "timeWindowEnd": 720,
+          "desLatitude": 13.81025,
+          "desLongitude": 100.85095,
+          "serviceTime": 172,
+          "type": 0,
+          "priority": 0,
+          "id": 0
+        },
+        {
+          "name": "67-9814",
+          "arrivalMin": 431,
+          "distanceFromPrevious": 12674.2,
+          "durationFromPrevious": 19,
+          "capacity": 14987,
+          "timeWindowStart": 240,
+          "timeWindowEnd": 720,
+          "desLatitude": 13.8056,
+          "desLongitude": 100.85465,
+          "serviceTime": 180,
+          "type": 0,
+          "priority": 0,
+          "id": 1
+        },
+        {
+          "name": "67-9815",
+          "arrivalMin": 622,
+          "distanceFromPrevious": 10316.4,
+          "durationFromPrevious": 11,
+          "capacity": 14235,
+          "timeWindowStart": 240,
+          "timeWindowEnd": 720,
+          "desLatitude": 13.80885,
+          "desLongitude": 100.85015,
+          "serviceTime": 171,
+          "type": 0,
+          "priority": 0,
+          "id": 2
+        }
+      ],
+      "stopCount": 3
+    },
+    {
+      "totalDistance": 0.0,
+      "totalDuration": 112.0,
+      "name": "WASTE-Thu-truck-5",
+      "capacity": 9348,
+      "workTimeStart": 1200,
+      "workTimeEnd": 1680,
+      "id": 5,
+      "stops": [
+        {
+          "name": "67-6593",
+          "arrivalMin": 1200,
+          "distanceFromPrevious": 0.0,
+          "durationFromPrevious": 0,
+          "capacity": 9348,
+          "timeWindowStart": 1200,
+          "timeWindowEnd": 1680,
+          "desLatitude": 13.8547,
+          "desLongitude": 100.84845,
+          "serviceTime": 112,
+          "type": 0,
+          "priority": 0,
+          "id": 0
+        }
+      ],
+      "stopCount": 1
+    },
+    {
+      "totalDistance": 298.1,
+      "totalDuration": 138.0,
+      "name": "WASTE-Thu-truck-6",
+      "capacity": 11568,
+      "workTimeStart": 240,
+      "workTimeEnd": 720,
+      "id": 6,
+      "stops": [
+        {
+          "name": "67-6595",
+          "arrivalMin": 240,
+          "distanceFromPrevious": 0.0,
+          "durationFromPrevious": 0,
+          "capacity": 7365,
+          "timeWindowStart": 240,
+          "timeWindowEnd": 720,
+          "desLatitude": 13.8243,
+          "desLongitude": 100.8706,
+          "serviceTime": 88,
+          "type": 0,
+          "priority": 0,
+          "id": 0
+        },
+        {
+          "name": "67-6595",
+          "arrivalMin": 328,
+          "distanceFromPrevious": 298.1,
+          "durationFromPrevious": 0,
+          "capacity": 4203,
+          "timeWindowStart": 240,
+          "timeWindowEnd": 720,
+          "desLatitude": 13.8231,
+          "desLongitude": 100.8707,
+          "serviceTime": 50,
+          "type": 0,
+          "priority": 0,
+          "id": 1
+        }
+      ],
+      "stopCount": 2
+    },
+    {
+      "totalDistance": 0.0,
+      "totalDuration": 219.0,
+      "name": "WASTE-Thu-truck-7",
+      "capacity": 18245,
+      "workTimeStart": 1200,
+      "workTimeEnd": 1680,
+      "id": 7,
+      "stops": [
+        {
+          "name": "67-6595",
+          "arrivalMin": 1200,
+          "distanceFromPrevious": 0.0,
+          "durationFromPrevious": 0,
+          "capacity": 18245,
+          "timeWindowStart": 1200,
+          "timeWindowEnd": 1680,
+          "desLatitude": 13.8879,
+          "desLongitude": 100.8587,
+          "serviceTime": 219,
+          "type": 0,
+          "priority": 0,
+          "id": 0
+        }
+      ],
+      "stopCount": 1
+    },
+    {
+      "totalDistance": 722.1,
+      "totalDuration": 390.0,
+      "name": "WASTE-Thu-truck-8",
+      "capacity": 32409,
+      "workTimeStart": 960,
+      "workTimeEnd": 1680,
+      "id": 8,
+      "stops": [
+        {
+          "name": "67-9820",
+          "arrivalMin": 1200,
+          "distanceFromPrevious": 0.0,
+          "durationFromPrevious": 0,
+          "capacity": 13723,
+          "timeWindowStart": 1200,
+          "timeWindowEnd": 1680,
+          "desLatitude": 13.85525,
+          "desLongitude": 100.8626,
+          "serviceTime": 165,
+          "type": 0,
+          "priority": 0,
+          "id": 0
+        },
+        {
+          "name": "67-9815",
+          "arrivalMin": 1365,
+          "distanceFromPrevious": 28.2,
+          "durationFromPrevious": 0,
+          "capacity": 6274,
+          "timeWindowStart": 1200,
+          "timeWindowEnd": 1680,
+          "desLatitude": 13.8546,
+          "desLongitude": 100.86585,
+          "serviceTime": 75,
+          "type": 0,
+          "priority": 0,
+          "id": 1
+        },
+        {
+          "name": "67-9819",
+          "arrivalMin": 1441,
+          "distanceFromPrevious": 693.9,
+          "durationFromPrevious": 1,
+          "capacity": 12412,
+          "timeWindowStart": 960,
+          "timeWindowEnd": 1200,
+          "desLatitude": 13.8585,
+          "desLongitude": 100.8687,
+          "serviceTime": 149,
+          "type": 0,
+          "priority": 0,
+          "id": 2
+        }
+      ],
+      "stopCount": 3
+    },
+    {
+      "totalDistance": 0.0,
+      "totalDuration": 61.0,
+      "name": "WASTE-Thu-truck-9",
+      "capacity": 5064,
+      "workTimeStart": 240,
+      "workTimeEnd": 720,
+      "id": 9,
+      "stops": [
+        {
+          "name": "67-6598",
+          "arrivalMin": 240,
+          "distanceFromPrevious": 0.0,
+          "durationFromPrevious": 0,
+          "capacity": 5064,
+          "timeWindowStart": 240,
+          "timeWindowEnd": 720,
+          "desLatitude": 13.8213,
+          "desLongitude": 100.84145,
+          "serviceTime": 61,
+          "type": 0,
+          "priority": 0,
+          "id": 0
+        }
+      ],
+      "stopCount": 1
+    },
+    {
+      "totalDistance": 1678.8,
+      "totalDuration": 404.0,
+      "name": "WASTE-Thu-truck-10",
+      "capacity": 33519,
+      "workTimeStart": 240,
+      "workTimeEnd": 1440,
+      "id": 10,
+      "stops": [
+        {
+          "name": "67-6598",
+          "arrivalMin": 488,
+          "distanceFromPrevious": 0.0,
+          "durationFromPrevious": 0,
+          "capacity": 13022,
+          "timeWindowStart": 488,
+          "timeWindowEnd": 1440,
+          "desLatitude": 13.84545,
+          "desLongitude": 100.8575,
+          "serviceTime": 156,
+          "type": 0,
+          "priority": 0,
+          "id": 0
+        },
+        {
+          "name": "65-5608",
+          "arrivalMin": 646,
+          "distanceFromPrevious": 1678.8,
+          "durationFromPrevious": 2,
+          "capacity": 20497,
+          "timeWindowStart": 240,
+          "timeWindowEnd": 720,
+          "desLatitude": 13.85025,
+          "desLongitude": 100.86015,
+          "serviceTime": 246,
+          "type": 0,
+          "priority": 0,
+          "id": 1
+        }
+      ],
+      "stopCount": 2
+    },
+    {
+      "totalDistance": 0.0,
+      "totalDuration": 209.0,
+      "name": "WASTE-Thu-truck-11",
+      "capacity": 17442,
+      "workTimeStart": 960,
+      "workTimeEnd": 1380,
+      "id": 11,
+      "stops": [
+        {
+          "name": "67-6598",
+          "arrivalMin": 960,
+          "distanceFromPrevious": 0.0,
+          "durationFromPrevious": 0,
+          "capacity": 17442,
+          "timeWindowStart": 960,
+          "timeWindowEnd": 1380,
+          "desLatitude": 13.8248,
+          "desLongitude": 100.8321,
+          "serviceTime": 209,
+          "type": 0,
+          "priority": 0,
+          "id": 0
+        }
+      ],
+      "stopCount": 1
+    },
+    {
+      "totalDistance": 0.0,
+      "totalDuration": 170.0,
+      "name": "WASTE-Thu-truck-12",
+      "capacity": 14180,
+      "workTimeStart": 1020,
+      "workTimeEnd": 1680,
+      "id": 12,
+      "stops": [
+        {
+          "name": "67-9812",
+          "arrivalMin": 1020,
+          "distanceFromPrevious": 0.0,
+          "durationFromPrevious": 0,
+          "capacity": 14180,
+          "timeWindowStart": 1020,
+          "timeWindowEnd": 1680,
+          "desLatitude": 13.80555,
+          "desLongitude": 100.84225,
+          "serviceTime": 170,
+          "type": 0,
+          "priority": 0,
+          "id": 0
+        }
+      ],
+      "stopCount": 1
+    },
+    {
+      "totalDistance": 0.0,
+      "totalDuration": 417.0,
+      "name": "WASTE-Thu-truck-13",
+      "capacity": 34717,
+      "workTimeStart": 240,
+      "workTimeEnd": 720,
+      "id": 13,
+      "stops": [
+        {
+          "name": "67-9813",
+          "arrivalMin": 240,
+          "distanceFromPrevious": 0.0,
+          "durationFromPrevious": 0,
+          "capacity": 34717,
+          "timeWindowStart": 240,
+          "timeWindowEnd": 720,
+          "desLatitude": 13.85445,
+          "desLongitude": 100.80735,
+          "serviceTime": 417,
+          "type": 0,
+          "priority": 0,
+          "id": 0
+        }
+      ],
+      "stopCount": 1
+    },
+    {
+      "totalDistance": 0.0,
+      "totalDuration": 24.0,
+      "name": "WASTE-Thu-truck-14",
+      "capacity": 1966,
+      "workTimeStart": 240,
+      "workTimeEnd": 720,
+      "id": 14,
+      "stops": [
+        {
+          "name": "67-9815",
+          "arrivalMin": 240,
+          "distanceFromPrevious": 0.0,
+          "durationFromPrevious": 0,
+          "capacity": 1966,
+          "timeWindowStart": 240,
+          "timeWindowEnd": 720,
+          "desLatitude": 13.8464,
+          "desLongitude": 100.8462,
+          "serviceTime": 24,
+          "type": 0,
+          "priority": 0,
+          "id": 0
+        }
+      ],
+      "stopCount": 1
+    },
+    {
+      "totalDistance": 0.0,
+      "totalDuration": 84.0,
+      "name": "WASTE-Thu-truck-15",
+      "capacity": 6961,
+      "workTimeStart": 1200,
+      "workTimeEnd": 1680,
+      "id": 15,
+      "stops": [
+        {
+          "name": "67-9816",
+          "arrivalMin": 1200,
+          "distanceFromPrevious": 0.0,
+          "durationFromPrevious": 0,
+          "capacity": 6961,
+          "timeWindowStart": 1200,
+          "timeWindowEnd": 1680,
+          "desLatitude": 13.80165,
+          "desLongitude": 100.80275,
+          "serviceTime": 84,
+          "type": 0,
+          "priority": 0,
+          "id": 0
+        }
+      ],
+      "stopCount": 1
+    },
+    {
+      "totalDistance": 0.0,
+      "totalDuration": 163.0,
+      "name": "WASTE-Thu-truck-16",
+      "capacity": 13591,
+      "workTimeStart": 240,
+      "workTimeEnd": 720,
+      "id": 16,
+      "stops": [
+        {
+          "name": "67-9816",
+          "arrivalMin": 240,
+          "distanceFromPrevious": 0.0,
+          "durationFromPrevious": 0,
+          "capacity": 13591,
+          "timeWindowStart": 240,
+          "timeWindowEnd": 720,
+          "desLatitude": 13.82945,
+          "desLongitude": 100.84935,
+          "serviceTime": 163,
+          "type": 0,
+          "priority": 0,
+          "id": 0
+        }
+      ],
+      "stopCount": 1
+    },
+    {
+      "totalDistance": 10447.0,
+      "totalDuration": 618.0,
+      "name": "WASTE-Thu-truck-17",
+      "capacity": 50193,
+      "workTimeStart": 240,
+      "workTimeEnd": 1680,
+      "id": 17,
+      "stops": [
+        {
+          "name": "67-9817",
+          "arrivalMin": 240,
+          "distanceFromPrevious": 0.0,
+          "durationFromPrevious": 0,
+          "capacity": 28998,
+          "timeWindowStart": 240,
+          "timeWindowEnd": 720,
+          "desLatitude": 13.812,
+          "desLongitude": 100.8314,
+          "serviceTime": 348,
+          "type": 0,
+          "priority": 0,
+          "id": 0
+        },
+        {
+          "name": "67-8263",
+          "arrivalMin": 1140,
+          "distanceFromPrevious": 10447,
+          "durationFromPrevious": 16,
+          "capacity": 21195,
+          "timeWindowStart": 1140,
+          "timeWindowEnd": 1680,
+          "desLatitude": 13.81115,
+          "desLongitude": 100.8267,
+          "serviceTime": 254,
+          "type": 0,
+          "priority": 0,
+          "id": 1
+        }
+      ],
+      "stopCount": 2
+    },
+    {
+      "totalDistance": 920.0,
+      "totalDuration": 469.0,
+      "name": "WASTE-Thu-truck-18",
+      "capacity": 38936,
+      "workTimeStart": 240,
+      "workTimeEnd": 1680,
+      "id": 18,
+      "stops": [
+        {
+          "name": "67-9818",
+          "arrivalMin": 240,
+          "distanceFromPrevious": 0.0,
+          "durationFromPrevious": 0,
+          "capacity": 28495,
+          "timeWindowStart": 240,
+          "timeWindowEnd": 720,
+          "desLatitude": 13.86125,
+          "desLongitude": 100.861,
+          "serviceTime": 342,
+          "type": 0,
+          "priority": 0,
+          "id": 0
+        },
+        {
+          "name": "65-5608",
+          "arrivalMin": 1200,
+          "distanceFromPrevious": 920,
+          "durationFromPrevious": 2,
+          "capacity": 10441,
+          "timeWindowStart": 1200,
+          "timeWindowEnd": 1680,
+          "desLatitude": 13.8595,
+          "desLongitude": 100.8543,
+          "serviceTime": 125,
+          "type": 0,
+          "priority": 0,
+          "id": 1
+        }
+      ],
+      "stopCount": 2
+    },
+    {
+      "totalDistance": 0.0,
+      "totalDuration": 91.0,
+      "name": "WASTE-Thu-truck-19",
+      "capacity": 7587,
+      "workTimeStart": 60,
+      "workTimeEnd": 360,
+      "id": 19,
+      "stops": [
+        {
+          "name": "67-8247",
+          "arrivalMin": 60,
+          "distanceFromPrevious": 0.0,
+          "durationFromPrevious": 0,
+          "capacity": 7587,
+          "timeWindowStart": 60,
+          "timeWindowEnd": 360,
+          "desLatitude": 13.7917,
+          "desLongitude": 100.8712,
+          "serviceTime": 91,
+          "type": 0,
+          "priority": 0,
+          "id": 0
+        }
+      ],
+      "stopCount": 1
+    },
+    {
+      "totalDistance": 0.0,
+      "totalDuration": 228.0,
+      "name": "WASTE-Thu-truck-20",
+      "capacity": 19037,
+      "workTimeStart": 1200,
+      "workTimeEnd": 1680,
+      "id": 20,
+      "stops": [
+        {
+          "name": "67-8248",
+          "arrivalMin": 1200,
+          "distanceFromPrevious": 0.0,
+          "durationFromPrevious": 0,
+          "capacity": 19037,
+          "timeWindowStart": 1200,
+          "timeWindowEnd": 1680,
+          "desLatitude": 13.81755,
+          "desLongitude": 100.83605,
+          "serviceTime": 228,
+          "type": 0,
+          "priority": 0,
+          "id": 0
+        }
+      ],
+      "stopCount": 1
+    },
+    {
+      "totalDistance": 0.0,
+      "totalDuration": 146.0,
+      "name": "WASTE-Thu-truck-21",
+      "capacity": 12184,
+      "workTimeStart": 150,
+      "workTimeEnd": 720,
+      "id": 21,
+      "stops": [
+        {
+          "name": "67-8249",
+          "arrivalMin": 150,
+          "distanceFromPrevious": 0.0,
+          "durationFromPrevious": 0,
+          "capacity": 12184,
+          "timeWindowStart": 150,
+          "timeWindowEnd": 720,
+          "desLatitude": 13.83015,
+          "desLongitude": 100.8657,
+          "serviceTime": 146,
+          "type": 0,
+          "priority": 0,
+          "id": 0
+        }
+      ],
+      "stopCount": 1
+    },
+    {
+      "totalDistance": 0.0,
+      "totalDuration": 163.0,
+      "name": "WASTE-Thu-truck-22",
+      "capacity": 13592,
+      "workTimeStart": 240,
+      "workTimeEnd": 720,
+      "id": 22,
+      "stops": [
+        {
+          "name": "67-8261",
+          "arrivalMin": 240,
+          "distanceFromPrevious": 0.0,
+          "durationFromPrevious": 0,
+          "capacity": 13592,
+          "timeWindowStart": 240,
+          "timeWindowEnd": 720,
+          "desLatitude": 13.85585,
+          "desLongitude": 100.84415,
+          "serviceTime": 163,
+          "type": 0,
+          "priority": 0,
+          "id": 0
+        }
+      ],
+      "stopCount": 1
+    },
+    {
+      "totalDistance": 0.0,
+      "totalDuration": 183.0,
+      "name": "WASTE-Thu-truck-23",
+      "capacity": 15252,
+      "workTimeStart": 240,
+      "workTimeEnd": 720,
+      "id": 23,
+      "stops": [
+        {
+          "name": "67-8263",
+          "arrivalMin": 240,
+          "distanceFromPrevious": 0.0,
+          "durationFromPrevious": 0,
+          "capacity": 15252,
+          "timeWindowStart": 240,
+          "timeWindowEnd": 720,
+          "desLatitude": 13.87855,
+          "desLongitude": 100.84235,
+          "serviceTime": 183,
+          "type": 0,
+          "priority": 0,
+          "id": 0
+        }
+      ],
+      "stopCount": 1
+    },
+    {
+      "totalDistance": 0.0,
+      "totalDuration": 98.0,
+      "name": "WASTE-Thu-truck-24",
+      "capacity": 8143,
+      "workTimeStart": 244,
+      "workTimeEnd": 720,
+      "id": 24,
+      "stops": [
+        {
+          "name": "67-8264",
+          "arrivalMin": 244,
+          "distanceFromPrevious": 0.0,
+          "durationFromPrevious": 0,
+          "capacity": 8143,
+          "timeWindowStart": 244,
+          "timeWindowEnd": 720,
+          "desLatitude": 13.7884,
+          "desLongitude": 100.8352,
+          "serviceTime": 98,
+          "type": 0,
+          "priority": 0,
+          "id": 0
+        }
+      ],
+      "stopCount": 1
+    },
+    {
+      "totalDistance": 0.0,
+      "totalDuration": 70.0,
+      "name": "WASTE-Thu-truck-25",
+      "capacity": 5860,
+      "workTimeStart": 1200,
+      "workTimeEnd": 1680,
+      "id": 25,
+      "stops": [
+        {
+          "name": "67-9021",
+          "arrivalMin": 1200,
+          "distanceFromPrevious": 0.0,
+          "durationFromPrevious": 0,
+          "capacity": 5860,
+          "timeWindowStart": 1200,
+          "timeWindowEnd": 1680,
+          "desLatitude": 13.84425,
+          "desLongitude": 100.8525,
+          "serviceTime": 70,
+          "type": 0,
+          "priority": 0,
+          "id": 0
+        }
+      ],
+      "stopCount": 1
+    },
+    {
+      "totalDistance": 0.0,
+      "totalDuration": 50.0,
+      "name": "WASTE-Thu-truck-26",
+      "capacity": 4180,
+      "workTimeStart": 1200,
+      "workTimeEnd": 1680,
+      "id": 26,
+      "stops": [
+        {
+          "name": "67-9752",
+          "arrivalMin": 1200,
+          "distanceFromPrevious": 0.0,
+          "durationFromPrevious": 0,
+          "capacity": 4180,
+          "timeWindowStart": 1200,
+          "timeWindowEnd": 1680,
+          "desLatitude": 13.8399,
+          "desLongitude": 100.8658,
+          "serviceTime": 50,
+          "type": 0,
+          "priority": 0,
+          "id": 0
+        }
+      ],
+      "stopCount": 1
+    },
+    {
+      "totalDistance": 0.0,
+      "totalDuration": 209.0,
+      "name": "WASTE-Fri-truck-0",
+      "capacity": 17411,
+      "workTimeStart": 1200,
+      "workTimeEnd": 1680,
+      "id": 0,
+      "stops": [
+        {
+          "name": "67-6592",
+          "arrivalMin": 1200,
+          "distanceFromPrevious": 0.0,
+          "durationFromPrevious": 0,
+          "capacity": 17411,
+          "timeWindowStart": 1200,
+          "timeWindowEnd": 1680,
+          "desLatitude": 13.80815,
+          "desLongitude": 100.82795,
+          "serviceTime": 209,
+          "type": 0,
+          "priority": 0,
+          "id": 0
+        }
+      ],
+      "stopCount": 1
+    },
+    {
+      "totalDistance": 10785.8,
+      "totalDuration": 680.0,
+      "name": "WASTE-Fri-truck-1",
+      "capacity": 55379,
+      "workTimeStart": 180,
+      "workTimeEnd": 1680,
+      "id": 1,
+      "stops": [
+        {
+          "name": "67-6592",
+          "arrivalMin": 180,
+          "distanceFromPrevious": 0.0,
+          "durationFromPrevious": 0,
+          "capacity": 28948,
+          "timeWindowStart": 180,
+          "timeWindowEnd": 720,
+          "desLatitude": 13.84545,
+          "desLongitude": 100.85755,
+          "serviceTime": 347,
+          "type": 0,
+          "priority": 0,
+          "id": 0
+        },
+        {
+          "name": "67-6597",
+          "arrivalMin": 1200,
+          "distanceFromPrevious": 3314.3,
+          "durationFromPrevious": 5,
+          "capacity": 7476,
+          "timeWindowStart": 1200,
+          "timeWindowEnd": 1680,
+          "desLatitude": 13.8416,
+          "desLongitude": 100.85565,
+          "serviceTime": 90,
+          "type": 0,
+          "priority": 0,
+          "id": 1
+        },
+        {
+          "name": "67-6598",
+          "arrivalMin": 1292,
+          "distanceFromPrevious": 1797.7,
+          "durationFromPrevious": 2,
+          "capacity": 13022,
+          "timeWindowStart": 488,
+          "timeWindowEnd": 1440,
+          "desLatitude": 13.84545,
+          "desLongitude": 100.8575,
+          "serviceTime": 156,
+          "type": 0,
+          "priority": 0,
+          "id": 2
+        },
+        {
+          "name": "67-9021",
+          "arrivalMin": 1457,
+          "distanceFromPrevious": 5673.8,
+          "durationFromPrevious": 9,
+          "capacity": 5933,
+          "timeWindowStart": 1200,
+          "timeWindowEnd": 1680,
+          "desLatitude": 13.8467,
+          "desLongitude": 100.85395,
+          "serviceTime": 71,
+          "type": 0,
+          "priority": 0,
+          "id": 3
+        }
+      ],
+      "stopCount": 4
+    },
+    {
+      "totalDistance": 17952.5,
+      "totalDuration": 536.0,
+      "name": "WASTE-Fri-truck-2",
+      "capacity": 43091,
+      "workTimeStart": 240,
+      "workTimeEnd": 1680,
+      "id": 2,
+      "stops": [
+        {
+          "name": "67-6591",
+          "arrivalMin": 1200,
+          "distanceFromPrevious": 0.0,
+          "durationFromPrevious": 0,
+          "capacity": 23778,
+          "timeWindowStart": 1200,
+          "timeWindowEnd": 1680,
+          "desLatitude": 13.8514,
+          "desLongitude": 100.83785,
+          "serviceTime": 285,
+          "type": 0,
+          "priority": 0,
+          "id": 0
+        },
+        {
+          "name": "67-9815",
+          "arrivalMin": 1493,
+          "distanceFromPrevious": 7938.1,
+          "durationFromPrevious": 8,
+          "capacity": 10983,
+          "timeWindowStart": 240,
+          "timeWindowEnd": 720,
+          "desLatitude": 13.84945,
+          "desLongitude": 100.83625,
+          "serviceTime": 132,
+          "type": 0,
+          "priority": 0,
+          "id": 1
+        },
+        {
+          "name": "67-9814",
+          "arrivalMin": 1636,
+          "distanceFromPrevious": 10014.4,
+          "durationFromPrevious": 11,
+          "capacity": 8330,
+          "timeWindowStart": 1200,
+          "timeWindowEnd": 1680,
+          "desLatitude": 13.85495,
+          "desLongitude": 100.8363,
+          "serviceTime": 100,
+          "type": 0,
+          "priority": 0,
+          "id": 2
+        }
+      ],
+      "stopCount": 3
+    },
+    {
+      "totalDistance": 0.0,
+      "totalDuration": 72.0,
+      "name": "WASTE-Fri-truck-3",
+      "capacity": 5995,
+      "workTimeStart": 240,
+      "workTimeEnd": 720,
+      "id": 3,
+      "stops": [
+        {
+          "name": "67-9811",
+          "arrivalMin": 240,
+          "distanceFromPrevious": 0.0,
+          "durationFromPrevious": 0,
+          "capacity": 5995,
+          "timeWindowStart": 240,
+          "timeWindowEnd": 720,
+          "desLatitude": 13.78255,
+          "desLongitude": 100.83465,
+          "serviceTime": 72,
+          "type": 0,
+          "priority": 0,
+          "id": 0
+        }
+      ],
+      "stopCount": 1
+    },
+    {
+      "totalDistance": 0.0,
+      "totalDuration": 123.0,
+      "name": "WASTE-Fri-truck-4",
+      "capacity": 10228,
+      "workTimeStart": 1200,
+      "workTimeEnd": 1680,
+      "id": 4,
+      "stops": [
+        {
+          "name": "67-6593",
+          "arrivalMin": 1200,
+          "distanceFromPrevious": 0.0,
+          "durationFromPrevious": 0,
+          "capacity": 10228,
+          "timeWindowStart": 1200,
+          "timeWindowEnd": 1680,
+          "desLatitude": 13.8545,
+          "desLongitude": 100.8461,
+          "serviceTime": 123,
+          "type": 0,
+          "priority": 0,
+          "id": 0
+        }
+      ],
+      "stopCount": 1
+    },
+    {
+      "totalDistance": 6961.7,
+      "totalDuration": 223.0,
+      "name": "WASTE-Fri-truck-5",
+      "capacity": 17763,
+      "workTimeStart": 240,
+      "workTimeEnd": 720,
+      "id": 5,
+      "stops": [
+        {
+          "name": "67-6595",
+          "arrivalMin": 240,
+          "distanceFromPrevious": 0.0,
+          "durationFromPrevious": 0,
+          "capacity": 5526,
+          "timeWindowStart": 240,
+          "timeWindowEnd": 720,
+          "desLatitude": 13.82455,
+          "desLongitude": 100.86835,
+          "serviceTime": 66,
+          "type": 0,
+          "priority": 0,
+          "id": 0
+        },
+        {
+          "name": "65-5608",
+          "arrivalMin": 316,
+          "distanceFromPrevious": 6961.7,
+          "durationFromPrevious": 10,
+          "capacity": 12237,
+          "timeWindowStart": 240,
+          "timeWindowEnd": 720,
+          "desLatitude": 13.8248,
+          "desLongitude": 100.8647,
+          "serviceTime": 147,
+          "type": 0,
+          "priority": 0,
+          "id": 1
+        }
+      ],
+      "stopCount": 2
+    },
+    {
+      "totalDistance": 6007.3,
+      "totalDuration": 489.0,
+      "name": "WASTE-Fri-truck-6",
+      "capacity": 40084,
+      "workTimeStart": 240,
+      "workTimeEnd": 1680,
+      "id": 6,
+      "stops": [
+        {
+          "name": "67-6595",
+          "arrivalMin": 1200,
+          "distanceFromPrevious": 0.0,
+          "durationFromPrevious": 0,
+          "capacity": 13691,
+          "timeWindowStart": 1200,
+          "timeWindowEnd": 1680,
+          "desLatitude": 13.885,
+          "desLongitude": 100.8633,
+          "serviceTime": 164,
+          "type": 0,
+          "priority": 0,
+          "id": 0
+        },
+        {
+          "name": "67-9818",
+          "arrivalMin": 1372,
+          "distanceFromPrevious": 6007.3,
+          "durationFromPrevious": 8,
+          "capacity": 26393,
+          "timeWindowStart": 240,
+          "timeWindowEnd": 720,
+          "desLatitude": 13.8943,
+          "desLongitude": 100.86265,
+          "serviceTime": 317,
+          "type": 0,
+          "priority": 0,
+          "id": 1
+        }
+      ],
+      "stopCount": 2
+    },
+    {
+      "totalDistance": 62.4,
+      "totalDuration": 414.0,
+      "name": "WASTE-Fri-truck-7",
+      "capacity": 34457,
+      "workTimeStart": 240,
+      "workTimeEnd": 1680,
+      "id": 7,
+      "stops": [
+        {
+          "name": "67-9820",
+          "arrivalMin": 1200,
+          "distanceFromPrevious": 0.0,
+          "durationFromPrevious": 0,
+          "capacity": 13723,
+          "timeWindowStart": 1200,
+          "timeWindowEnd": 1680,
+          "desLatitude": 13.85525,
+          "desLongitude": 100.8626,
+          "serviceTime": 165,
+          "type": 0,
+          "priority": 0,
+          "id": 0
+        },
+        {
+          "name": "67-6263",
+          "arrivalMin": 1365,
+          "distanceFromPrevious": 62.4,
+          "durationFromPrevious": 0,
+          "capacity": 20734,
+          "timeWindowStart": 240,
+          "timeWindowEnd": 720,
+          "desLatitude": 13.8551,
+          "desLongitude": 100.8625,
+          "serviceTime": 249,
+          "type": 0,
+          "priority": 0,
+          "id": 1
+        }
+      ],
+      "stopCount": 2
+    },
+    {
+      "totalDistance": 153.2,
+      "totalDuration": 468.0,
+      "name": "WASTE-Fri-truck-8",
+      "capacity": 38851,
+      "workTimeStart": 240,
+      "workTimeEnd": 1680,
+      "id": 8,
+      "stops": [
+        {
+          "name": "67-6596",
+          "arrivalMin": 1200,
+          "distanceFromPrevious": 0.0,
+          "durationFromPrevious": 0,
+          "capacity": 12059,
+          "timeWindowStart": 1200,
+          "timeWindowEnd": 1680,
+          "desLatitude": 13.8551,
+          "desLongitude": 100.81445,
+          "serviceTime": 145,
+          "type": 0,
+          "priority": 0,
+          "id": 0
+        },
+        {
+          "name": "67-9813",
+          "arrivalMin": 1346,
+          "distanceFromPrevious": 153.2,
+          "durationFromPrevious": 1,
+          "capacity": 26792,
+          "timeWindowStart": 240,
+          "timeWindowEnd": 720,
+          "desLatitude": 13.8545,
+          "desLongitude": 100.80735,
+          "serviceTime": 322,
+          "type": 0,
+          "priority": 0,
+          "id": 1
+        }
+      ],
+      "stopCount": 2
+    },
+    {
+      "totalDistance": 5155.2,
+      "totalDuration": 448.0,
+      "name": "WASTE-Fri-truck-9",
+      "capacity": 36970,
+      "workTimeStart": 240,
+      "workTimeEnd": 720,
+      "id": 9,
+      "stops": [
+        {
+          "name": "67-6598",
+          "arrivalMin": 240,
+          "distanceFromPrevious": 0.0,
+          "durationFromPrevious": 0,
+          "capacity": 5064,
+          "timeWindowStart": 240,
+          "timeWindowEnd": 720,
+          "desLatitude": 13.8213,
+          "desLongitude": 100.84145,
+          "serviceTime": 61,
+          "type": 0,
+          "priority": 0,
+          "id": 0
+        },
+        {
+          "name": "67-8264",
+          "arrivalMin": 305,
+          "distanceFromPrevious": 5155.2,
+          "durationFromPrevious": 4,
+          "capacity": 31906,
+          "timeWindowStart": 240,
+          "timeWindowEnd": 720,
+          "desLatitude": 13.8163,
+          "desLongitude": 100.8407,
+          "serviceTime": 383,
+          "type": 0,
+          "priority": 0,
+          "id": 1
+        }
+      ],
+      "stopCount": 2
+    },
+    {
+      "totalDistance": 0.0,
+      "totalDuration": 269.0,
+      "name": "WASTE-Fri-truck-10",
+      "capacity": 22393,
+      "workTimeStart": 960,
+      "workTimeEnd": 1380,
+      "id": 10,
+      "stops": [
+        {
+          "name": "67-6598",
+          "arrivalMin": 960,
+          "distanceFromPrevious": 0.0,
+          "durationFromPrevious": 0,
+          "capacity": 22393,
+          "timeWindowStart": 960,
+          "timeWindowEnd": 1380,
+          "desLatitude": 13.8219,
+          "desLongitude": 100.8302,
+          "serviceTime": 269,
+          "type": 0,
+          "priority": 0,
+          "id": 0
+        }
+      ],
+      "stopCount": 1
+    },
+    {
+      "totalDistance": 0.0,
+      "totalDuration": 153.0,
+      "name": "WASTE-Fri-truck-11",
+      "capacity": 12726,
+      "workTimeStart": 1020,
+      "workTimeEnd": 1680,
+      "id": 11,
+      "stops": [
+        {
+          "name": "67-9812",
+          "arrivalMin": 1020,
+          "distanceFromPrevious": 0.0,
+          "durationFromPrevious": 0,
+          "capacity": 12726,
+          "timeWindowStart": 1020,
+          "timeWindowEnd": 1680,
+          "desLatitude": 13.80185,
+          "desLongitude": 100.8395,
+          "serviceTime": 153,
+          "type": 0,
+          "priority": 0,
+          "id": 0
+        }
+      ],
+      "stopCount": 1
+    },
+    {
+      "totalDistance": 4100.1,
+      "totalDuration": 216.0,
+      "name": "WASTE-Fri-truck-12",
+      "capacity": 17505,
+      "workTimeStart": 150,
+      "workTimeEnd": 720,
+      "id": 12,
+      "stops": [
+        {
+          "name": "67-9814",
+          "arrivalMin": 240,
+          "distanceFromPrevious": 0.0,
+          "durationFromPrevious": 0,
+          "capacity": 5612,
+          "timeWindowStart": 240,
+          "timeWindowEnd": 720,
+          "desLatitude": 13.8336,
+          "desLongitude": 100.8699,
+          "serviceTime": 67,
+          "type": 0,
+          "priority": 0,
+          "id": 0
+        },
+        {
+          "name": "67-8249",
+          "arrivalMin": 313,
+          "distanceFromPrevious": 4100.1,
+          "durationFromPrevious": 6,
+          "capacity": 11893,
+          "timeWindowStart": 150,
+          "timeWindowEnd": 720,
+          "desLatitude": 13.8296,
+          "desLongitude": 100.86465,
+          "serviceTime": 143,
+          "type": 0,
+          "priority": 0,
+          "id": 1
+        }
+      ],
+      "stopCount": 2
+    },
+    {
+      "totalDistance": 0.0,
+      "totalDuration": 63.0,
+      "name": "WASTE-Fri-truck-13",
+      "capacity": 5242,
+      "workTimeStart": 1200,
+      "workTimeEnd": 1680,
+      "id": 13,
+      "stops": [
+        {
+          "name": "67-9815",
+          "arrivalMin": 1200,
+          "distanceFromPrevious": 0.0,
+          "durationFromPrevious": 0,
+          "capacity": 5242,
+          "timeWindowStart": 1200,
+          "timeWindowEnd": 1680,
+          "desLatitude": 13.8515,
+          "desLongitude": 100.8729,
+          "serviceTime": 63,
+          "type": 0,
+          "priority": 0,
+          "id": 0
+        }
+      ],
+      "stopCount": 1
+    },
+    {
+      "totalDistance": 0.0,
+      "totalDuration": 93.0,
+      "name": "WASTE-Fri-truck-14",
+      "capacity": 7711,
+      "workTimeStart": 1200,
+      "workTimeEnd": 1680,
+      "id": 14,
+      "stops": [
+        {
+          "name": "67-9816",
+          "arrivalMin": 1200,
+          "distanceFromPrevious": 0.0,
+          "durationFromPrevious": 0,
+          "capacity": 7711,
+          "timeWindowStart": 1200,
+          "timeWindowEnd": 1680,
+          "desLatitude": 13.80515,
+          "desLongitude": 100.80205,
+          "serviceTime": 93,
+          "type": 0,
+          "priority": 0,
+          "id": 0
+        }
+      ],
+      "stopCount": 1
+    },
+    {
+      "totalDistance": 0.0,
+      "totalDuration": 132.0,
+      "name": "WASTE-Fri-truck-15",
+      "capacity": 10989,
+      "workTimeStart": 240,
+      "workTimeEnd": 720,
+      "id": 15,
+      "stops": [
+        {
+          "name": "67-9816",
+          "arrivalMin": 240,
+          "distanceFromPrevious": 0.0,
+          "durationFromPrevious": 0,
+          "capacity": 10989,
+          "timeWindowStart": 240,
+          "timeWindowEnd": 720,
+          "desLatitude": 13.80525,
+          "desLongitude": 100.8435,
+          "serviceTime": 132,
+          "type": 0,
+          "priority": 0,
+          "id": 0
+        }
+      ],
+      "stopCount": 1
+    },
+    {
+      "totalDistance": 0.0,
+      "totalDuration": 278.0,
+      "name": "WASTE-Fri-truck-16",
+      "capacity": 23139,
+      "workTimeStart": 240,
+      "workTimeEnd": 720,
+      "id": 16,
+      "stops": [
+        {
+          "name": "67-9817",
+          "arrivalMin": 240,
+          "distanceFromPrevious": 0.0,
+          "durationFromPrevious": 0,
+          "capacity": 23139,
+          "timeWindowStart": 240,
+          "timeWindowEnd": 720,
+          "desLatitude": 13.86065,
+          "desLongitude": 100.8623,
+          "serviceTime": 278,
+          "type": 0,
+          "priority": 0,
+          "id": 0
+        }
+      ],
+      "stopCount": 1
+    },
+    {
+      "totalDistance": 3046.8,
+      "totalDuration": 421.0,
+      "name": "WASTE-Fri-truck-17",
+      "capacity": 34665,
+      "workTimeStart": 240,
+      "workTimeEnd": 1200,
+      "id": 17,
+      "stops": [
+        {
+          "name": "67-9819 (split 1/2)",
+          "arrivalMin": 960,
+          "distanceFromPrevious": 0.0,
+          "durationFromPrevious": 0,
+          "capacity": 14168,
+          "timeWindowStart": 960,
+          "timeWindowEnd": 1200,
+          "desLatitude": 13.8485,
+          "desLongitude": 100.861425,
+          "serviceTime": 170,
+          "type": 0,
+          "priority": 0,
+          "id": 0
+        },
+        {
+          "name": "65-5608",
+          "arrivalMin": 1135,
+          "distanceFromPrevious": 3046.8,
+          "durationFromPrevious": 5,
+          "capacity": 20497,
+          "timeWindowStart": 240,
+          "timeWindowEnd": 720,
+          "desLatitude": 13.85025,
+          "desLongitude": 100.86015,
+          "serviceTime": 246,
+          "type": 0,
+          "priority": 0,
+          "id": 1
+        }
+      ],
+      "stopCount": 2
+    },
+    {
+      "totalDistance": 0.0,
+      "totalDuration": 170.0,
+      "name": "WASTE-Fri-truck-18",
+      "capacity": 14168,
+      "workTimeStart": 960,
+      "workTimeEnd": 1200,
+      "id": 18,
+      "stops": [
+        {
+          "name": "67-9819 (split 2/2)",
+          "arrivalMin": 960,
+          "distanceFromPrevious": 0.0,
+          "durationFromPrevious": 0,
+          "capacity": 14168,
+          "timeWindowStart": 960,
+          "timeWindowEnd": 1200,
+          "desLatitude": 13.8625,
+          "desLongitude": 100.873275,
+          "serviceTime": 170,
+          "type": 0,
+          "priority": 0,
+          "id": 0
+        }
+      ],
+      "stopCount": 1
+    },
+    {
+      "totalDistance": 0.0,
+      "totalDuration": 98.0,
+      "name": "WASTE-Fri-truck-19",
+      "capacity": 8205,
+      "workTimeStart": 60,
+      "workTimeEnd": 360,
+      "id": 19,
+      "stops": [
+        {
+          "name": "67-8247",
+          "arrivalMin": 60,
+          "distanceFromPrevious": 0.0,
+          "durationFromPrevious": 0,
+          "capacity": 8205,
+          "timeWindowStart": 60,
+          "timeWindowEnd": 360,
+          "desLatitude": 13.7914,
+          "desLongitude": 100.8712,
+          "serviceTime": 98,
+          "type": 0,
+          "priority": 0,
+          "id": 0
+        }
+      ],
+      "stopCount": 1
+    },
+    {
+      "totalDistance": 0.0,
+      "totalDuration": 117.0,
+      "name": "WASTE-Fri-truck-20",
+      "capacity": 9729,
+      "workTimeStart": 1200,
+      "workTimeEnd": 1680,
+      "id": 20,
+      "stops": [
+        {
+          "name": "67-8248",
+          "arrivalMin": 1200,
+          "distanceFromPrevious": 0.0,
+          "durationFromPrevious": 0,
+          "capacity": 9729,
+          "timeWindowStart": 1200,
+          "timeWindowEnd": 1680,
+          "desLatitude": 13.84655,
+          "desLongitude": 100.8898,
+          "serviceTime": 117,
+          "type": 0,
+          "priority": 0,
+          "id": 0
+        }
+      ],
+      "stopCount": 1
+    },
+    {
+      "totalDistance": 2705.4,
+      "totalDuration": 470.0,
+      "name": "WASTE-Fri-truck-21",
+      "capacity": 38811,
+      "workTimeStart": 240,
+      "workTimeEnd": 1680,
+      "id": 21,
+      "stops": [
+        {
+          "name": "67-8261",
+          "arrivalMin": 240,
+          "distanceFromPrevious": 0.0,
+          "durationFromPrevious": 0,
+          "capacity": 17848,
+          "timeWindowStart": 240,
+          "timeWindowEnd": 720,
+          "desLatitude": 13.83575,
+          "desLongitude": 100.85135,
+          "serviceTime": 214,
+          "type": 0,
+          "priority": 0,
+          "id": 0
+        },
+        {
+          "name": "67-8263",
+          "arrivalMin": 1200,
+          "distanceFromPrevious": 2705.4,
+          "durationFromPrevious": 4,
+          "capacity": 20963,
+          "timeWindowStart": 1200,
+          "timeWindowEnd": 1680,
+          "desLatitude": 13.83115,
+          "desLongitude": 100.85015,
+          "serviceTime": 252,
+          "type": 0,
+          "priority": 0,
+          "id": 1
+        }
+      ],
+      "stopCount": 2
+    },
+    {
+      "totalDistance": 0.0,
+      "totalDuration": 267.0,
+      "name": "WASTE-Fri-truck-22",
+      "capacity": 22249,
+      "workTimeStart": 240,
+      "workTimeEnd": 720,
+      "id": 22,
+      "stops": [
+        {
+          "name": "67-8261",
+          "arrivalMin": 240,
+          "distanceFromPrevious": 0.0,
+          "durationFromPrevious": 0,
+          "capacity": 22249,
+          "timeWindowStart": 240,
+          "timeWindowEnd": 720,
+          "desLatitude": 13.85185,
+          "desLongitude": 100.84955,
+          "serviceTime": 267,
+          "type": 0,
+          "priority": 0,
+          "id": 0
+        }
+      ],
+      "stopCount": 1
+    },
+    {
+      "totalDistance": 0.0,
+      "totalDuration": 130.0,
+      "name": "WASTE-Fri-truck-23",
+      "capacity": 10856,
+      "workTimeStart": 60,
+      "workTimeEnd": 480,
+      "id": 23,
+      "stops": [
+        {
+          "name": "67-8262",
+          "arrivalMin": 60,
+          "distanceFromPrevious": 0.0,
+          "durationFromPrevious": 0,
+          "capacity": 10856,
+          "timeWindowStart": 60,
+          "timeWindowEnd": 480,
+          "desLatitude": 13.8541,
+          "desLongitude": 100.84165,
+          "serviceTime": 130,
+          "type": 0,
+          "priority": 0,
+          "id": 0
+        }
+      ],
+      "stopCount": 1
+    },
+    {
+      "totalDistance": 0.0,
+      "totalDuration": 345.0,
+      "name": "WASTE-Fri-truck-24",
+      "capacity": 28787,
+      "workTimeStart": 240,
+      "workTimeEnd": 720,
+      "id": 24,
+      "stops": [
+        {
+          "name": "67-8263",
+          "arrivalMin": 240,
+          "distanceFromPrevious": 0.0,
+          "durationFromPrevious": 0,
+          "capacity": 28787,
+          "timeWindowStart": 240,
+          "timeWindowEnd": 720,
+          "desLatitude": 13.8789,
+          "desLongitude": 100.835,
+          "serviceTime": 345,
+          "type": 0,
+          "priority": 0,
+          "id": 0
+        }
+      ],
+      "stopCount": 1
+    },
+    {
+      "totalDistance": 0.0,
+      "totalDuration": 93.0,
+      "name": "WASTE-Fri-truck-25",
+      "capacity": 7718,
+      "workTimeStart": 1200,
+      "workTimeEnd": 1680,
+      "id": 25,
+      "stops": [
+        {
+          "name": "65-5608",
+          "arrivalMin": 1200,
+          "distanceFromPrevious": 0.0,
+          "durationFromPrevious": 0,
+          "capacity": 7718,
+          "timeWindowStart": 1200,
+          "timeWindowEnd": 1680,
+          "desLatitude": 13.85955,
+          "desLongitude": 100.8542,
+          "serviceTime": 93,
+          "type": 0,
+          "priority": 0,
+          "id": 0
+        }
+      ],
+      "stopCount": 1
+    },
+    {
+      "totalDistance": 0.0,
+      "totalDuration": 280.0,
+      "name": "WASTE-Fri-truck-26",
+      "capacity": 23332,
+      "workTimeStart": 1200,
+      "workTimeEnd": 1680,
+      "id": 26,
+      "stops": [
+        {
+          "name": "67-9752",
+          "arrivalMin": 1200,
+          "distanceFromPrevious": 0.0,
+          "durationFromPrevious": 0,
+          "capacity": 23332,
+          "timeWindowStart": 1200,
+          "timeWindowEnd": 1680,
+          "desLatitude": 13.81345,
+          "desLongitude": 100.85805,
+          "serviceTime": 280,
+          "type": 0,
+          "priority": 0,
+          "id": 0
+        }
+      ],
+      "stopCount": 1
+    },
+    {
+      "totalDistance": 12948.9,
+      "totalDuration": 864.0,
+      "name": "WASTE-Sat-truck-0",
+      "capacity": 70636,
+      "workTimeStart": 240,
+      "workTimeEnd": 1680,
+      "id": 0,
+      "stops": [
+        {
+          "name": "67-6592",
+          "arrivalMin": 1200,
+          "distanceFromPrevious": 0.0,
+          "durationFromPrevious": 0,
+          "capacity": 18387,
+          "timeWindowStart": 1200,
+          "timeWindowEnd": 1680,
+          "desLatitude": 13.8073,
+          "desLongitude": 100.8381,
+          "serviceTime": 221,
+          "type": 0,
+          "priority": 0,
+          "id": 0
+        },
+        {
+          "name": "67-9816",
+          "arrivalMin": 1422,
+          "distanceFromPrevious": 606.2,
+          "durationFromPrevious": 1,
+          "capacity": 10026,
+          "timeWindowStart": 1200,
+          "timeWindowEnd": 1680,
+          "desLatitude": 13.80705,
+          "desLongitude": 100.83755,
+          "serviceTime": 120,
+          "type": 0,
+          "priority": 0,
+          "id": 1
+        },
+        {
+          "name": "678264",
+          "arrivalMin": 1550,
+          "distanceFromPrevious": 7050,
+          "durationFromPrevious": 8,
+          "capacity": 17709,
+          "timeWindowStart": 240,
+          "timeWindowEnd": 720,
+          "desLatitude": 13.8135,
+          "desLongitude": 100.8411,
+          "serviceTime": 213,
+          "type": 0,
+          "priority": 0,
+          "id": 2
+        },
+        {
+          "name": "67-9812",
+          "arrivalMin": 1770,
+          "distanceFromPrevious": 5292.7,
+          "durationFromPrevious": 7,
+          "capacity": 24514,
+          "timeWindowStart": 1020,
+          "timeWindowEnd": 1680,
+          "desLatitude": 13.80705,
+          "desLongitude": 100.8377,
+          "serviceTime": 294,
+          "type": 0,
+          "priority": 0,
+          "id": 3
+        }
+      ],
+      "stopCount": 4
+    },
+    {
+      "totalDistance": 8445.2,
+      "totalDuration": 699.0,
+      "name": "WASTE-Sat-truck-1",
+      "capacity": 57204,
+      "workTimeStart": 180,
+      "workTimeEnd": 1680,
+      "id": 1,
+      "stops": [
+        {
+          "name": "67-6592",
+          "arrivalMin": 180,
+          "distanceFromPrevious": 0.0,
+          "durationFromPrevious": 0,
+          "capacity": 27297,
+          "timeWindowStart": 180,
+          "timeWindowEnd": 720,
+          "desLatitude": 13.8454,
+          "desLongitude": 100.85755,
+          "serviceTime": 328,
+          "type": 0,
+          "priority": 0,
+          "id": 0
+        },
+        {
+          "name": "67-9021",
+          "arrivalMin": 1200,
+          "distanceFromPrevious": 445.8,
+          "durationFromPrevious": 1,
+          "capacity": 5850,
+          "timeWindowStart": 1200,
+          "timeWindowEnd": 1680,
+          "desLatitude": 13.84515,
+          "desLongitude": 100.86035,
+          "serviceTime": 70,
+          "type": 0,
+          "priority": 0,
+          "id": 1
+        },
+        {
+          "name": "67-6597",
+          "arrivalMin": 1280,
+          "distanceFromPrevious": 6325.4,
+          "durationFromPrevious": 10,
+          "capacity": 11035,
+          "timeWindowStart": 1200,
+          "timeWindowEnd": 1680,
+          "desLatitude": 13.84545,
+          "desLongitude": 100.8576,
+          "serviceTime": 132,
+          "type": 0,
+          "priority": 0,
+          "id": 2
+        },
+        {
+          "name": "67-6598",
+          "arrivalMin": 1414,
+          "distanceFromPrevious": 1674,
+          "durationFromPrevious": 2,
+          "capacity": 13022,
+          "timeWindowStart": 488,
+          "timeWindowEnd": 1440,
+          "desLatitude": 13.84545,
+          "desLongitude": 100.8575,
+          "serviceTime": 156,
+          "type": 0,
+          "priority": 0,
+          "id": 3
+        }
+      ],
+      "stopCount": 4
+    },
+    {
+      "totalDistance": 6308.8,
+      "totalDuration": 295.0,
+      "name": "WASTE-Sat-truck-2",
+      "capacity": 24045,
+      "workTimeStart": 720,
+      "workTimeEnd": 1680,
+      "id": 2,
+      "stops": [
+        {
+          "name": "67-6591",
+          "arrivalMin": 720,
+          "distanceFromPrevious": 0.0,
+          "durationFromPrevious": 0,
+          "capacity": 15715,
+          "timeWindowStart": 720,
+          "timeWindowEnd": 1200,
+          "desLatitude": 13.85485,
+          "desLongitude": 100.83505,
+          "serviceTime": 189,
+          "type": 0,
+          "priority": 0,
+          "id": 0
+        },
+        {
+          "name": "67-9814",
+          "arrivalMin": 1200,
+          "distanceFromPrevious": 6308.8,
+          "durationFromPrevious": 6,
+          "capacity": 8330,
+          "timeWindowStart": 1200,
+          "timeWindowEnd": 1680,
+          "desLatitude": 13.85495,
+          "desLongitude": 100.8363,
+          "serviceTime": 100,
+          "type": 0,
+          "priority": 0,
+          "id": 1
+        }
+      ],
+      "stopCount": 2
+    },
+    {
+      "totalDistance": 0.0,
+      "totalDuration": 116.0,
+      "name": "WASTE-Sat-truck-3",
+      "capacity": 9675,
+      "workTimeStart": 240,
+      "workTimeEnd": 720,
+      "id": 3,
+      "stops": [
+        {
+          "name": "67-9811",
+          "arrivalMin": 240,
+          "distanceFromPrevious": 0.0,
+          "durationFromPrevious": 0,
+          "capacity": 9675,
+          "timeWindowStart": 240,
+          "timeWindowEnd": 720,
+          "desLatitude": 13.7897,
+          "desLongitude": 100.84175,
+          "serviceTime": 116,
+          "type": 0,
+          "priority": 0,
+          "id": 0
+        }
+      ],
+      "stopCount": 1
+    },
+    {
+      "totalDistance": 0.0,
+      "totalDuration": 103.0,
+      "name": "WASTE-Sat-truck-4",
+      "capacity": 8559,
+      "workTimeStart": 1200,
+      "workTimeEnd": 1680,
+      "id": 4,
+      "stops": [
+        {
+          "name": "67-6593",
+          "arrivalMin": 1200,
+          "distanceFromPrevious": 0.0,
+          "durationFromPrevious": 0,
+          "capacity": 8559,
+          "timeWindowStart": 1200,
+          "timeWindowEnd": 1680,
+          "desLatitude": 13.85515,
+          "desLongitude": 100.85375,
+          "serviceTime": 103,
+          "type": 0,
+          "priority": 0,
+          "id": 0
+        }
+      ],
+      "stopCount": 1
+    },
+    {
+      "totalDistance": 7092.3,
+      "totalDuration": 492.0,
+      "name": "WASTE-Sat-truck-5",
+      "capacity": 40192,
+      "workTimeStart": 240,
+      "workTimeEnd": 960,
+      "id": 5,
+      "stops": [
+        {
+          "name": "67-6595",
+          "arrivalMin": 240,
+          "distanceFromPrevious": 0.0,
+          "durationFromPrevious": 0,
+          "capacity": 2814,
+          "timeWindowStart": 240,
+          "timeWindowEnd": 720,
+          "desLatitude": 13.8233,
+          "desLongitude": 100.86935,
+          "serviceTime": 34,
+          "type": 0,
+          "priority": 0,
+          "id": 0
+        },
+        {
+          "name": "67-6595",
+          "arrivalMin": 275,
+          "distanceFromPrevious": 602.4,
+          "durationFromPrevious": 1,
+          "capacity": 4272,
+          "timeWindowStart": 240,
+          "timeWindowEnd": 720,
+          "desLatitude": 13.8243,
+          "desLongitude": 100.8706,
+          "serviceTime": 51,
+          "type": 0,
+          "priority": 0,
+          "id": 1
+        },
+        {
+          "name": "67-9815",
+          "arrivalMin": 480,
+          "distanceFromPrevious": 6489.9,
+          "durationFromPrevious": 9,
+          "capacity": 33106,
+          "timeWindowStart": 480,
+          "timeWindowEnd": 960,
+          "desLatitude": 13.82685,
+          "desLongitude": 100.8703,
+          "serviceTime": 397,
+          "type": 0,
+          "priority": 0,
+          "id": 2
+        }
+      ],
+      "stopCount": 3
+    },
+    {
+      "totalDistance": 0.0,
+      "totalDuration": 108.0,
+      "name": "WASTE-Sat-truck-6",
+      "capacity": 9019,
+      "workTimeStart": 1200,
+      "workTimeEnd": 1680,
+      "id": 6,
+      "stops": [
+        {
+          "name": "67-6595",
+          "arrivalMin": 1200,
+          "distanceFromPrevious": 0.0,
+          "durationFromPrevious": 0,
+          "capacity": 9019,
+          "timeWindowStart": 1200,
+          "timeWindowEnd": 1680,
+          "desLatitude": 13.87755,
+          "desLongitude": 100.86285,
+          "serviceTime": 108,
+          "type": 0,
+          "priority": 0,
+          "id": 0
+        }
+      ],
+      "stopCount": 1
+    },
+    {
+      "totalDistance": 594.6,
+      "totalDuration": 278.0,
+      "name": "WASTE-Sat-truck-7",
+      "capacity": 23064,
+      "workTimeStart": 960,
+      "workTimeEnd": 1680,
+      "id": 7,
+      "stops": [
+        {
+          "name": "67-9820",
+          "arrivalMin": 1200,
+          "distanceFromPrevious": 0.0,
+          "durationFromPrevious": 0,
+          "capacity": 13723,
+          "timeWindowStart": 1200,
+          "timeWindowEnd": 1680,
+          "desLatitude": 13.85525,
+          "desLongitude": 100.8626,
+          "serviceTime": 165,
+          "type": 0,
+          "priority": 0,
+          "id": 0
+        },
+        {
+          "name": "67-9819",
+          "arrivalMin": 1366,
+          "distanceFromPrevious": 594.6,
+          "durationFromPrevious": 1,
+          "capacity": 9341,
+          "timeWindowStart": 960,
+          "timeWindowEnd": 1200,
+          "desLatitude": 13.86,
+          "desLongitude": 100.8645,
+          "serviceTime": 112,
+          "type": 0,
+          "priority": 0,
+          "id": 1
+        }
+      ],
+      "stopCount": 2
+    },
+    {
+      "totalDistance": 0.0,
+      "totalDuration": 82.0,
+      "name": "WASTE-Sat-truck-8",
+      "capacity": 6813,
+      "workTimeStart": 1200,
+      "workTimeEnd": 1680,
+      "id": 8,
+      "stops": [
+        {
+          "name": "67-6596",
+          "arrivalMin": 1200,
+          "distanceFromPrevious": 0.0,
+          "durationFromPrevious": 0,
+          "capacity": 6813,
+          "timeWindowStart": 1200,
+          "timeWindowEnd": 1680,
+          "desLatitude": 13.8554,
+          "desLongitude": 100.81835,
+          "serviceTime": 82,
+          "type": 0,
+          "priority": 0,
+          "id": 0
+        }
+      ],
+      "stopCount": 1
+    },
+    {
+      "totalDistance": 0.0,
+      "totalDuration": 61.0,
+      "name": "WASTE-Sat-truck-9",
+      "capacity": 5064,
+      "workTimeStart": 240,
+      "workTimeEnd": 720,
+      "id": 9,
+      "stops": [
+        {
+          "name": "67-6598",
+          "arrivalMin": 240,
+          "distanceFromPrevious": 0.0,
+          "durationFromPrevious": 0,
+          "capacity": 5064,
+          "timeWindowStart": 240,
+          "timeWindowEnd": 720,
+          "desLatitude": 13.8213,
+          "desLongitude": 100.84145,
+          "serviceTime": 61,
+          "type": 0,
+          "priority": 0,
+          "id": 0
+        }
+      ],
+      "stopCount": 1
+    },
+    {
+      "totalDistance": 0.0,
+      "totalDuration": 389.0,
+      "name": "WASTE-Sat-truck-10",
+      "capacity": 32396,
+      "workTimeStart": 1020,
+      "workTimeEnd": 1680,
+      "id": 10,
+      "stops": [
+        {
+          "name": "67-9812",
+          "arrivalMin": 1020,
+          "distanceFromPrevious": 0.0,
+          "durationFromPrevious": 0,
+          "capacity": 32396,
+          "timeWindowStart": 1020,
+          "timeWindowEnd": 1680,
+          "desLatitude": 13.8014,
+          "desLongitude": 100.8389,
+          "serviceTime": 389,
+          "type": 0,
+          "priority": 0,
+          "id": 0
+        }
+      ],
+      "stopCount": 1
+    },
+    {
+      "totalDistance": 0.0,
+      "totalDuration": 419.0,
+      "name": "WASTE-Sat-truck-11",
+      "capacity": 34896,
+      "workTimeStart": 240,
+      "workTimeEnd": 720,
+      "id": 11,
+      "stops": [
+        {
+          "name": "67-9813",
+          "arrivalMin": 240,
+          "distanceFromPrevious": 0.0,
+          "durationFromPrevious": 0,
+          "capacity": 34896,
+          "timeWindowStart": 240,
+          "timeWindowEnd": 720,
+          "desLatitude": 13.85455,
+          "desLongitude": 100.8074,
+          "serviceTime": 419,
+          "type": 0,
+          "priority": 0,
+          "id": 0
+        }
+      ],
+      "stopCount": 1
+    },
+    {
+      "totalDistance": 0.0,
+      "totalDuration": 269.0,
+      "name": "WASTE-Sat-truck-12",
+      "capacity": 22451,
+      "workTimeStart": 240,
+      "workTimeEnd": 720,
+      "id": 12,
+      "stops": [
+        {
+          "name": "67-9814",
+          "arrivalMin": 240,
+          "distanceFromPrevious": 0.0,
+          "durationFromPrevious": 0,
+          "capacity": 22451,
+          "timeWindowStart": 240,
+          "timeWindowEnd": 720,
+          "desLatitude": 13.8316,
+          "desLongitude": 100.8558,
+          "serviceTime": 269,
+          "type": 0,
+          "priority": 0,
+          "id": 0
+        }
+      ],
+      "stopCount": 1
+    },
+    {
+      "totalDistance": 6366.4,
+      "totalDuration": 353.0,
+      "name": "WASTE-Sat-truck-13",
+      "capacity": 28678,
+      "workTimeStart": 1200,
+      "workTimeEnd": 1680,
+      "id": 13,
+      "stops": [
+        {
+          "name": "67-9815",
+          "arrivalMin": 1200,
+          "distanceFromPrevious": 0.0,
+          "durationFromPrevious": 0,
+          "capacity": 20289,
+          "timeWindowStart": 1200,
+          "timeWindowEnd": 1680,
+          "desLatitude": 13.84285,
+          "desLongitude": 100.888,
+          "serviceTime": 243,
+          "type": 0,
+          "priority": 0,
+          "id": 0
+        },
+        {
+          "name": "67-8248",
+          "arrivalMin": 1452,
+          "distanceFromPrevious": 6366.4,
+          "durationFromPrevious": 9,
+          "capacity": 8389,
+          "timeWindowStart": 1200,
+          "timeWindowEnd": 1680,
+          "desLatitude": 13.8452,
+          "desLongitude": 100.88545,
+          "serviceTime": 101,
+          "type": 0,
+          "priority": 0,
+          "id": 1
+        }
+      ],
+      "stopCount": 2
+    },
+    {
+      "totalDistance": 0.0,
+      "totalDuration": 191.0,
+      "name": "WASTE-Sat-truck-14",
+      "capacity": 15938,
+      "workTimeStart": 240,
+      "workTimeEnd": 720,
+      "id": 14,
+      "stops": [
+        {
+          "name": "67-9816",
+          "arrivalMin": 240,
+          "distanceFromPrevious": 0.0,
+          "durationFromPrevious": 0,
+          "capacity": 15938,
+          "timeWindowStart": 240,
+          "timeWindowEnd": 720,
+          "desLatitude": 13.8233,
+          "desLongitude": 100.8571,
+          "serviceTime": 191,
+          "type": 0,
+          "priority": 0,
+          "id": 0
+        }
+      ],
+      "stopCount": 1
+    },
+    {
+      "totalDistance": 0.0,
+      "totalDuration": 309.0,
+      "name": "WASTE-Sat-truck-15",
+      "capacity": 25778,
+      "workTimeStart": 240,
+      "workTimeEnd": 720,
+      "id": 15,
+      "stops": [
+        {
+          "name": "67-9817",
+          "arrivalMin": 240,
+          "distanceFromPrevious": 0.0,
+          "durationFromPrevious": 0,
+          "capacity": 25778,
+          "timeWindowStart": 240,
+          "timeWindowEnd": 720,
+          "desLatitude": 13.85435,
+          "desLongitude": 100.84975,
+          "serviceTime": 309,
+          "type": 0,
+          "priority": 0,
+          "id": 0
+        }
+      ],
+      "stopCount": 1
+    },
+    {
+      "totalDistance": 0.0,
+      "totalDuration": 252.0,
+      "name": "WASTE-Sat-truck-16",
+      "capacity": 21004,
+      "workTimeStart": 240,
+      "workTimeEnd": 720,
+      "id": 16,
+      "stops": [
+        {
+          "name": "67-9818",
+          "arrivalMin": 240,
+          "distanceFromPrevious": 0.0,
+          "durationFromPrevious": 0,
+          "capacity": 21004,
+          "timeWindowStart": 240,
+          "timeWindowEnd": 720,
+          "desLatitude": 13.90305,
+          "desLongitude": 100.8709,
+          "serviceTime": 252,
+          "type": 0,
+          "priority": 0,
+          "id": 0
+        }
+      ],
+      "stopCount": 1
+    },
+    {
+      "totalDistance": 0.0,
+      "totalDuration": 155.0,
+      "name": "WASTE-Sat-truck-17",
+      "capacity": 12906,
+      "workTimeStart": 60,
+      "workTimeEnd": 360,
+      "id": 17,
+      "stops": [
+        {
+          "name": "67-8247 (split 1/2)",
+          "arrivalMin": 60,
+          "distanceFromPrevious": 0.0,
+          "durationFromPrevious": 0,
+          "capacity": 12906,
+          "timeWindowStart": 60,
+          "timeWindowEnd": 360,
+          "desLatitude": 13.8044,
+          "desLongitude": 100.862375,
+          "serviceTime": 155,
+          "type": 0,
+          "priority": 0,
+          "id": 0
+        }
+      ],
+      "stopCount": 1
+    },
+    {
+      "totalDistance": 0.0,
+      "totalDuration": 155.0,
+      "name": "WASTE-Sat-truck-18",
+      "capacity": 12906,
+      "workTimeStart": 60,
+      "workTimeEnd": 360,
+      "id": 18,
+      "stops": [
+        {
+          "name": "67-8247 (split 2/2)",
+          "arrivalMin": 60,
+          "distanceFromPrevious": 0.0,
+          "durationFromPrevious": 0,
+          "capacity": 12906,
+          "timeWindowStart": 60,
+          "timeWindowEnd": 360,
+          "desLatitude": 13.8064,
+          "desLongitude": 100.843125,
+          "serviceTime": 155,
+          "type": 0,
+          "priority": 0,
+          "id": 0
+        }
+      ],
+      "stopCount": 1
+    },
+    {
+      "totalDistance": 0.0,
+      "totalDuration": 253.0,
+      "name": "WASTE-Sat-truck-19",
+      "capacity": 21085,
+      "workTimeStart": 150,
+      "workTimeEnd": 720,
+      "id": 19,
+      "stops": [
+        {
+          "name": "67-8249",
+          "arrivalMin": 150,
+          "distanceFromPrevious": 0.0,
+          "durationFromPrevious": 0,
+          "capacity": 21085,
+          "timeWindowStart": 150,
+          "timeWindowEnd": 720,
+          "desLatitude": 13.81975,
+          "desLongitude": 100.8621,
+          "serviceTime": 253,
+          "type": 0,
+          "priority": 0,
+          "id": 0
+        }
+      ],
+      "stopCount": 1
+    },
+    {
+      "totalDistance": 0.0,
+      "totalDuration": 414.0,
+      "name": "WASTE-Sat-truck-20",
+      "capacity": 34514,
+      "workTimeStart": 240,
+      "workTimeEnd": 720,
+      "id": 20,
+      "stops": [
+        {
+          "name": "67-8261",
+          "arrivalMin": 240,
+          "distanceFromPrevious": 0.0,
+          "durationFromPrevious": 0,
+          "capacity": 34514,
+          "timeWindowStart": 240,
+          "timeWindowEnd": 720,
+          "desLatitude": 13.76775,
+          "desLongitude": 100.8508,
+          "serviceTime": 414,
+          "type": 0,
+          "priority": 0,
+          "id": 0
+        }
+      ],
+      "stopCount": 1
+    },
+    {
+      "totalDistance": 0.0,
+      "totalDuration": 191.0,
+      "name": "WASTE-Sat-truck-21",
+      "capacity": 15956,
+      "workTimeStart": 60,
+      "workTimeEnd": 480,
+      "id": 21,
+      "stops": [
+        {
+          "name": "67-8262",
+          "arrivalMin": 60,
+          "distanceFromPrevious": 0.0,
+          "durationFromPrevious": 0,
+          "capacity": 15956,
+          "timeWindowStart": 60,
+          "timeWindowEnd": 480,
+          "desLatitude": 13.8534,
+          "desLongitude": 100.84405,
+          "serviceTime": 191,
+          "type": 0,
+          "priority": 0,
+          "id": 0
+        }
+      ],
+      "stopCount": 1
+    },
+    {
+      "totalDistance": 0.0,
+      "totalDuration": 126.0,
+      "name": "WASTE-Sat-truck-22",
+      "capacity": 10508,
+      "workTimeStart": 1200,
+      "workTimeEnd": 1680,
+      "id": 22,
+      "stops": [
+        {
+          "name": "67-8263",
+          "arrivalMin": 1200,
+          "distanceFromPrevious": 0.0,
+          "durationFromPrevious": 0,
+          "capacity": 10508,
+          "timeWindowStart": 1200,
+          "timeWindowEnd": 1680,
+          "desLatitude": 13.79945,
+          "desLongitude": 100.82575,
+          "serviceTime": 126,
+          "type": 0,
+          "priority": 0,
+          "id": 0
+        }
+      ],
+      "stopCount": 1
+    },
+    {
+      "totalDistance": 0.0,
+      "totalDuration": 384.0,
+      "name": "WASTE-Sat-truck-23",
+      "capacity": 31963,
+      "workTimeStart": 240,
+      "workTimeEnd": 720,
+      "id": 23,
+      "stops": [
+        {
+          "name": "67-6263",
+          "arrivalMin": 240,
+          "distanceFromPrevious": 0.0,
+          "durationFromPrevious": 0,
+          "capacity": 31963,
+          "timeWindowStart": 240,
+          "timeWindowEnd": 720,
+          "desLatitude": 13.86855,
+          "desLongitude": 100.84715,
+          "serviceTime": 384,
+          "type": 0,
+          "priority": 0,
+          "id": 0
+        }
+      ],
+      "stopCount": 1
+    },
+    {
+      "totalDistance": 0.0,
+      "totalDuration": 193.0,
+      "name": "WASTE-Sat-truck-24",
+      "capacity": 16077,
+      "workTimeStart": 960,
+      "workTimeEnd": 1380,
+      "id": 24,
+      "stops": [
+        {
+          "name": null,
+          "arrivalMin": 960,
+          "distanceFromPrevious": 0.0,
+          "durationFromPrevious": 0,
+          "capacity": 16077,
+          "timeWindowStart": 960,
+          "timeWindowEnd": 1380,
+          "desLatitude": 13.86965,
+          "desLongitude": 100.8267,
+          "serviceTime": 193,
+          "type": 0,
+          "priority": 0,
+          "id": 0
+        }
+      ],
+      "stopCount": 1
+    },
+    {
+      "totalDistance": 0.0,
+      "totalDuration": 118.0,
+      "name": "WASTE-Sat-truck-25",
+      "capacity": 9794,
+      "workTimeStart": 1200,
+      "workTimeEnd": 1680,
+      "id": 25,
+      "stops": [
+        {
+          "name": "65-5608",
+          "arrivalMin": 1200,
+          "distanceFromPrevious": 0.0,
+          "durationFromPrevious": 0,
+          "capacity": 9794,
+          "timeWindowStart": 1200,
+          "timeWindowEnd": 1680,
+          "desLatitude": 13.85955,
+          "desLongitude": 100.8541,
+          "serviceTime": 118,
+          "type": 0,
+          "priority": 0,
+          "id": 0
+        }
+      ],
+      "stopCount": 1
+    },
+    {
+      "totalDistance": 0.0,
+      "totalDuration": 125.0,
+      "name": "WASTE-Sat-truck-26",
+      "capacity": 10391,
+      "workTimeStart": 240,
+      "workTimeEnd": 720,
+      "id": 26,
+      "stops": [
+        {
+          "name": "65-5608",
+          "arrivalMin": 240,
+          "distanceFromPrevious": 0.0,
+          "durationFromPrevious": 0,
+          "capacity": 10391,
+          "timeWindowStart": 240,
+          "timeWindowEnd": 720,
+          "desLatitude": 13.85185,
+          "desLongitude": 100.8711,
+          "serviceTime": 125,
+          "type": 0,
+          "priority": 0,
+          "id": 0
+        }
+      ],
+      "stopCount": 1
+    },
+    {
+      "totalDistance": 0.0,
+      "totalDuration": 160.0,
+      "name": "WASTE-Sat-truck-27",
+      "capacity": 13323,
+      "workTimeStart": 1200,
+      "workTimeEnd": 1680,
+      "id": 27,
+      "stops": [
+        {
+          "name": "67-9752",
+          "arrivalMin": 1200,
+          "distanceFromPrevious": 0.0,
+          "durationFromPrevious": 0,
+          "capacity": 13323,
+          "timeWindowStart": 1200,
+          "timeWindowEnd": 1680,
+          "desLatitude": 13.80585,
+          "desLongitude": 100.8521,
+          "serviceTime": 160,
+          "type": 0,
+          "priority": 0,
+          "id": 0
+        }
+      ],
+      "stopCount": 1
+    }
+  ],
+  "depotLat": 13.838298,
+  "depotLon": 100.849321
+}
