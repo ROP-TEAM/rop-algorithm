@@ -325,6 +325,8 @@ type SolveRequest struct {
 	MultiStartCount   int32                  `protobuf:"varint,12,opt,name=multi_start_count,json=multiStartCount,proto3" json:"multi_start_count,omitempty"` // 0 = use server default (2)
 	DisableCapacity   bool                   `protobuf:"varint,13,opt,name=disable_capacity,json=disableCapacity,proto3" json:"disable_capacity,omitempty"`
 	DisableTimeWindow bool                   `protobuf:"varint,14,opt,name=disable_time_window,json=disableTimeWindow,proto3" json:"disable_time_window,omitempty"`
+	WeightDistance    float64                `protobuf:"fixed64,15,opt,name=weight_distance,json=weightDistance,proto3" json:"weight_distance,omitempty"` // objective weight on distance; both weights 0 = server default (0.5/0.5)
+	WeightCost        float64                `protobuf:"fixed64,16,opt,name=weight_cost,json=weightCost,proto3" json:"weight_cost,omitempty"`             // objective weight on cost
 	unknownFields     protoimpl.UnknownFields
 	sizeCache         protoimpl.SizeCache
 }
@@ -455,6 +457,20 @@ func (x *SolveRequest) GetDisableTimeWindow() bool {
 		return x.DisableTimeWindow
 	}
 	return false
+}
+
+func (x *SolveRequest) GetWeightDistance() float64 {
+	if x != nil {
+		return x.WeightDistance
+	}
+	return 0
+}
+
+func (x *SolveRequest) GetWeightCost() float64 {
+	if x != nil {
+		return x.WeightCost
+	}
+	return 0
 }
 
 type DropReason struct {
@@ -776,7 +792,7 @@ const file_routing_proto_rawDesc = "" +
 	"fixed_cost\x18\n" +
 	" \x01(\x01R\tfixedCost\x12\x1e\n" +
 	"\vcost_per_km\x18\v \x01(\x01R\tcostPerKm\x12\x12\n" +
-	"\x04type\x18\f \x01(\tR\x04type\"\x8b\x04\n" +
+	"\x04type\x18\f \x01(\tR\x04type\"\xd5\x04\n" +
 	"\fSolveRequest\x12\"\n" +
 	"\x05depot\x18\x01 \x01(\v2\f.solver.NodeR\x05depot\x12\"\n" +
 	"\x05nodes\x18\x02 \x03(\v2\f.solver.NodeR\x05nodes\x12+\n" +
@@ -795,7 +811,10 @@ const file_routing_proto_rawDesc = "" +
 	"\x04seed\x18\v \x01(\rR\x04seed\x12*\n" +
 	"\x11multi_start_count\x18\f \x01(\x05R\x0fmultiStartCount\x12)\n" +
 	"\x10disable_capacity\x18\r \x01(\bR\x0fdisableCapacity\x12.\n" +
-	"\x13disable_time_window\x18\x0e \x01(\bR\x11disableTimeWindow\"Q\n" +
+	"\x13disable_time_window\x18\x0e \x01(\bR\x11disableTimeWindow\x12'\n" +
+	"\x0fweight_distance\x18\x0f \x01(\x01R\x0eweightDistance\x12\x1f\n" +
+	"\vweight_cost\x18\x10 \x01(\x01R\n" +
+	"weightCost\"Q\n" +
 	"\n" +
 	"DropReason\x12\x17\n" +
 	"\anode_id\x18\x01 \x01(\tR\x06nodeId\x12\x12\n" +

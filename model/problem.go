@@ -2,11 +2,11 @@ package model
 
 // Problem is the complete input to a solver.
 type Problem struct {
-	Depot       Node
-	Nodes       []Node // delivery/pickup only (no depot)
-	Vehicles    []Vehicle
-	Durations   [][]float64 // (1+N)×(1+N) travel-time matrix, minutes; row/col 0 = depot
-	Distances   [][]float64 // (1+N)×(1+N) distance matrix, meters
+	Depot             Node
+	Nodes             []Node // delivery/pickup only (no depot)
+	Vehicles          []Vehicle
+	Durations         [][]float64 // (1+N)×(1+N) travel-time matrix, minutes; row/col 0 = depot
+	Distances         [][]float64 // (1+N)×(1+N) distance matrix, meters
 	TimeLimitMS       int
 	EnableALNS        bool
 	EnableMultiTrip   bool
@@ -15,6 +15,8 @@ type Problem struct {
 	MultiStartCount   int    // 0 = server default (2)
 	DisableCapacity   bool
 	DisableTimeWindow bool
+	WeightDistance    float64 // objective weight on distance; both weights 0 = server default (0.5/0.5)
+	WeightCost        float64 // objective weight on cost
 }
 
 // TimeWindow is an HH:mm time interval.

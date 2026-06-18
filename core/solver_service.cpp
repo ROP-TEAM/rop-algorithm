@@ -301,10 +301,13 @@ grpc::Status SolverServiceImpl::Solve(grpc::ServerContext*,
                                       const solver::SolveRequest* req,
                                       solver::SolveResponse* resp)
 {
-    SolveConfig dynamic_cfg = ConfigManager::loadMode(
-        0.5f,  // w_dist
-        0.5f   // w_cost
-    );
+    float w_dist = static_cast<float>(req->weight_distance());
+    float w_cost = static_cast<float>(req->weight_cost());
+    if (w_dist == 0.0f && w_cost == 0.0f) {  // both unset → server default
+        w_dist = 0.5f;
+        w_cost = 0.5f;
+    }
+    SolveConfig dynamic_cfg = ConfigManager::loadMode(w_dist, w_cost);
 
     dynamic_cfg.enableALNS      = cfg_.enableALNS;
     dynamic_cfg.enableMultiTrip = cfg_.enableMultiTrip;

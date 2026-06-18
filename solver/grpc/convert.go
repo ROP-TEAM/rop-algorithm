@@ -15,20 +15,22 @@ func problemToProto(p model.Problem) *pb.SolveRequest {
 		vehicles[i] = vehicleToProto(v)
 	}
 	return &pb.SolveRequest{
-		Depot:            nodeToProto(p.Depot),
-		Nodes:            nodes,
-		Vehicles:         vehicles,
-		Durations:        flattenMatrix(p.Durations),
-		Distances:        flattenMatrix(p.Distances),
-		MatrixSize:       int32(len(p.Nodes) + 1),
-		TimeLimitMs:      int32(p.TimeLimitMS),
-		EnableAlns:       p.EnableALNS,
-		EnableMultiTrip:  p.EnableMultiTrip,
-		ReloadMin:        int32(p.ReloadMin),
-		Seed:             p.Seed,
+		Depot:             nodeToProto(p.Depot),
+		Nodes:             nodes,
+		Vehicles:          vehicles,
+		Durations:         flattenMatrix(p.Durations),
+		Distances:         flattenMatrix(p.Distances),
+		MatrixSize:        int32(len(p.Nodes) + 1),
+		TimeLimitMs:       int32(p.TimeLimitMS),
+		EnableAlns:        p.EnableALNS,
+		EnableMultiTrip:   p.EnableMultiTrip,
+		ReloadMin:         int32(p.ReloadMin),
+		Seed:              p.Seed,
 		MultiStartCount:   int32(p.MultiStartCount),
 		DisableCapacity:   p.DisableCapacity,
 		DisableTimeWindow: p.DisableTimeWindow,
+		WeightDistance:    p.WeightDistance,
+		WeightCost:        p.WeightCost,
 	}
 }
 
