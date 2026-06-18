@@ -1,0 +1,455 @@
+{
+  "note": "REALISTIC plan per district (haversine distance, capacity disabled); soft windows, 12h/vehicle/day hard cap, real crews, NN-sequenced.",
+  "districts": [
+    {
+      "truckShifts": 10,
+      "extraShifts": 3,
+      "offDayShifts": 0,
+      "deadheadKm": 29.7,
+      "twViolationMin": 6600,
+      "offShiftMin": 240,
+      "district": "Rat Burana"
+    },
+    {
+      "truckShifts": 14,
+      "extraShifts": 7,
+      "offDayShifts": 0,
+      "deadheadKm": 66.3,
+      "twViolationMin": 0,
+      "offShiftMin": 56,
+      "district": "Bang Kho Laem"
+    },
+    {
+      "truckShifts": 24,
+      "extraShifts": 3,
+      "offDayShifts": 15,
+      "deadheadKm": 52.4,
+      "twViolationMin": 0,
+      "offShiftMin": 1653,
+      "district": "Suan Luang"
+    },
+    {
+      "truckShifts": 28,
+      "extraShifts": 7,
+      "offDayShifts": 0,
+      "deadheadKm": 160.7,
+      "twViolationMin": 0,
+      "offShiftMin": 0,
+      "district": "Department of Environment, Bangkok Metropolitan Administration"
+    },
+    {
+      "truckShifts": 42,
+      "extraShifts": 7,
+      "offDayShifts": 8,
+      "deadheadKm": 33.9,
+      "twViolationMin": 4200,
+      "offShiftMin": 1200,
+      "district": "Phaya Thai"
+    },
+    {
+      "truckShifts": 70,
+      "extraShifts": 7,
+      "offDayShifts": 0,
+      "deadheadKm": 49.3,
+      "twViolationMin": 3360,
+      "offShiftMin": 0,
+      "district": "Samphanthawong"
+    },
+    {
+      "truckShifts": 91,
+      "extraShifts": 7,
+      "offDayShifts": 0,
+      "deadheadKm": 82.3,
+      "twViolationMin": 3360,
+      "offShiftMin": 1680,
+      "district": "Pom Prap Sattru Phai"
+    },
+    {
+      "truckShifts": 102,
+      "extraShifts": 4,
+      "offDayShifts": 31,
+      "deadheadKm": 277.4,
+      "twViolationMin": 28,
+      "offShiftMin": 741,
+      "district": "Lak Si"
+    },
+    {
+      "truckShifts": 118,
+      "extraShifts": 2,
+      "offDayShifts": 42,
+      "deadheadKm": 592.4,
+      "twViolationMin": 496,
+      "offShiftMin": 3386,
+      "district": "Khan Na Yao"
+    },
+    {
+      "truckShifts": 124,
+      "extraShifts": 1,
+      "offDayShifts": 38,
+      "deadheadKm": 453.0,
+      "twViolationMin": 1578,
+      "offShiftMin": 2668,
+      "district": "Phra Khanong"
+    },
+    {
+      "truckShifts": 124,
+      "extraShifts": 11,
+      "offDayShifts": 45,
+      "deadheadKm": 405.2,
+      "twViolationMin": 1404,
+      "offShiftMin": 2073,
+      "district": "Taling Chan"
+    },
+    {
+      "truckShifts": 131,
+      "extraShifts": 12,
+      "offDayShifts": 27,
+      "deadheadKm": 618.9,
+      "twViolationMin": 1180,
+      "offShiftMin": 13381,
+      "district": "Thung Khru"
+    },
+    {
+      "truckShifts": 132,
+      "extraShifts": 6,
+      "offDayShifts": 23,
+      "deadheadKm": 385.1,
+      "twViolationMin": 372,
+      "offShiftMin": 2264,
+      "district": "Phasi Charoen"
+    },
+    {
+      "truckShifts": 136,
+      "extraShifts": 2,
+      "offDayShifts": 41,
+      "deadheadKm": 430.5,
+      "twViolationMin": 1430,
+      "offShiftMin": 2625,
+      "district": "Minburi"
+    },
+    {
+      "truckShifts": 140,
+      "extraShifts": 7,
+      "offDayShifts": 0,
+      "deadheadKm": 154.2,
+      "twViolationMin": 20,
+      "offShiftMin": 0,
+      "district": "Khlong San"
+    },
+    {
+      "truckShifts": 143,
+      "extraShifts": 6,
+      "offDayShifts": 20,
+      "deadheadKm": 297.5,
+      "twViolationMin": 271,
+      "offShiftMin": 1307,
+      "district": "Bang Phlat"
+    },
+    {
+      "truckShifts": 144,
+      "extraShifts": 7,
+      "offDayShifts": 5,
+      "deadheadKm": 240.4,
+      "twViolationMin": 3528,
+      "offShiftMin": 210,
+      "district": "Bangkok Yai"
+    },
+    {
+      "truckShifts": 148,
+      "extraShifts": 4,
+      "offDayShifts": 70,
+      "deadheadKm": 443.5,
+      "twViolationMin": 943,
+      "offShiftMin": 2072,
+      "district": "Bangna"
+    },
+    {
+      "truckShifts": 155,
+      "extraShifts": 0,
+      "offDayShifts": 74,
+      "deadheadKm": 1195.7,
+      "twViolationMin": 3918,
+      "offShiftMin": 5312,
+      "district": "Don Mueang"
+    },
+    {
+      "truckShifts": 157,
+      "extraShifts": 2,
+      "offDayShifts": 66,
+      "deadheadKm": 1068.2,
+      "twViolationMin": 942,
+      "offShiftMin": 2520,
+      "district": "Khlong Sam Wa"
+    },
+    {
+      "truckShifts": 161,
+      "extraShifts": 7,
+      "offDayShifts": 0,
+      "deadheadKm": 382.4,
+      "twViolationMin": 88,
+      "offShiftMin": 587,
+      "district": "Nong Khaem"
+    },
+    {
+      "truckShifts": 161,
+      "extraShifts": 7,
+      "offDayShifts": 0,
+      "deadheadKm": 235.5,
+      "twViolationMin": 0,
+      "offShiftMin": 0,
+      "district": "Yan Nawa"
+    },
+    {
+      "truckShifts": 164,
+      "extraShifts": 0,
+      "offDayShifts": 115,
+      "deadheadKm": 646.7,
+      "twViolationMin": 1044,
+      "offShiftMin": 15915,
+      "district": "Chom Thong"
+    },
+    {
+      "truckShifts": 165,
+      "extraShifts": 4,
+      "offDayShifts": 41,
+      "deadheadKm": 761.4,
+      "twViolationMin": 1861,
+      "offShiftMin": 830,
+      "district": "Lat Phrao"
+    },
+    {
+      "truckShifts": 169,
+      "extraShifts": 5,
+      "offDayShifts": 98,
+      "deadheadKm": 448.7,
+      "twViolationMin": 598,
+      "offShiftMin": 4762,
+      "district": "Nong Chok"
+    },
+    {
+      "truckShifts": 172,
+      "extraShifts": 0,
+      "offDayShifts": 59,
+      "deadheadKm": 534.8,
+      "twViolationMin": 5886,
+      "offShiftMin": 3463,
+      "district": "Saphan Sung"
+    },
+    {
+      "truckShifts": 178,
+      "extraShifts": 9,
+      "offDayShifts": 33,
+      "deadheadKm": 880.6,
+      "twViolationMin": 1010,
+      "offShiftMin": 8282,
+      "district": "Huai Khwang"
+    },
+    {
+      "truckShifts": 187,
+      "extraShifts": 0,
+      "offDayShifts": 76,
+      "deadheadKm": 1584.5,
+      "twViolationMin": 1541,
+      "offShiftMin": 7770,
+      "district": "Lat Krabang"
+    },
+    {
+      "truckShifts": 192,
+      "extraShifts": 3,
+      "offDayShifts": 43,
+      "deadheadKm": 687.7,
+      "twViolationMin": 2331,
+      "offShiftMin": 8347,
+      "district": "Bang Sue"
+    },
+    {
+      "truckShifts": 193,
+      "extraShifts": 7,
+      "offDayShifts": 6,
+      "deadheadKm": 177.7,
+      "twViolationMin": 326,
+      "offShiftMin": 357,
+      "district": "Bangkok Noi"
+    },
+    {
+      "truckShifts": 201,
+      "extraShifts": 0,
+      "offDayShifts": 62,
+      "deadheadKm": 1540.1,
+      "twViolationMin": 904,
+      "offShiftMin": 13091,
+      "district": "Bang Khen"
+    },
+    {
+      "truckShifts": 205,
+      "extraShifts": 2,
+      "offDayShifts": 60,
+      "deadheadKm": 807.5,
+      "twViolationMin": 642,
+      "offShiftMin": 968,
+      "district": "Bang Khae"
+    },
+    {
+      "truckShifts": 207,
+      "extraShifts": 4,
+      "offDayShifts": 62,
+      "deadheadKm": 2261.5,
+      "twViolationMin": 4267,
+      "offShiftMin": 14447,
+      "district": "Prawet"
+    },
+    {
+      "truckShifts": 210,
+      "extraShifts": 6,
+      "offDayShifts": 81,
+      "deadheadKm": 1210.6,
+      "twViolationMin": 14454,
+      "offShiftMin": 354,
+      "district": "Bang Bon"
+    },
+    {
+      "truckShifts": 210,
+      "extraShifts": 21,
+      "offDayShifts": 0,
+      "deadheadKm": 305.1,
+      "twViolationMin": 7,
+      "offShiftMin": 0,
+      "district": "Thonburi"
+    },
+    {
+      "truckShifts": 238,
+      "extraShifts": 14,
+      "offDayShifts": 4,
+      "deadheadKm": 40.0,
+      "twViolationMin": 0,
+      "offShiftMin": 2040,
+      "district": "Ratchathewi"
+    },
+    {
+      "truckShifts": 239,
+      "extraShifts": 3,
+      "offDayShifts": 92,
+      "deadheadKm": 863.7,
+      "twViolationMin": 187,
+      "offShiftMin": 6959,
+      "district": "Wang Thonglang"
+    },
+    {
+      "truckShifts": 248,
+      "extraShifts": 0,
+      "offDayShifts": 77,
+      "deadheadKm": 774.1,
+      "twViolationMin": 898,
+      "offShiftMin": 21728,
+      "district": "Chatuchak"
+    },
+    {
+      "truckShifts": 250,
+      "extraShifts": 4,
+      "offDayShifts": 115,
+      "deadheadKm": 862.3,
+      "twViolationMin": 2480,
+      "offShiftMin": 1628,
+      "district": "Bang Kapi"
+    },
+    {
+      "truckShifts": 266,
+      "extraShifts": 7,
+      "offDayShifts": 4,
+      "deadheadKm": 433.1,
+      "twViolationMin": 2310,
+      "offShiftMin": 1784,
+      "district": "Bang Rak"
+    },
+    {
+      "truckShifts": 270,
+      "extraShifts": 179,
+      "offDayShifts": 39,
+      "deadheadKm": 862.9,
+      "twViolationMin": 11695,
+      "offShiftMin": 3397,
+      "district": "Thawi Watthana"
+    },
+    {
+      "truckShifts": 273,
+      "extraShifts": 13,
+      "offDayShifts": 42,
+      "deadheadKm": 354.1,
+      "twViolationMin": 2386,
+      "offShiftMin": 7029,
+      "district": "Khlong Toei"
+    },
+    {
+      "truckShifts": 273,
+      "extraShifts": 14,
+      "offDayShifts": 0,
+      "deadheadKm": 101.7,
+      "twViolationMin": 0,
+      "offShiftMin": 770,
+      "district": "Phra Nakhon"
+    },
+    {
+      "truckShifts": 287,
+      "extraShifts": 8,
+      "offDayShifts": 34,
+      "deadheadKm": 907.5,
+      "twViolationMin": 9146,
+      "offShiftMin": 12907,
+      "district": "Watthana"
+    },
+    {
+      "truckShifts": 290,
+      "extraShifts": 9,
+      "offDayShifts": 0,
+      "deadheadKm": 267.1,
+      "twViolationMin": 8487,
+      "offShiftMin": 1354,
+      "district": "Sathorn"
+    },
+    {
+      "truckShifts": 303,
+      "extraShifts": 7,
+      "offDayShifts": 5,
+      "deadheadKm": 461.0,
+      "twViolationMin": 1140,
+      "offShiftMin": 0,
+      "district": "Din Daeng"
+    },
+    {
+      "truckShifts": 307,
+      "extraShifts": 7,
+      "offDayShifts": 0,
+      "deadheadKm": 258.8,
+      "twViolationMin": 3229,
+      "offShiftMin": 1521,
+      "district": "Pathumwan"
+    },
+    {
+      "truckShifts": 321,
+      "extraShifts": 24,
+      "offDayShifts": 181,
+      "deadheadKm": 1511.8,
+      "twViolationMin": 3832,
+      "offShiftMin": 18566,
+      "district": "Bang Khun Thian"
+    },
+    {
+      "truckShifts": 484,
+      "extraShifts": 14,
+      "offDayShifts": 0,
+      "deadheadKm": 158.8,
+      "twViolationMin": 7080,
+      "offShiftMin": 8608,
+      "district": "Dusit"
+    },
+    {
+      "truckShifts": 761,
+      "extraShifts": 456,
+      "offDayShifts": 129,
+      "deadheadKm": 23592.0,
+      "twViolationMin": 38129,
+      "offShiftMin": 58693,
+      "district": "Sai Mai"
+    }
+  ]
+}
