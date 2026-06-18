@@ -1,7 +1,7 @@
 // validator/route_state.h
 #pragma once
 #include "validator/labels.h"
-#include "solver.pb.h"
+#include "routing.pb.h"
 #include <string>
 #include <vector>
 

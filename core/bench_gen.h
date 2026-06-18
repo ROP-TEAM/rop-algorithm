@@ -1,5 +1,5 @@
 #pragma once
-#include "solver.pb.h"
+#include "routing.pb.h"
 
 struct BenchConfig {
     int    seed;

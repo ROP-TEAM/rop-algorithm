@@ -2,7 +2,7 @@
 #include <grpcpp/grpcpp.h>
 #include <random>
 #include "alns/alns.h"
-#include "solver.grpc.pb.h"
+#include "routing.grpc.pb.h"
 
 struct SolveConfig {
     int      randomTrials          = 10000;

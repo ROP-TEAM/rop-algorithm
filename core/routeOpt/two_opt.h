@@ -1,6 +1,6 @@
 #pragma once
 
-#include "solver.pb.h"
+#include "routing.pb.h"
 #include "validator/route_state.h"
 
 namespace hfvrptwb {

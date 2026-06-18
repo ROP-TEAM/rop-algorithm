@@ -1,7 +1,7 @@
 #pragma once
 
 #include "construction/adaptive_constructor.h"
-#include "solver.pb.h"
+#include "routing.pb.h"
 #include "solver_service.h"
 
 namespace hfvrptwb {
