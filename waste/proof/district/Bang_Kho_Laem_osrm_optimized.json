@@ -1,6 +1,6 @@
 {
   "createdAt": "2026-06-18T00:00:00Z",
-  "message": "Bang Kho Laem: REAL OSRM-optimized vs current. trucks 140->45, deadhead 523.5->483.4 km, Gini 0.322->0.217. all distances OSRM road.",
+  "message": "Bang Kho Laem: REAL OSRM-optimized (re-solved on road network) vs current assignment. trucks 140->45, deadhead 523.5->483.4 km, Gini 0.322->0.217. all distances OSRM road.",
   "summary": {
     "district": "Bang Kho Laem",
     "distance": "osrm-road-optimized",
